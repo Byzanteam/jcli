@@ -1,8 +1,14 @@
-export function add(a: number, b: number): number {
-  return a + b;
-}
+import { Command } from "cliffy";
 
-// Learn more at https://deno.land/manual/examples/module_metadata#concepts
-if (import.meta.main) {
-  console.log("Add 2 + 3 =", add(2, 3));
-}
+import { default as projectsCommand } from "@/subcommands/projects/mod.ts";
+import { default as migrationsCommand } from "@/subcommands/migrations/mod.ts";
+import { default as functionsCommand } from "@/subcommands/functions/mod.ts";
+
+await new Command()
+  .name("jcli")
+  .description("Jet command-line tool")
+  .globalOption("-d, --debug", "Enable debug output.")
+  .command("projects", projectsCommand)
+  .command("migrations", migrationsCommand)
+  .command("functions", functionsCommand)
+  .parse(Deno.args);
