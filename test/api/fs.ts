@@ -1,19 +1,7 @@
 import { FS, WriteFileOptions } from "@/api/fs.ts";
 
 class File {
-  #content: string;
-
-  constructor() {
-    this.#content = "";
-  }
-
-  get content(): string {
-    return this.#content;
-  }
-
-  set content(value: string) {
-    this.#content = value;
-  }
+  content = "";
 }
 
 class Directory {

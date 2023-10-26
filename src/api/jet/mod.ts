@@ -41,16 +41,18 @@ export async function createProject(
   args: CreateProjectArgs,
   config: JcliConfigDotJSON,
 ): Promise<Project> {
-  const response = await query<CreateProjectMutationResponse>(
+  const { createProject: { project: { uuid, name, title } } } = await query<
+    CreateProjectMutationResponse
+  >(
     createProjectMutation,
     args,
     config,
   );
 
   return {
-    id: response.createProject.project.uuid,
-    name: response.createProject.project.name,
-    title: response.createProject.project.title,
+    id: uuid,
+    name,
+    title,
     capabilities: [],
     instances: [],
   };
