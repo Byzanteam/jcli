@@ -21,12 +21,12 @@ export class ProjectDotJSON {
     this.#instances = project.instances;
   }
 
-  toJSON = () => {
+  toJSON() {
     return {
       name: this.#name,
       title: this.#title,
       capabilities: this.#capabilities,
       instances: this.#instances,
     };
-  };
+  }
 }

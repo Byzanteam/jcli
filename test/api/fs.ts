@@ -11,15 +11,13 @@ class Directory {
     this.#children = new Map();
   }
 
-  static normalizePath = (path: string): ReadonlyArray<string> => {
+  static normalizePath(path: string): ReadonlyArray<string> {
     return path
       .split("/")
       .filter((elem) => "" !== elem && "." !== elem);
-  };
+  }
 
-  mkdirRec = (
-    [name, ...rest]: ReadonlyArray<string>,
-  ): Directory | undefined => {
+  mkdirRec([name, ...rest]: ReadonlyArray<string>): Directory | undefined {
     if (undefined === name) {
       return this;
     } else if (0 === rest.length) {
@@ -31,15 +29,15 @@ class Directory {
         ? directoryOrFile.mkdirRec(rest)
         : undefined;
     }
-  };
+  }
 
-  mkdir = (name: string): Directory | undefined => {
+  mkdir(name: string): Directory | undefined {
     if (!this.#children.has(name)) {
       const directory = new Directory();
       this.#children.set(name, directory);
       return directory;
     }
-  };
+  }
 
   writeTextFile(
     path: string,
@@ -63,9 +61,9 @@ class Directory {
     }
   }
 
-  getChildRec = (
+  getChildRec(
     [name, ...rest]: ReadonlyArray<string>,
-  ): Directory | File | undefined => {
+  ): Directory | File | undefined {
     if (undefined === name) {
       return this;
     }
@@ -81,7 +79,7 @@ class Directory {
     } else {
       return undefined;
     }
-  };
+  }
 }
 
 export interface FSTest extends FS {

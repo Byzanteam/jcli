@@ -16,7 +16,7 @@ export abstract class ConfigBase<T> {
     this.#serializer = options?.serializer ?? makeJSONSerializer();
   }
 
-  get = async () => {
+  async get() {
     if (undefined === this.#data) {
       const data = await this._fs.readTextFile(this.#path);
       const deserializedData = await this.#serializer.deserialize(data);
@@ -24,13 +24,13 @@ export abstract class ConfigBase<T> {
     }
 
     return this.#data;
-  };
+  }
 
-  set = async (data: T, options?: WriteFileOptions) => {
+  async set(data: T, options?: WriteFileOptions) {
     const serializedData = await this.#serializer.serialize(data);
     await this._fs.writeTextFile(this.#path, serializedData, options);
     this.#data = data;
-  };
+  }
 
   abstract _fs: FS;
 }
