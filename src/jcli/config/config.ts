@@ -8,12 +8,12 @@ export interface ConfigSerializer<T> {
 
 export abstract class ConfigBase<T> {
   #path: string;
-  #data: T | undefined = undefined;
+  #data: T | undefined;
   #serializer: ConfigSerializer<T>;
 
   constructor(path: string, options?: { serializer?: ConfigSerializer<T> }) {
     this.#path = path;
-    this.#serializer = options?.serializer ?? makeJSONSerializer();
+    this.#serializer = options?.serializer ?? makeJSONSerializer<T>();
   }
 
   async get() {
