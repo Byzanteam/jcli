@@ -22,7 +22,7 @@ async function query<T>(
 
   const body = await response.json();
 
-  return resolveResponse(body);
+  return resolveResponse<T>(body);
 }
 
 function resolveResponse<T>(
