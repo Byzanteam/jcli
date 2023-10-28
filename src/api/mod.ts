@@ -12,7 +12,7 @@ class Config<T> extends ConfigBase<T> {
 }
 
 export const config = await new Config<JcliConfigDotJSON>(
-  jcliConfigDotJSONPath(),
+  jcliConfigDotJSONPath(fs),
 ).get();
 
 export type { FS, Jet, WriteFileOptions };

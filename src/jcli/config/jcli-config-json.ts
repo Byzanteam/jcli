@@ -1,13 +1,8 @@
 import { LevelName } from "cliffy/log";
+import { FS } from "@/api/mod.ts";
 
-export function jcliConfigDotJSONPath(): string {
-  const homePath = Deno.env.get("HOME");
-
-  if (homePath) {
-    return `${homePath}/.config/jcli/config.json`;
-  } else {
-    throw new Error("HOME not found");
-  }
+export function jcliConfigDotJSONPath(fs: FS): string {
+  return `${fs.homePath()}/.config/jcli/config.json`;
 }
 
 export interface JcliConfigDotJSON {

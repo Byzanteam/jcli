@@ -87,9 +87,14 @@ export interface FSTest extends FS {
 }
 
 export function makeFS(): FSTest {
+  const homePath = "~";
   const cwd = new Directory();
+  cwd.mkdir(homePath);
 
   return {
+    homePath(): string {
+      return homePath;
+    },
     mkdir(path: string): Promise<void> {
       return new Promise((resolve, reject) => {
         cwd.mkdirRec(Directory.normalizePath(path))

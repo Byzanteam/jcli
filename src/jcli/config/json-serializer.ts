@@ -7,9 +7,7 @@ export function makeJSONSerializer<T>(): ConfigSerializer<T> {
     },
 
     deserialize(data: string): Promise<T> {
-      return new Promise((resolve) => {
-        resolve(JSON.parse(data));
-      });
+      return Promise.resolve(JSON.parse(data));
     },
   };
 }
