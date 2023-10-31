@@ -1,5 +1,8 @@
-import { APIClient } from "@/api/mod.ts";
 import { GlobalOptions } from "@/args.ts";
+
+import { APIClient } from "@/api/mod.ts";
+import { createTableFileHashesQuery } from "@/api/db/queries/create-table-file-hashes.ts";
+
 import {
   ProjectDotJSON,
   projectDotJSONPath,
@@ -52,5 +55,10 @@ export default function (api: APIClient) {
     );
 
     await metadataDotJSON.set({ projectId: project.id }, { createNew: true });
+
+    const db = api.db.createDatabase(`${projectName}/.jcli/project.sqlite`);
+    db.execute(createTableFileHashesQuery);
+
+    db.close();
   };
 }
