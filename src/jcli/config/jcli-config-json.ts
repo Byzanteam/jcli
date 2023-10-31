@@ -1,4 +1,4 @@
-import { LevelName } from "cliffy/log";
+import { LevelName } from "log";
 import { FS } from "@/api/mod.ts";
 
 export function jcliConfigDotJSONPath(fs: FS): string {

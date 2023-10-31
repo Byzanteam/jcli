@@ -1,3 +1,4 @@
+import { DB, db } from "@/api/db.ts";
 import { FS, fs, WriteFileOptions } from "@/api/fs.ts";
 import { Jet, makeJet } from "@/api/jet.ts";
 
@@ -18,6 +19,7 @@ export const config = await new Config<JcliConfigDotJSON>(
 export type { FS, Jet, WriteFileOptions };
 
 export interface APIClient {
+  db: DB;
   fs: FS;
   jet: Jet;
   Config: new <T>(
@@ -27,6 +29,7 @@ export interface APIClient {
 }
 
 export const api: APIClient = {
+  db,
   fs,
   jet: makeJet(config),
   Config: Config,

@@ -1,4 +1,4 @@
-import * as log from "cliffy/log";
+import * as log from "log";
 
 const LOGGER = "jcli";
 
