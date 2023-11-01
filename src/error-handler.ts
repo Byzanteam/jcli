@@ -1,12 +1,15 @@
 import { Command, ValidationError } from "cliffy";
+import { getLogger } from "@/jcli/logger.ts";
 
 export default function <T>(error: T, cmd: Command) {
+  const logger = getLogger();
+
   if (error instanceof ValidationError) {
     cmd.showHelp();
   } else if (error instanceof Error) {
-    console.log(error.message);
+    logger.error(error.message);
   } else {
-    console.log({ error: error });
+    logger.error({ error: error });
   }
 
   Deno.exit(error instanceof ValidationError ? error.exitCode : 1);

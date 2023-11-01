@@ -1,11 +1,20 @@
 import { Project } from "@/jet/project.ts";
-import { CreateProjectArgs } from "@/api/jet.ts";
+import {
+  CreateMigrationArgs,
+  CreateProjectArgs,
+  DeleteMigrationArgs,
+  UpdateMigrationArgs,
+} from "@/api/jet.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
 
 import {
   createProjectMutation,
   CreateProjectMutationResponse,
 } from "@/api/jet/queries/create-project.ts";
+
+import { createMigrationMutation } from "@/api/jet/queries/create-migration.ts";
+import { updateMigrationMutation } from "@/api/jet/queries/update-migration.ts";
+import { deleteMigrationMutation } from "@/api/jet/queries/delete-migration.ts";
 
 async function query<T>(
   query: string,
@@ -56,4 +65,25 @@ export async function createProject(
     capabilities: [],
     instances: [],
   };
+}
+
+export async function createMigration(
+  args: CreateMigrationArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(createMigrationMutation, args, config);
+}
+
+export async function updateMigration(
+  args: UpdateMigrationArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(updateMigrationMutation, args, config);
+}
+
+export async function deleteMigration(
+  args: DeleteMigrationArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(deleteMigrationMutation, args, config);
 }

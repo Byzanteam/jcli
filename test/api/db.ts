@@ -4,13 +4,15 @@ import { dirname, join } from "path";
 export { DBClass };
 
 export interface DBTest extends DB {
+  chdir(path: string): void;
   cleanup(): void;
   hasDatabase(path: string): boolean;
 }
 
 export function makeDB(): DBTest {
-  const namespaceDir = join("test/tmp", crypto.randomUUID());
   const databases = new Set<string>();
+  const origNamespaceDir = join("test/tmp", crypto.randomUUID());
+  let namespaceDir = origNamespaceDir;
 
   let hasDir = false;
 
@@ -38,9 +40,13 @@ export function makeDB(): DBTest {
       });
     },
 
+    chdir(path: string): void {
+      namespaceDir = join(namespaceDir, path);
+    },
+
     cleanup(): void {
       if (hasDir) {
-        Deno.removeSync(namespaceDir, { recursive: true });
+        Deno.removeSync(origNamespaceDir, { recursive: true });
       }
     },
 

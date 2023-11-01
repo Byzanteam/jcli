@@ -6,6 +6,8 @@ import {
   assertRejects,
 } from "@test/mod.ts";
 
+import { PROJECT_DB_PATH } from "@/api/mod.ts";
+
 import { afterEach, beforeEach, describe, it } from "@test/mod.ts";
 
 import { setupAPI } from "@/api/mod.ts";
@@ -81,21 +83,41 @@ describe("works", () => {
   it("provision project.db", async () => {
     await action(options, "my_proj");
 
-    const expectedDatabase = "my_proj/.jcli/project.sqlite";
+    const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
 
     assert(api.db.hasDatabase(expectedDatabase));
 
     const database = await api.db.connect(expectedDatabase);
 
     const columns = database.queryEntries<
-      { name: string; type: string }
-    >("SELECT name, type FROM pragma_table_info(:tableName) ORDER BY name", {
-      tableName: "file_hashes",
+      { name: string; type: string; notnull: number; pk: number }
+    >(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
+      { tableName: "objects" },
+    );
+
+    assertEquals(columns.length, 3);
+
+    assertObjectMatch(columns[0], {
+      name: "filetype",
+      type: "TEXT",
+      notnull: 1,
+      pk: 0,
     });
 
-    assertEquals(columns.length, 2);
-    assertObjectMatch(columns[0], { name: "hash", type: "BLOB" });
-    assertObjectMatch(columns[1], { name: "path", type: "TEXT" });
+    assertObjectMatch(columns[1], {
+      name: "hash",
+      type: "TEXT",
+      notnull: 1,
+      pk: 0,
+    });
+
+    assertObjectMatch(columns[2], {
+      name: "path",
+      type: "TEXT",
+      notnull: 0,
+      pk: 1,
+    });
 
     database.close();
   });
