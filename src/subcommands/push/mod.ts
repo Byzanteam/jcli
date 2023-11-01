@@ -5,10 +5,7 @@ import errorHandler from "@/error-handler.ts";
 import action from "./action.ts";
 
 const command = new Command<GlobalOptions>()
-  .description(
-    "Create a project on server and link it with a local directory.",
-  )
-  .arguments("<projectName:string>")
+  .description("Push local changes to Jet.")
   .error(errorHandler)
   .action(action);
 

@@ -1,4 +1,4 @@
-import { FS, WriteFileOptions } from "@/api/fs.ts";
+import { DirEntry, FS, WriteFileOptions } from "@/api/fs.ts";
 
 class File {
   content = "";
@@ -61,6 +61,55 @@ class Directory {
     }
   }
 
+  remove([name, ...rest]: ReadonlyArray<string>): void {
+    if (undefined === name) {
+      throw new Error("No such file or directory.");
+    }
+
+    if (0 === rest.length) {
+      this._remove(name);
+      return;
+    }
+
+    const fileOrDirectory = this.#children.get(name);
+
+    if (fileOrDirectory instanceof Directory) {
+      fileOrDirectory.remove(rest);
+    } else {
+      throw new Error("No such file or directory.");
+    }
+  }
+
+  _remove(path: string): void {
+    const directoryOrFile = this.#children.get(path);
+
+    if (directoryOrFile instanceof Directory && !directoryOrFile.isEmpty()) {
+      throw new Error(`${path} is not empty.`);
+    }
+
+    this.#children.delete(path);
+  }
+
+  isEmpty(): boolean {
+    return this.#children.size === 0;
+  }
+
+  ls(): AsyncIterable<DirEntry> {
+    const children = this.#children;
+
+    return {
+      async *[Symbol.asyncIterator](): AsyncGenerator<DirEntry> {
+        for (const [name, directoryOrFile] of children) {
+          yield {
+            name,
+            isDirectory: directoryOrFile instanceof Directory,
+            isFile: directoryOrFile instanceof File,
+          };
+        }
+      },
+    };
+  }
+
   getChildRec(
     [name, ...rest]: ReadonlyArray<string>,
   ): Directory | File | undefined {
@@ -83,12 +132,13 @@ class Directory {
 }
 
 export interface FSTest extends FS {
+  chdir(path: string): void;
   hasDir(path: string): boolean;
 }
 
 export function makeFS(): FSTest {
   const homePath = "~";
-  const cwd = new Directory();
+  let cwd = new Directory();
   cwd.mkdir(homePath);
 
   return {
@@ -101,11 +151,6 @@ export function makeFS(): FSTest {
           ? resolve()
           : reject(new Error(`Cannot mkdir "${path}"`));
       });
-    },
-
-    hasDir(path: string): boolean {
-      const directoryOrFile = cwd.getChildRec(Directory.normalizePath(path));
-      return !!directoryOrFile && directoryOrFile instanceof Directory;
     },
 
     writeTextFile(
@@ -137,6 +182,12 @@ export function makeFS(): FSTest {
       });
     },
 
+    async readFile(path: string): Promise<Uint8Array> {
+      const content = await this.readTextFile(path);
+      const encoder = new TextEncoder();
+      return encoder.encode(content);
+    },
+
     readTextFile(path: string): Promise<string> {
       return new Promise((resolve, reject) => {
         const directoryOrFile = cwd.getChildRec(Directory.normalizePath(path));
@@ -147,6 +198,39 @@ export function makeFS(): FSTest {
 
         reject(new Error("Cannot read file"));
       });
+    },
+
+    readDir(path: string): AsyncIterable<DirEntry> {
+      const directoryOrFile = cwd.getChildRec(Directory.normalizePath(path));
+
+      if (directoryOrFile && directoryOrFile instanceof Directory) {
+        return directoryOrFile.ls();
+      }
+
+      throw new Error(`${path} is not a directory.`);
+    },
+
+    remove(path: string): Promise<void> {
+      return new Promise((resolve) => {
+        const normalizedPath = Directory.normalizePath(path);
+        cwd.remove(normalizedPath);
+        resolve();
+      });
+    },
+
+    chdir(path: string): void {
+      const directoryOrFile = cwd.getChildRec(Directory.normalizePath(path));
+
+      if (directoryOrFile && directoryOrFile instanceof Directory) {
+        cwd = directoryOrFile;
+      } else {
+        throw new Error(`Cannot chdir to "${path}"`);
+      }
+    },
+
+    hasDir(path: string): boolean {
+      const directoryOrFile = cwd.getChildRec(Directory.normalizePath(path));
+      return !!directoryOrFile && directoryOrFile instanceof Directory;
     },
   };
 }

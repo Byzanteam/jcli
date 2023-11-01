@@ -1,7 +1,7 @@
 import { GlobalOptions } from "@/args.ts";
 
-import { api } from "@/api/mod.ts";
-import { createTableFileHashesQuery } from "@/api/db/queries/create-table-file-hashes.ts";
+import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
+import { createTableObjectsQuery } from "@/api/db/queries/create-table-objects.ts";
 
 import { Config } from "@/jcli/config/config.ts";
 import {
@@ -13,11 +13,11 @@ import {
   metadataDotJSONPath,
 } from "@/jcli/config/metadata-json.ts";
 
-const projectNameFormat = /^[a-z_][a-z0-9_]{0,39}$/;
+const PROJECT_NAME_FORMAT = /^[a-z_][a-z0-9_]{0,39}$/;
 
 function validateProjectName(projectName: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (projectNameFormat.test(projectName)) {
+    if (PROJECT_NAME_FORMAT.test(projectName)) {
       resolve(projectName);
     } else {
       reject(invalidProjectNameError(projectName));
@@ -54,13 +54,13 @@ export default async function (
   await projectDotJSON.set(new ProjectDotJSON(project), { createNew: true });
 
   const metadataDotJSON = new Config<MetadataDotJSON>(
-    metadataDotJSONPath(projectName),
+    `${projectName}/${metadataDotJSONPath()}`,
   );
 
   await metadataDotJSON.set({ projectId: project.id }, { createNew: true });
 
-  const db = api.db.createDatabase(`${projectName}/.jcli/project.sqlite`);
-  db.execute(createTableFileHashesQuery);
+  const db = api.db.createDatabase(`${projectName}/${PROJECT_DB_PATH}`);
+  db.execute(createTableObjectsQuery);
 
   db.close();
 }
