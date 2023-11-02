@@ -1,8 +1,8 @@
 import { LevelName } from "log";
-import { FS } from "@/api/mod.ts";
+import { api } from "@/api/mod.ts";
 
-export function jcliConfigDotJSONPath(fs: FS): string {
-  return `${fs.homePath()}/.config/jcli/config.json`;
+export function jcliConfigDotJSONPath(): string {
+  return `${api.fs.homePath()}/.config/jcli/config.json`;
 }
 
 export interface JcliConfigDotJSON {

@@ -1,9 +1,8 @@
 import { Command } from "cliffy";
 import { GlobalOptions } from "@/args.ts";
 import errorHandler from "@/error-handler.ts";
-import { api } from "@/api/mod.ts";
 
-import makeAction from "@/subcommands/admin/projects/create/action.ts";
+import action from "@/subcommands/admin/projects/create/action.ts";
 
 const command = new Command<GlobalOptions>()
   .description(
@@ -11,6 +10,6 @@ const command = new Command<GlobalOptions>()
   )
   .arguments("<projectName:string>")
   .error(errorHandler)
-  .action(makeAction(api));
+  .action(action);
 
 export default command;

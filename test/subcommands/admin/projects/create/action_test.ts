@@ -6,29 +6,28 @@ import {
   assertRejects,
 } from "@test/mod.ts";
 
-import { makeAPIClient, ProjectObject } from "@test/api/mod.ts";
+import { afterEach, beforeEach, describe, it } from "@test/mod.ts";
 
-import makeAction from "@/subcommands/admin/projects/create/action.ts";
+import { setupAPI } from "@/api/mod.ts";
 
-Deno.test("works", async (t) => {
-  const setup = () => {
-    const api = makeAPIClient();
-    const action = makeAction(api);
-    const options = {};
+import { APIClientTest, makeAPIClient, ProjectObject } from "@test/api/mod.ts";
 
-    return {
-      api,
-      action,
-      options,
-      cleanup() {
-        api.cleanup();
-      },
-    };
-  };
+import action from "@/subcommands/admin/projects/create/action.ts";
 
-  await t.step("create project on server", async () => {
-    const { api, action, options, cleanup } = setup();
+describe("works", () => {
+  let api: APIClientTest;
+  const options = {};
 
+  beforeEach(() => {
+    api = makeAPIClient();
+    setupAPI(api);
+  });
+
+  afterEach(() => {
+    api.cleanup();
+  });
+
+  it("create project on server", async () => {
     assert(!api.jet.hasProject({ projectName: "my_proj" }));
 
     await action(options, "my_proj");
@@ -37,13 +36,9 @@ Deno.test("works", async (t) => {
     assertNotEquals(project, undefined);
     assertEquals(project?.name, "my_proj");
     assertEquals(project?.title, "my_proj");
-
-    cleanup();
   });
 
-  await t.step("make project directories", async () => {
-    const { api, action, options, cleanup } = setup();
-
+  it("make project directories", async () => {
     assert(!api.fs.hasDir("my_proj"));
 
     await action(options, "my_proj");
@@ -52,13 +47,9 @@ Deno.test("works", async (t) => {
     assert(api.fs.hasDir("my_proj/migrations"));
     assert(api.fs.hasDir("my_proj/functions"));
     assert(api.fs.hasDir("my_proj/.jcli"));
-
-    cleanup();
   });
 
-  await t.step("provision my_proj/project.json", async () => {
-    const { api, action, options, cleanup } = setup();
-
+  it("provision my_proj/project.json", async () => {
     await action(options, "my_proj");
 
     const configuration = JSON.parse(
@@ -71,13 +62,9 @@ Deno.test("works", async (t) => {
       capabilities: [],
       instances: [],
     });
-
-    cleanup();
   });
 
-  await t.step("provision my_proj/.jcli/metadata.json", async () => {
-    const { api, action, options, cleanup } = setup();
-
+  it("provision my_proj/.jcli/metadata.json", async () => {
     await action(options, "my_proj");
 
     const metadata = JSON.parse(
@@ -89,13 +76,9 @@ Deno.test("works", async (t) => {
     }) as ProjectObject;
 
     assertObjectMatch(metadata, { projectId: project.id });
-
-    cleanup();
   });
 
-  await t.step("provision project.db", async () => {
-    const { api, action, options, cleanup } = setup();
-
+  it("provision project.db", async () => {
     await action(options, "my_proj");
 
     const expectedDatabase = "my_proj/.jcli/project.sqlite";
@@ -115,17 +98,18 @@ Deno.test("works", async (t) => {
     assertObjectMatch(columns[1], { name: "path", type: "TEXT" });
 
     database.close();
-
-    cleanup();
   });
 });
 
-Deno.test("fails", async (t) => {
+describe("fails", () => {
   const alreadyExistDir = "dir_existed";
   const alreadyExistProject = "name_existed";
 
-  const setup = () => {
-    const api = makeAPIClient();
+  let api: APIClientTest;
+  const options = {};
+
+  beforeEach(() => {
+    api = makeAPIClient();
 
     api.fs.mkdir(alreadyExistDir);
 
@@ -134,40 +118,18 @@ Deno.test("fails", async (t) => {
       title: alreadyExistProject,
     });
 
-    const action = makeAction(api);
-    const options = {};
+    setupAPI(api);
+  });
 
-    return {
-      api,
-      action,
-      options,
-      cleanup() {
-        api.cleanup();
-      },
-    };
-  };
-
-  await t.step("invalid project name", () => {
-    const { action, options, cleanup } = setup();
-
+  it("invalid project name", () => {
     assertRejects(() => action(options, "@invalid-name"));
-
-    cleanup();
   });
 
-  await t.step("failed to make project directory", () => {
-    const { action, options, cleanup } = setup();
-
+  it("failed to make project directory", () => {
     assertRejects(() => action(options, alreadyExistDir));
-
-    cleanup();
   });
 
-  await t.step("failed to create project on server", () => {
-    const { action, options, cleanup } = setup();
-
+  it("failed to create project on server", () => {
     assertRejects(() => action(options, alreadyExistProject));
-
-    cleanup();
   });
 });

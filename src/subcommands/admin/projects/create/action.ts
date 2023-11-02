@@ -1,8 +1,9 @@
 import { GlobalOptions } from "@/args.ts";
 
-import { APIClient } from "@/api/mod.ts";
+import { api } from "@/api/mod.ts";
 import { createTableFileHashesQuery } from "@/api/db/queries/create-table-file-hashes.ts";
 
+import { Config } from "@/jcli/config/config.ts";
 import {
   ProjectDotJSON,
   projectDotJSONPath,
@@ -30,35 +31,36 @@ function invalidProjectNameError(projectName: string): Error {
   );
 }
 
-export default function (api: APIClient) {
-  return async function (_options: GlobalOptions, rawProjectName: string) {
-    const projectName = await validateProjectName(rawProjectName);
+export default async function (
+  _options: GlobalOptions,
+  rawProjectName: string,
+) {
+  const projectName = await validateProjectName(rawProjectName);
 
-    console.log("Creating project in Jet...");
-    const project = await api.jet.createProject({
-      name: projectName,
-      title: projectName,
-    });
+  console.log("Creating project in Jet...");
+  const project = await api.jet.createProject({
+    name: projectName,
+    title: projectName,
+  });
 
-    console.info("Provisioning local files...");
-    await api.fs.mkdir(projectName);
-    await api.fs.mkdir(`${projectName}/migrations`);
-    await api.fs.mkdir(`${projectName}/functions`);
-    await api.fs.mkdir(`${projectName}/.jcli`);
+  console.info("Provisioning local files...");
+  await api.fs.mkdir(projectName);
+  await api.fs.mkdir(`${projectName}/migrations`);
+  await api.fs.mkdir(`${projectName}/functions`);
+  await api.fs.mkdir(`${projectName}/.jcli`);
 
-    const projectDotJSON = new api.Config(projectDotJSONPath(projectName));
+  const projectDotJSON = new Config(projectDotJSONPath(projectName));
 
-    await projectDotJSON.set(new ProjectDotJSON(project), { createNew: true });
+  await projectDotJSON.set(new ProjectDotJSON(project), { createNew: true });
 
-    const metadataDotJSON = new api.Config<MetadataDotJSON>(
-      metadataDotJSONPath(projectName),
-    );
+  const metadataDotJSON = new Config<MetadataDotJSON>(
+    metadataDotJSONPath(projectName),
+  );
 
-    await metadataDotJSON.set({ projectId: project.id }, { createNew: true });
+  await metadataDotJSON.set({ projectId: project.id }, { createNew: true });
 
-    const db = api.db.createDatabase(`${projectName}/.jcli/project.sqlite`);
-    db.execute(createTableFileHashesQuery);
+  const db = api.db.createDatabase(`${projectName}/.jcli/project.sqlite`);
+  db.execute(createTableFileHashesQuery);
 
-    db.close();
-  };
+  db.close();
 }
