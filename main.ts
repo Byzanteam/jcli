@@ -1,6 +1,6 @@
 import { Command } from "cliffy";
 
-import { config } from "@/api/mod.ts";
+import { getConfig } from "@/api/mod.ts";
 import { setupLogger } from "@/jcli/logger.ts";
 
 import { action as globalOptionAction } from "@/args.ts";
@@ -11,7 +11,8 @@ import functionsCommand from "@/subcommands/functions/mod.ts";
 import adminCommand from "@/subcommands/admin/mod.ts";
 
 const DEFAULT_LOG_LEVEL = "INFO";
-setupLogger(config.logLevel ?? DEFAULT_LOG_LEVEL);
+const { logLevel = DEFAULT_LOG_LEVEL } = await getConfig().get();
+setupLogger(logLevel);
 
 await new Command()
   .name("jcli")

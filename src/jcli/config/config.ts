@@ -1,4 +1,4 @@
-import { FS, WriteFileOptions } from "@/api/mod.ts";
+import { api, WriteFileOptions } from "@/api/mod.ts";
 import { makeJSONSerializer } from "@/jcli/config/json-serializer.ts";
 
 export interface ConfigSerializer<T> {
@@ -6,7 +6,7 @@ export interface ConfigSerializer<T> {
   deserialize(data: string): Promise<T>;
 }
 
-export abstract class ConfigBase<T> {
+export class Config<T> {
   #path: string;
   #data: T | undefined;
   #serializer: ConfigSerializer<T>;
@@ -18,7 +18,7 @@ export abstract class ConfigBase<T> {
 
   async get() {
     if (undefined === this.#data) {
-      const data = await this._fs.readTextFile(this.#path);
+      const data = await api.fs.readTextFile(this.#path);
       const deserializedData = await this.#serializer.deserialize(data);
       this.#data = deserializedData;
     }
@@ -28,9 +28,7 @@ export abstract class ConfigBase<T> {
 
   async set(data: T, options?: WriteFileOptions) {
     const serializedData = await this.#serializer.serialize(data);
-    await this._fs.writeTextFile(this.#path, serializedData, options);
+    await api.fs.writeTextFile(this.#path, serializedData, options);
     this.#data = data;
   }
-
-  abstract _fs: FS;
 }

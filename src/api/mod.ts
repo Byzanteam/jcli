@@ -1,36 +1,39 @@
 import { DB, db } from "@/api/db.ts";
 import { FS, fs, WriteFileOptions } from "@/api/fs.ts";
-import { Jet, makeJet } from "@/api/jet.ts";
+import { Jet, jet } from "@/api/jet.ts";
 
-import { ConfigBase, ConfigSerializer } from "@/jcli/config/config.ts";
+import { Config } from "@/jcli/config/config.ts";
 import {
   JcliConfigDotJSON,
   jcliConfigDotJSONPath,
 } from "@/jcli/config/jcli-config-json.ts";
 
-class Config<T> extends ConfigBase<T> {
-  _fs = fs;
+let config: Config<JcliConfigDotJSON>;
+
+export function getConfig(): Config<JcliConfigDotJSON> {
+  if (undefined === config) {
+    config = new Config<JcliConfigDotJSON>(jcliConfigDotJSONPath());
+  }
+
+  return config;
 }
 
-export const config = await new Config<JcliConfigDotJSON>(
-  jcliConfigDotJSONPath(fs),
-).get();
-
-export type { FS, Jet, WriteFileOptions };
+export type { DB, FS, Jet, WriteFileOptions };
 
 export interface APIClient {
   db: DB;
   fs: FS;
   jet: Jet;
-  Config: new <T>(
-    path: string,
-    options?: { serializer?: ConfigSerializer<T> },
-  ) => ConfigBase<T>;
 }
 
 export const api: APIClient = {
   db,
   fs,
-  jet: makeJet(config),
-  Config: Config,
+  jet,
 };
+
+export function setupAPI(instance: APIClient): void {
+  api.db = instance.db;
+  api.fs = instance.fs;
+  api.jet = instance.jet;
+}
