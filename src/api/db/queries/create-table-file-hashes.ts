@@ -3,4 +3,4 @@ export const createTableFileHashesQuery = `
     path TEXT PRIMARY KEY,
     hash BLOB
   );
-`
+`;
