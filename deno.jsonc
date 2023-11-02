@@ -9,6 +9,8 @@
     "sqlite": "https://deno.land/x/sqlite@v3.8/mod.ts"
   },
   "tasks": {
-    "dev": "deno run --watch main.ts"
+    "dev": "deno run --watch main.ts",
+    "check:types": "deno check **/*.ts",
+    "test": "deno test -A"
   }
 }
