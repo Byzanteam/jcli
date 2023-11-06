@@ -19,13 +19,13 @@ describe("functions", () => {
   let api: APIClientTest;
   let projectUuid: string;
 
-  const options = {};
+  const options = { onlyFunctions: true };
 
   beforeEach(async () => {
     api = makeAPIClient();
     setupAPI(api);
 
-    await createProject(options, "my_proj");
+    await createProject({}, "my_proj");
 
     api.chdir("my_proj");
 
@@ -266,13 +266,13 @@ describe("migrations", () => {
   let api: APIClientTest;
   let projectUuid: string;
 
-  const options = {};
+  const options = { onlyMigrations: true };
 
   beforeEach(async () => {
     api = makeAPIClient();
     setupAPI(api);
 
-    await createProject(options, "my_proj");
+    await createProject({}, "my_proj");
 
     api.chdir("my_proj");
 
