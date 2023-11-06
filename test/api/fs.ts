@@ -1,4 +1,4 @@
-import { DirEntry, FS, WriteFileOptions } from "@/api/fs.ts";
+import { DirEntry, FS, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
 
 class File {
   content = "";
@@ -17,18 +17,25 @@ class Directory {
       .filter((elem) => "" !== elem && "." !== elem);
   }
 
-  mkdirRec([name, ...rest]: ReadonlyArray<string>): Directory | undefined {
-    if (undefined === name) {
-      return this;
-    } else if (0 === rest.length) {
-      return this.mkdir(name);
-    } else {
-      const directoryOrFile = this.#children.get(name);
+  mkdirRec(
+    [name, ...rest]: ReadonlyArray<string>,
+    options: MkdirOptions,
+  ): Directory | undefined {
+    if (undefined === name) return undefined;
 
-      return directoryOrFile && (directoryOrFile instanceof Directory)
-        ? directoryOrFile.mkdirRec(rest)
-        : undefined;
+    if (0 === rest.length) return this.mkdir(name);
+
+    const child = this.#children.get(name);
+
+    if (!child && options.recursive) {
+      this.mkdir(name);
+      const dir = this.#children.get(name) as Directory;
+      return dir.mkdirRec(rest, options);
     }
+
+    return child && (child instanceof Directory)
+      ? child.mkdirRec(rest, options)
+      : undefined;
   }
 
   mkdir(name: string): Directory | undefined {
@@ -134,6 +141,7 @@ class Directory {
 export interface FSTest extends FS {
   chdir(path: string): void;
   hasDir(path: string): boolean;
+  hasFile(path: string): boolean;
 }
 
 export function makeFS(): FSTest {
@@ -145,9 +153,13 @@ export function makeFS(): FSTest {
     homePath(): string {
       return homePath;
     },
-    mkdir(path: string): Promise<void> {
+
+    mkdir(
+      path: string,
+      options: MkdirOptions = { recursive: false },
+    ): Promise<void> {
       return new Promise((resolve, reject) => {
-        cwd.mkdirRec(Directory.normalizePath(path))
+        cwd.mkdirRec(Directory.normalizePath(path), options)
           ? resolve()
           : reject(new Error(`Cannot mkdir "${path}"`));
       });
@@ -226,6 +238,11 @@ export function makeFS(): FSTest {
       } else {
         throw new Error(`Cannot chdir to "${path}"`);
       }
+    },
+
+    hasFile(path: string): boolean {
+      const directoryOrFile = cwd.getChildRec(Directory.normalizePath(path));
+      return !!directoryOrFile && directoryOrFile instanceof File;
     },
 
     hasDir(path: string): boolean {

@@ -1,7 +1,12 @@
 import { parse } from "path";
 
 import { DBClass } from "@/api/mod.ts";
-import { FileChange, FileEntry, listFiles } from "@/jcli/file/files-man.ts";
+import {
+  buildFileChange,
+  FileChange,
+  FileEntry,
+  listFiles,
+} from "@/jcli/file/files-man.ts";
 
 const BASE_PATH = "./migrations";
 
@@ -41,25 +46,6 @@ export class MigrationFileEntry extends FileEntry {
   }
 }
 
-async function buildFileChange(
-  path: string,
-  existingMigrationHashes: Map<string, string>,
-): Promise<FileChange<MigrationFileEntry> | undefined> {
-  const entry = new MigrationFileEntry(path);
-  const entryDigest = await entry.digest();
-
-  if (!existingMigrationHashes.has(entry.path)) {
-    return { type: "CREATED", entry };
-  }
-
-  if (entryDigest !== existingMigrationHashes.get!(entry.path)) {
-    return {
-      type: "UPDATED",
-      entry,
-    };
-  }
-}
-
 export async function* diffMigrations(
   db: DBClass,
 ): AsyncIterable<FileChange<MigrationFileEntry>> {
@@ -72,7 +58,11 @@ export async function* diffMigrations(
   for await (const path of listFiles(BASE_PATH, ".sql")) {
     newMigrationPaths.add(path);
 
-    const fileChange = await buildFileChange(path, existingMigrationHashes);
+    const fileChange = await buildFileChange(
+      path,
+      existingMigrationHashes,
+      MigrationFileEntry,
+    );
 
     if (fileChange) {
       yield fileChange;

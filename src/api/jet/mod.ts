@@ -1,8 +1,13 @@
 import { Project } from "@/jet/project.ts";
 import {
+  CreateFunctionArgs,
+  CreateFunctionFileArgs,
   CreateMigrationArgs,
   CreateProjectArgs,
+  DeleteFunctionArgs,
+  DeleteFunctionFileArgs,
   DeleteMigrationArgs,
+  UpdateFunctionFileArgs,
   UpdateMigrationArgs,
 } from "@/api/jet.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
@@ -11,6 +16,12 @@ import {
   createProjectMutation,
   CreateProjectMutationResponse,
 } from "@/api/jet/queries/create-project.ts";
+
+import { createFunctionMutation } from "@/api/jet/queries/create-function.ts";
+import { deleteFunctionMutation } from "@/api/jet/queries/delete-function.ts";
+import { createFunctionFileMutation } from "@/api/jet/queries/create-funciton-file.ts";
+import { updateFunctionFileMutation } from "@/api/jet/queries/update-function-file.ts";
+import { deleteFunctionFileMutation } from "@/api/jet/queries/delete-function-file.ts";
 
 import { createMigrationMutation } from "@/api/jet/queries/create-migration.ts";
 import { updateMigrationMutation } from "@/api/jet/queries/update-migration.ts";
@@ -65,6 +76,41 @@ export async function createProject(
     capabilities: [],
     instances: [],
   };
+}
+
+export async function createFunction(
+  args: CreateFunctionArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(createFunctionMutation, args, config);
+}
+
+export async function deleteFunction(
+  args: DeleteFunctionArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(deleteFunctionMutation, args, config);
+}
+
+export async function createFunctionFile(
+  args: CreateFunctionFileArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(createFunctionFileMutation, args, config);
+}
+
+export async function updateFunctionFile(
+  args: UpdateFunctionFileArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(updateFunctionFileMutation, args, config);
+}
+
+export async function deleteFunctionFile(
+  args: DeleteFunctionFileArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(deleteFunctionFileMutation, args, config);
 }
 
 export async function createMigration(

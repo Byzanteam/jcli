@@ -2,6 +2,7 @@ import { GlobalOptions } from "@/args.ts";
 
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
 import { createTableObjectsQuery } from "@/api/db/queries/create-table-objects.ts";
+import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
 
 import { Config } from "@/jcli/config/config.ts";
 import {
@@ -61,6 +62,7 @@ export default async function (
 
   const db = api.db.createDatabase(`${projectName}/${PROJECT_DB_PATH}`);
   db.execute(createTableObjectsQuery);
+  db.execute(createFunctionsQuery);
 
   db.close();
 }

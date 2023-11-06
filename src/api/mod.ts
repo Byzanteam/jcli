@@ -1,5 +1,5 @@
 import { DB, db, DBClass } from "@/api/db.ts";
-import { DirEntry, FS, fs, WriteFileOptions } from "@/api/fs.ts";
+import { DirEntry, FS, fs, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
 import { Jet, jet } from "@/api/jet.ts";
 
 import { Config } from "@/jcli/config/config.ts";
@@ -20,7 +20,7 @@ export function getConfig(): Config<JcliConfigDotJSON> {
 
 export const PROJECT_DB_PATH = ".jcli/project.sqlite";
 
-export type { DB, DBClass, DirEntry, FS, Jet, WriteFileOptions };
+export type { DB, DBClass, DirEntry, FS, Jet, MkdirOptions, WriteFileOptions };
 
 export interface APIClient {
   db: DB;

@@ -54,6 +54,26 @@ function filterFileByExtension(
   return hasExtension(entry.name, extension);
 }
 
+export async function buildFileChange<T extends FileEntry = FileEntry>(
+  path: string,
+  existingMigrationHashes: Map<string, string>,
+  FileEntryConstructor: new (path: string) => T,
+): Promise<FileChange<T> | undefined> {
+  const entry = new FileEntryConstructor(path);
+  const entryDigest = await entry.digest();
+
+  if (!existingMigrationHashes.has(entry.path)) {
+    return { type: "CREATED", entry };
+  }
+
+  if (entryDigest !== existingMigrationHashes.get!(entry.path)) {
+    return {
+      type: "UPDATED",
+      entry,
+    };
+  }
+}
+
 /**
  * List all files with specific extensions in a directory.
  * If no extension is given, all files would be yielded.
