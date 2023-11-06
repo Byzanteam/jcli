@@ -1,6 +1,7 @@
 import { parse } from "path";
+import { PreparedQuery } from "sqlite";
 
-import { DBClass } from "@/api/mod.ts";
+import { api, DBClass } from "@/api/mod.ts";
 import {
   buildFileChange,
   FileChange,
@@ -46,12 +47,10 @@ export class MigrationFileEntry extends FileEntry {
   }
 }
 
-export async function* diffMigrations(
-  db: DBClass,
+async function* diffMigrations(
+  listMigrationHashesQuery: () => ReadonlyArray<[path: string, hash: string]>,
 ): AsyncIterable<FileChange<MigrationFileEntry>> {
-  const existingMigrationHashes = new Map(db.query<[string, string]>(
-    "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
-  ));
+  const existingMigrationHashes = new Map(listMigrationHashesQuery());
 
   const newMigrationPaths = new Set<string>();
 
@@ -72,6 +71,117 @@ export async function* diffMigrations(
   for (const path of existingMigrationHashes.keys()) {
     if (!newMigrationPaths.has(path)) {
       yield { type: "DELETED", entry: new MigrationFileEntry(path) };
+    }
+  }
+}
+
+export interface PushMigrationQueries {
+  listMigrationHashesQuery(): ReadonlyArray<[path: string, hash: string]>;
+
+  createMigrationQuery: PreparedQuery<
+    never,
+    never,
+    { path: string; hash: string }
+  >;
+
+  updateMigrationQuery: PreparedQuery<
+    never,
+    never,
+    { path: string; hash: string }
+  >;
+
+  deleteMigrationQuery: PreparedQuery<
+    never,
+    never,
+    { path: string }
+  >;
+
+  finalize(): void;
+}
+
+export function prepareQueries(db: DBClass): PushMigrationQueries {
+  const createMigrationQuery = db.prepareQuery<
+    never,
+    never,
+    { path: string; hash: string }
+  >(
+    "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
+  );
+
+  const updateMigrationQuery = db.prepareQuery<
+    never,
+    never,
+    { path: string; hash: string }
+  >(
+    "UPDATE objects SET hash = :hash WHERE path = :path",
+  );
+
+  const deleteMigrationQuery = db.prepareQuery<never, never, { path: string }>(
+    "DELETE FROM objects WHERE path = :path",
+  );
+
+  return {
+    listMigrationHashesQuery() {
+      return db.query<[path: string, hash: string]>(
+        "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
+      );
+    },
+    createMigrationQuery,
+    updateMigrationQuery,
+    deleteMigrationQuery,
+    finalize() {
+      createMigrationQuery.finalize();
+      updateMigrationQuery.finalize();
+      deleteMigrationQuery.finalize();
+    },
+  };
+}
+
+export async function pushMigrations(
+  queries: PushMigrationQueries,
+  projectUuid: string,
+): Promise<void> {
+  const {
+    listMigrationHashesQuery,
+    createMigrationQuery,
+    updateMigrationQuery,
+    deleteMigrationQuery,
+  } = queries;
+
+  for await (const fileChange of diffMigrations(listMigrationHashesQuery)) {
+    if (fileChange.type === "CREATED") {
+      await api.jet.createMigration({
+        projectUuid,
+        version: await fileChange.entry.version(),
+        content: await fileChange.entry.content(),
+      });
+
+      createMigrationQuery.execute({
+        path: fileChange.entry.path,
+        hash: await fileChange.entry.digest(),
+      });
+    }
+
+    if (fileChange.type === "UPDATED") {
+      await api.jet.updateMigration({
+        projectUuid,
+        migrationVersion: await fileChange.entry.version(),
+        content: await fileChange.entry.content(),
+      });
+
+      updateMigrationQuery.execute({
+        path: fileChange.entry.path,
+        hash: await fileChange.entry.digest(),
+      });
+    }
+
+    if (fileChange.type === "DELETED") {
+      await api.jet.deleteMigration({
+        projectUuid,
+        migrationVersion: await fileChange.entry.version(),
+      });
+
+      deleteMigrationQuery.execute({ path: fileChange.entry.path });
     }
   }
 }
