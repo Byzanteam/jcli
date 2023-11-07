@@ -54,9 +54,46 @@ function filterFileByExtension(
   return hasExtension(entry.name, extension);
 }
 
+export async function buildFileChange<T extends FileEntry>(
+  path: string,
+  existingMigrationHashes: Map<string, string>,
+  FileEntryConstructor: new (path: string) => T,
+): Promise<FileChange<T> | undefined> {
+  const entry = new FileEntryConstructor(path);
+  const entryDigest = await entry.digest();
+
+  if (!existingMigrationHashes.has(entry.path)) {
+    return { type: "CREATED", entry };
+  }
+
+  if (entryDigest !== existingMigrationHashes.get!(entry.path)) {
+    return {
+      type: "UPDATED",
+      entry,
+    };
+  }
+}
+
 /**
  * List all files with specific extensions in a directory.
  * If no extension is given, all files would be yielded.
+ *
+ * Example:
+ *
+ * Say we have:
+ *
+ *   src/
+ *     - entry.ts
+ *     - utility.ts
+ *     - tsconfig.json
+ *     - users/
+ *       - more files...
+ *
+ *  > for await (const e of listFiles("./src", "ts")) {
+ *      console.log(`Found: "${e}"`);
+ *    }
+ *  Found: "entry.ts"
+ *  Found: "utility.ts"
  */
 export async function* listFiles(
   path: string,
@@ -64,7 +101,7 @@ export async function* listFiles(
 ): AsyncIterable<string> {
   for await (const entry of api.fs.readDir(path)) {
     if (filterFileByExtension(entry, extension)) {
-      yield join(path, entry.name);
+      yield entry.name;
     }
   }
 }
@@ -72,6 +109,28 @@ export async function* listFiles(
 /**
  * List all files with specific extensions in a directory recursively.
  * If no extension is given, all files would be yielded.
+ *
+ * Example:
+ *
+ * Say we have:
+ *
+ *   src/
+ *     - entry.ts
+ *     - tsconfig.json
+ *     - users/
+ *       - index.ts
+ *       - _id/
+ *         - show.ts
+ *     - posts/
+ *       - index.ts
+ *
+ *  > for await (const e of listFilesRec("./src", "ts")) {
+ *      console.log(`Found: "${e}"`);
+ *    }
+ *  Found: "entry.ts"
+ *  Found: "users/index.ts"
+ *  Found: "users/_id/show.ts"
+ *  Found: "posts/index.ts"
  */
 export async function* listFilesRec(
   path: string,
@@ -79,9 +138,13 @@ export async function* listFilesRec(
 ): AsyncIterable<string> {
   for await (const entry of api.fs.readDir(path)) {
     if (entry.isDirectory) {
-      yield* listFilesRec(join(path, entry.name), extension);
+      for await (
+        const subEntry of listFilesRec(join(path, entry.name), extension)
+      ) {
+        yield join(entry.name, subEntry);
+      }
     } else if (filterFileByExtension(entry, extension)) {
-      yield join(path, entry.name);
+      yield entry.name;
     }
   }
 }

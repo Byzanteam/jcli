@@ -2,6 +2,7 @@ import { GlobalOptions } from "@/args.ts";
 
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
 import { createTableObjectsQuery } from "@/api/db/queries/create-table-objects.ts";
+import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
 
 import { Config } from "@/jcli/config/config.ts";
 import {
@@ -37,13 +38,13 @@ export default async function (
 ) {
   const projectName = await validateProjectName(rawProjectName);
 
-  console.log("Creating project in Jet...");
+  api.console.log("Creating project in Jet...");
   const project = await api.jet.createProject({
     name: projectName,
     title: projectName,
   });
 
-  console.info("Provisioning local files...");
+  api.console.log("Provisioning local files...");
   await api.fs.mkdir(projectName);
   await api.fs.mkdir(`${projectName}/migrations`);
   await api.fs.mkdir(`${projectName}/functions`);
@@ -61,6 +62,7 @@ export default async function (
 
   const db = api.db.createDatabase(`${projectName}/${PROJECT_DB_PATH}`);
   db.execute(createTableObjectsQuery);
+  db.execute(createFunctionsQuery);
 
   db.close();
 }

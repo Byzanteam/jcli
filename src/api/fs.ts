@@ -1,6 +1,6 @@
 export interface FS {
   homePath(): string;
-  mkdir(path: string): Promise<void>;
+  mkdir(path: string, options?: MkdirOptions): Promise<void>;
   readFile(path: string): Promise<Uint8Array>;
   readTextFile(path: string): Promise<string>;
   remove(path: string): Promise<void>;
@@ -10,6 +10,10 @@ export interface FS {
     options?: WriteFileOptions,
   ): Promise<void>;
   readDir(path: string): AsyncIterable<DirEntry>;
+}
+
+export interface MkdirOptions {
+  recursive?: boolean;
 }
 
 export interface WriteFileOptions {

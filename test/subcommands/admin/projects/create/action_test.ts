@@ -80,7 +80,7 @@ describe("works", () => {
     assertObjectMatch(metadata, { projectId: project.id });
   });
 
-  it("provision project.db", async () => {
+  it("provision objects.db", async () => {
     await action(options, "my_proj");
 
     const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
@@ -114,6 +114,34 @@ describe("works", () => {
 
     assertObjectMatch(columns[2], {
       name: "path",
+      type: "TEXT",
+      notnull: 0,
+      pk: 1,
+    });
+
+    database.close();
+  });
+
+  it("provision functions.db", async () => {
+    await action(options, "my_proj");
+
+    const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
+
+    assert(api.db.hasDatabase(expectedDatabase));
+
+    const database = await api.db.connect(expectedDatabase);
+
+    const columns = database.queryEntries<
+      { name: string; type: string; notnull: number; pk: number }
+    >(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
+      { tableName: "functions" },
+    );
+
+    assertEquals(columns.length, 1);
+
+    assertObjectMatch(columns[0], {
+      name: "name",
       type: "TEXT",
       notnull: 0,
       pk: 1,

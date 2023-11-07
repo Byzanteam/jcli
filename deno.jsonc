@@ -12,6 +12,6 @@
   "tasks": {
     "dev": "deno run --watch main.ts",
     "check:types": "deno check **/*.ts",
-    "test": "deno test -A"
+    "test": "deno test -A --parallel"
   }
 }
