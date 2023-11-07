@@ -9,6 +9,8 @@ import {
   listFiles,
 } from "@/jcli/file/files-man.ts";
 
+import { chunk } from "@/utility/async-iterable.ts";
+
 const BASE_PATH = "./migrations";
 
 /**
@@ -137,56 +139,77 @@ export function prepareQueries(db: DBClass): PushMigrationQueries {
   };
 }
 
-export async function pushMigrations(
+async function pushMigrationsChange(
+  change: FileChange<MigrationFileEntry>,
   queries: PushMigrationQueries,
   projectUuid: string,
-): Promise<void> {
+) {
   const {
-    listMigrationHashesQuery,
     createMigrationQuery,
     updateMigrationQuery,
     deleteMigrationQuery,
   } = queries;
 
-  for await (const fileChange of diffMigrations(listMigrationHashesQuery)) {
-    switch (fileChange.type) {
-      case "CREATED":
-        await api.jet.createMigration({
-          projectUuid,
-          version: await fileChange.entry.version(),
-          content: await fileChange.entry.content(),
-        });
+  switch (change.type) {
+    case "CREATED":
+      await api.jet.createMigration({
+        projectUuid,
+        version: await change.entry.version(),
+        content: await change.entry.content(),
+      });
 
-        createMigrationQuery.execute({
-          path: fileChange.entry.path,
-          hash: await fileChange.entry.digest(),
-        });
+      createMigrationQuery.execute({
+        path: change.entry.path,
+        hash: await change.entry.digest(),
+      });
 
-        break;
+      break;
 
-      case "UPDATED":
-        await api.jet.updateMigration({
-          projectUuid,
-          migrationVersion: await fileChange.entry.version(),
-          content: await fileChange.entry.content(),
-        });
+    case "UPDATED":
+      await api.jet.updateMigration({
+        projectUuid,
+        migrationVersion: await change.entry.version(),
+        content: await change.entry.content(),
+      });
 
-        updateMigrationQuery.execute({
-          path: fileChange.entry.path,
-          hash: await fileChange.entry.digest(),
-        });
+      updateMigrationQuery.execute({
+        path: change.entry.path,
+        hash: await change.entry.digest(),
+      });
 
-        break;
+      break;
 
-      case "DELETED":
-        await api.jet.deleteMigration({
-          projectUuid,
-          migrationVersion: await fileChange.entry.version(),
-        });
+    case "DELETED":
+      await api.jet.deleteMigration({
+        projectUuid,
+        migrationVersion: await change.entry.version(),
+      });
 
-        deleteMigrationQuery.execute({ path: fileChange.entry.path });
+      deleteMigrationQuery.execute({ path: change.entry.path });
 
-        break;
-    }
+      break;
+  }
+}
+
+export interface PushMigrationsOptions {
+  concurrency?: number;
+}
+
+export async function pushMigrations(
+  queries: PushMigrationQueries,
+  projectUuid: string,
+  options?: PushMigrationsOptions,
+): Promise<void> {
+  for await (
+    const fileChanges of chunk(
+      diffMigrations(queries.listMigrationHashesQuery),
+      options?.concurrency ?? navigator.hardwareConcurrency,
+    )
+  ) {
+    await Promise.allSettled(
+      fileChanges.map((change) =>
+        pushMigrationsChange(change, queries, projectUuid)
+      ),
+    );
   }
 }

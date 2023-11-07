@@ -1,5 +1,7 @@
 import { join } from "path";
 
+import { chunk } from "@/utility/async-iterable.ts";
+
 import { api, DBClass } from "@/api/mod.ts";
 import {
   buildFileChange,
@@ -170,108 +172,146 @@ export function prepareQueries(db: DBClass): PushFunctionQueries {
   };
 }
 
-async function pushFunctionFiles(
+export interface PushFunctionsOptions {
+  concurrency?: number;
+}
+
+async function pushFunctionFile(
+  fileChange: FileChange<FileEntry>,
   queries: PushFunctionQueries,
   projectUuid: string,
   functionName: string,
 ): Promise<void> {
   const {
-    listFunctionFileHashesQuery,
     createFunctionFileQuery,
     updateFunctionFileQuery,
     deleteFunctionFileQuery,
   } = queries;
 
+  switch (fileChange.type) {
+    case "CREATED":
+      await api.jet.createFunctionFile({
+        projectUuid,
+        functionName,
+        path: fileChange.entry.path,
+        content: await fileChange.entry.content(),
+      });
+
+      createFunctionFileQuery.execute({
+        path: fileChange.entry.path,
+        hash: await fileChange.entry.digest(),
+      });
+
+      break;
+
+    case "UPDATED":
+      await api.jet.updateFunctionFile({
+        projectUuid,
+        functionName,
+        path: fileChange.entry.path,
+        content: await fileChange.entry.content(),
+      });
+
+      updateFunctionFileQuery.execute({
+        path: fileChange.entry.path,
+        hash: await fileChange.entry.digest(),
+      });
+
+      break;
+
+    case "DELETED":
+      await api.jet.deleteFunctionFile({
+        projectUuid,
+        functionName,
+        path: fileChange.entry.path,
+      });
+
+      deleteFunctionFileQuery.execute({ path: fileChange.entry.path });
+
+      break;
+  }
+}
+
+async function pushFunctionFiles(
+  queries: PushFunctionQueries,
+  projectUuid: string,
+  functionName: string,
+  options?: PushFunctionsOptions,
+): Promise<void> {
   for await (
-    const fileChange of diffFunctionFiles(
-      functionName,
-      listFunctionFileHashesQuery,
+    const fileChanges of chunk(
+      diffFunctionFiles(
+        functionName,
+        queries.listFunctionFileHashesQuery,
+      ),
+      options?.concurrency ?? navigator.hardwareConcurrency,
     )
   ) {
-    switch (fileChange.type) {
-      case "CREATED":
-        await api.jet.createFunctionFile({
-          projectUuid,
-          functionName,
-          path: fileChange.entry.path,
-          content: await fileChange.entry.content(),
-        });
+    await Promise.allSettled(
+      fileChanges.map((fileChange) =>
+        pushFunctionFile(fileChange, queries, projectUuid, functionName)
+      ),
+    );
+  }
+}
 
-        createFunctionFileQuery.execute({
-          path: fileChange.entry.path,
-          hash: await fileChange.entry.digest(),
-        });
+async function pushFunction(
+  change: FunctionChange,
+  queries: PushFunctionQueries,
+  projectUuid: string,
+  options?: PushFunctionsOptions,
+): Promise<void> {
+  const {
+    createFunctionQuery,
+    deleteFunctionQuery,
+  } = queries;
 
-        break;
+  switch (change.type) {
+    case "CREATED":
+      await api.jet.createFunction({
+        projectUuid,
+        name: change.name,
+        title: change.name,
+      });
 
-      case "UPDATED":
-        await api.jet.updateFunctionFile({
-          projectUuid,
-          functionName,
-          path: fileChange.entry.path,
-          content: await fileChange.entry.content(),
-        });
+      createFunctionQuery.execute({ name: change.name });
 
-        updateFunctionFileQuery.execute({
-          path: fileChange.entry.path,
-          hash: await fileChange.entry.digest(),
-        });
+      break;
 
-        break;
+    case "DELETED":
+      await api.jet.deleteFunction({
+        projectUuid,
+        functionName: change.name,
+      });
 
-      case "DELETED":
-        await api.jet.deleteFunctionFile({
-          projectUuid,
-          functionName,
-          path: fileChange.entry.path,
-        });
+      deleteFunctionQuery.execute({ name: change.name });
 
-        deleteFunctionFileQuery.execute({ path: fileChange.entry.path });
+      break;
 
-        break;
-    }
+    default:
+      break;
+  }
+
+  if (change.type !== "DELETED") {
+    await pushFunctionFiles(queries, projectUuid, change.name, options);
   }
 }
 
 export async function pushFunctions(
   queries: PushFunctionQueries,
   projectUuid: string,
+  options?: PushFunctionsOptions,
 ): Promise<void> {
-  const {
-    listFunctionNamesQuery,
-    createFunctionQuery,
-    deleteFunctionQuery,
-  } = queries;
-
-  for await (const change of diffFunctions(listFunctionNamesQuery)) {
-    switch (change.type) {
-      case "CREATED":
-        await api.jet.createFunction({
-          projectUuid,
-          name: change.name,
-          title: change.name,
-        });
-
-        createFunctionQuery.execute({ name: change.name });
-
-        break;
-
-      case "DELETED":
-        await api.jet.deleteFunction({
-          projectUuid,
-          functionName: change.name,
-        });
-
-        deleteFunctionQuery.execute({ name: change.name });
-
-        break;
-
-      default:
-        break;
-    }
-
-    if (change.type !== "DELETED") {
-      await pushFunctionFiles(queries, projectUuid, change.name);
-    }
+  for await (
+    const changes of chunk(
+      diffFunctions(queries.listFunctionNamesQuery),
+      options?.concurrency ?? navigator.hardwareConcurrency,
+    )
+  ) {
+    await Promise.allSettled(
+      changes.map((change) =>
+        pushFunction(change, queries, projectUuid, options)
+      ),
+    );
   }
 }
