@@ -13,8 +13,8 @@ import { PreparedQuery } from "sqlite";
 
 const BASE_PATH = "./functions";
 
-interface WithRelativePath {
-  relativePath: string;
+interface WithServerPath {
+  serverPath: string;
 }
 
 /**
@@ -25,12 +25,12 @@ interface WithRelativePath {
  *   users/index.ts
  */
 function FunctionFileEntry(functionName: string) {
-  return class extends FileEntry implements WithRelativePath {
-    readonly relativePath: string;
+  return class extends FileEntry implements WithServerPath {
+    readonly serverPath: string;
 
     constructor(relativePath: string) {
       super(join(BASE_PATH, functionName, relativePath));
-      this.relativePath = relativePath;
+      this.serverPath = join("/", relativePath);
     }
   };
 }
@@ -84,7 +84,7 @@ function buildFunctionFileRelativePath(
   return path.slice(basePathLength + 1);
 }
 
-async function* diffFunctionFiles<T extends FileEntry & WithRelativePath>(
+async function* diffFunctionFiles<T extends FileEntry & WithServerPath>(
   functionName: string,
   listFunctionFileHashesQuery: () => ReadonlyArray<
     [path: string, hash: string]
@@ -211,7 +211,7 @@ export interface PushFunctionsOptions {
   concurrency?: number;
 }
 
-async function pushFunctionFile<T extends FileEntry & WithRelativePath>(
+async function pushFunctionFile<T extends FileEntry & WithServerPath>(
   fileChange: FileChange<T>,
   queries: PushFunctionQueries,
   projectUuid: string,
@@ -228,7 +228,7 @@ async function pushFunctionFile<T extends FileEntry & WithRelativePath>(
       await api.jet.createFunctionFile({
         projectUuid,
         functionName,
-        path: fileChange.entry.relativePath,
+        path: fileChange.entry.serverPath,
         code: await fileChange.entry.content(),
       });
 
@@ -243,7 +243,7 @@ async function pushFunctionFile<T extends FileEntry & WithRelativePath>(
       await api.jet.updateFunctionFile({
         projectUuid,
         functionName,
-        path: fileChange.entry.relativePath,
+        path: fileChange.entry.serverPath,
         code: await fileChange.entry.content(),
       });
 
@@ -258,7 +258,7 @@ async function pushFunctionFile<T extends FileEntry & WithRelativePath>(
       await api.jet.deleteFunctionFile({
         projectUuid,
         functionName,
-        path: fileChange.entry.relativePath,
+        path: fileChange.entry.serverPath,
       });
 
       deleteFunctionFileQuery.execute({ path: fileChange.entry.path });

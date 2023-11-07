@@ -1,4 +1,4 @@
-import { dirname } from "path";
+import { parse } from "path";
 
 import { Jet } from "@/api/mod.ts";
 import { Project } from "@/jet/project.ts";
@@ -115,10 +115,11 @@ export function makeJet(): JetTest {
             reject(new Error("File already exists"));
           }
 
-          const dir = dirname(path);
+          const { dir, base } = parse(path);
 
-          if ("" === dir) {
-            func.files.writeTextFile(path, code, { createNew: true });
+          if ("" === dir || "/" === dir) {
+            func.files.writeTextFile(base, code, { createNew: true });
+            resolve();
           } else {
             tryMkdirRecursively(dir, func.files).then(() => {
               func.files.writeTextFile(path, code, { createNew: true });

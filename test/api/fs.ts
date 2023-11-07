@@ -174,7 +174,8 @@ export function makeFS(): FSTest {
         const normalizedPath = Directory.normalizePath(path);
 
         if (
-          normalizedPath.length === 1 && cwd.writeTextFile(path, data, options)
+          normalizedPath.length === 1 &&
+          cwd.writeTextFile(normalizedPath[0], data, options)
         ) {
           resolve();
         }
