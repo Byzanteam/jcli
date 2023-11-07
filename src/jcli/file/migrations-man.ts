@@ -1,4 +1,4 @@
-import { parse } from "path";
+import { join, parse } from "path";
 import { PreparedQuery } from "sqlite";
 
 import { api, DBClass } from "@/api/mod.ts";
@@ -56,7 +56,8 @@ async function* diffMigrations(
 
   const newMigrationPaths = new Set<string>();
 
-  for await (const path of listFiles(BASE_PATH, ".sql")) {
+  for await (const relativePath of listFiles(BASE_PATH, ".sql")) {
+    const path = join(BASE_PATH, relativePath);
     newMigrationPaths.add(path);
 
     const fileChange = await buildFileChange(

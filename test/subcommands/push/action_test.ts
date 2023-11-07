@@ -128,21 +128,21 @@ describe("functions", () => {
       it("pushes to jet", async () => {
         const func = api.jet.getFunctions(projectUuid)!.get("my_func")!;
 
-        assert(func.files.hasFile(`${FUNC_PATH}/index.ts`));
+        assert(func.files.hasFile(`index.ts`));
         assertEquals(
-          await func.files.readTextFile(`${FUNC_PATH}/index.ts`),
+          await func.files.readTextFile(`index.ts`),
           "index",
         );
 
-        assert(func.files.hasFile(`${FUNC_PATH}/users/mod.ts`));
+        assert(func.files.hasFile(`users/mod.ts`));
         assertEquals(
-          await func.files.readTextFile(`${FUNC_PATH}/users/mod.ts`),
+          await func.files.readTextFile(`/users/mod.ts`),
           "mod",
         );
 
-        assert(func.files.hasFile(`${FUNC_PATH}/posts/entry.ts`));
+        assert(func.files.hasFile(`posts/entry.ts`));
         assertEquals(
-          await func.files.readTextFile(`${FUNC_PATH}/posts/entry.ts`),
+          await func.files.readTextFile(`posts/entry.ts`),
           "entry",
         );
       });
@@ -187,21 +187,21 @@ describe("functions", () => {
       it("pushes to jet", async () => {
         const func = api.jet.getFunctions(projectUuid)!.get("my_func")!;
 
-        assert(func.files.hasFile(`${FUNC_PATH}/index.ts`));
+        assert(func.files.hasFile(`index.ts`));
         assertEquals(
-          await func.files.readTextFile(`${FUNC_PATH}/index.ts`),
+          await func.files.readTextFile(`index.ts`),
           "xedni",
         );
 
-        assert(func.files.hasFile(`${FUNC_PATH}/users/mod.ts`));
+        assert(func.files.hasFile(`users/mod.ts`));
         assertEquals(
-          await func.files.readTextFile(`${FUNC_PATH}/users/mod.ts`),
+          await func.files.readTextFile(`users/mod.ts`),
           "dom",
         );
 
-        assert(func.files.hasFile(`${FUNC_PATH}/posts/entry.ts`));
+        assert(func.files.hasFile(`posts/entry.ts`));
         assertEquals(
-          await func.files.readTextFile(`${FUNC_PATH}/posts/entry.ts`),
+          await func.files.readTextFile(`posts/entry.ts`),
           "yrtne",
         );
       });

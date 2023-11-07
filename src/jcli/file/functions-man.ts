@@ -13,6 +13,28 @@ import { PreparedQuery } from "sqlite";
 
 const BASE_PATH = "./functions";
 
+interface WithRelativePath {
+  relativePath: string;
+}
+
+/**
+ * We store function files in database with full paths like:
+ *   functions/my_func/users/index.ts
+ *
+ * But push function files to Jet with scoped paths like:
+ *   users/index.ts
+ */
+function FunctionFileEntry(functionName: string) {
+  return class extends FileEntry implements WithRelativePath {
+    readonly relativePath: string;
+
+    constructor(relativePath: string) {
+      super(join(BASE_PATH, functionName, relativePath));
+      this.relativePath = relativePath;
+    }
+  };
+}
+
 export interface FunctionChange {
   type: "CREATED" | "UPDATED" | "DELETED";
   name: string;
@@ -52,24 +74,36 @@ async function* diffFunctions(
   }
 }
 
-async function* diffFunctionFiles(
+function buildFunctionFileRelativePath(
+  path: string,
+  functionName: string,
+): string {
+  /*    basePathLength = "./functions"     - "./" + "/" + "my_func" */
+  const basePathLength = (BASE_PATH.length - 2) + 1 + functionName.length;
+  /* functions/my_func/users/index.ts -> users/index.ts */
+  return path.slice(basePathLength + 1);
+}
+
+async function* diffFunctionFiles<T extends FileEntry & WithRelativePath>(
   functionName: string,
   listFunctionFileHashesQuery: () => ReadonlyArray<
     [path: string, hash: string]
   >,
-): AsyncIterable<FileChange<FileEntry>> {
+  FileEntryConstructor: new (path: string) => T,
+): AsyncIterable<FileChange<T>> {
   const functionPath = join(BASE_PATH, functionName);
 
   const existingFunctionHashes = new Map(listFunctionFileHashesQuery());
   const newFunctionPaths = new Set<string>();
 
-  for await (const path of listFilesRec(functionPath, ".ts")) {
+  for await (const relativePath of listFilesRec(functionPath, ".ts")) {
+    const path = join(BASE_PATH, functionName, relativePath);
     newFunctionPaths.add(path);
 
     const fileChange = await buildFileChange(
-      path,
+      relativePath,
       existingFunctionHashes,
-      FileEntry,
+      FileEntryConstructor,
     );
 
     if (fileChange) {
@@ -79,7 +113,8 @@ async function* diffFunctionFiles(
 
   for (const path of existingFunctionHashes.keys()) {
     if (!newFunctionPaths.has(path)) {
-      yield { type: "DELETED", entry: new FileEntry(path) };
+      const relativePath = buildFunctionFileRelativePath(path, functionName);
+      yield { type: "DELETED", entry: new FileEntryConstructor(relativePath) };
     }
   }
 }
@@ -176,8 +211,8 @@ export interface PushFunctionsOptions {
   concurrency?: number;
 }
 
-async function pushFunctionFile(
-  fileChange: FileChange<FileEntry>,
+async function pushFunctionFile<T extends FileEntry & WithRelativePath>(
+  fileChange: FileChange<T>,
   queries: PushFunctionQueries,
   projectUuid: string,
   functionName: string,
@@ -193,7 +228,7 @@ async function pushFunctionFile(
       await api.jet.createFunctionFile({
         projectUuid,
         functionName,
-        path: fileChange.entry.path,
+        path: fileChange.entry.relativePath,
         code: await fileChange.entry.content(),
       });
 
@@ -208,7 +243,7 @@ async function pushFunctionFile(
       await api.jet.updateFunctionFile({
         projectUuid,
         functionName,
-        path: fileChange.entry.path,
+        path: fileChange.entry.relativePath,
         code: await fileChange.entry.content(),
       });
 
@@ -223,7 +258,7 @@ async function pushFunctionFile(
       await api.jet.deleteFunctionFile({
         projectUuid,
         functionName,
-        path: fileChange.entry.path,
+        path: fileChange.entry.relativePath,
       });
 
       deleteFunctionFileQuery.execute({ path: fileChange.entry.path });
@@ -243,6 +278,7 @@ async function pushFunctionFiles(
       diffFunctionFiles(
         functionName,
         queries.listFunctionFileHashesQuery,
+        FunctionFileEntry(functionName),
       ),
       options?.concurrency ?? navigator.hardwareConcurrency,
     )
