@@ -32,5 +32,5 @@ export async function* chunk<T>(
     }
   }
 
-  yield chunk;
+  if (0 !== chunk.length) yield chunk;
 }

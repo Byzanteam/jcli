@@ -96,7 +96,7 @@ async function* diffFunctionFiles<T extends FileEntry & WithRelativePath>(
   const existingFunctionHashes = new Map(listFunctionFileHashesQuery());
   const newFunctionPaths = new Set<string>();
 
-  for await (const relativePath of listFilesRec(functionPath, ".ts")) {
+  for await (const relativePath of listFilesRec(functionPath)) {
     const path = join(BASE_PATH, functionName, relativePath);
     newFunctionPaths.add(path);
 
