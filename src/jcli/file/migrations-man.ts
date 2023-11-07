@@ -149,39 +149,44 @@ export async function pushMigrations(
   } = queries;
 
   for await (const fileChange of diffMigrations(listMigrationHashesQuery)) {
-    if (fileChange.type === "CREATED") {
-      await api.jet.createMigration({
-        projectUuid,
-        version: await fileChange.entry.version(),
-        content: await fileChange.entry.content(),
-      });
+    switch (fileChange.type) {
+      case "CREATED":
+        await api.jet.createMigration({
+          projectUuid,
+          version: await fileChange.entry.version(),
+          content: await fileChange.entry.content(),
+        });
 
-      createMigrationQuery.execute({
-        path: fileChange.entry.path,
-        hash: await fileChange.entry.digest(),
-      });
-    }
+        createMigrationQuery.execute({
+          path: fileChange.entry.path,
+          hash: await fileChange.entry.digest(),
+        });
 
-    if (fileChange.type === "UPDATED") {
-      await api.jet.updateMigration({
-        projectUuid,
-        migrationVersion: await fileChange.entry.version(),
-        content: await fileChange.entry.content(),
-      });
+        break;
 
-      updateMigrationQuery.execute({
-        path: fileChange.entry.path,
-        hash: await fileChange.entry.digest(),
-      });
-    }
+      case "UPDATED":
+        await api.jet.updateMigration({
+          projectUuid,
+          migrationVersion: await fileChange.entry.version(),
+          content: await fileChange.entry.content(),
+        });
 
-    if (fileChange.type === "DELETED") {
-      await api.jet.deleteMigration({
-        projectUuid,
-        migrationVersion: await fileChange.entry.version(),
-      });
+        updateMigrationQuery.execute({
+          path: fileChange.entry.path,
+          hash: await fileChange.entry.digest(),
+        });
 
-      deleteMigrationQuery.execute({ path: fileChange.entry.path });
+        break;
+
+      case "DELETED":
+        await api.jet.deleteMigration({
+          projectUuid,
+          migrationVersion: await fileChange.entry.version(),
+        });
+
+        deleteMigrationQuery.execute({ path: fileChange.entry.path });
+
+        break;
     }
   }
 }

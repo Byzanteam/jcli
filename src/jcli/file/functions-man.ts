@@ -170,85 +170,108 @@ export function prepareQueries(db: DBClass): PushFunctionQueries {
   };
 }
 
+async function pushFunctionFiles(
+  queries: PushFunctionQueries,
+  projectUuid: string,
+  functionName: string,
+): Promise<void> {
+  const {
+    listFunctionFileHashesQuery,
+    createFunctionFileQuery,
+    updateFunctionFileQuery,
+    deleteFunctionFileQuery,
+  } = queries;
+
+  for await (
+    const fileChange of diffFunctionFiles(
+      functionName,
+      listFunctionFileHashesQuery,
+    )
+  ) {
+    switch (fileChange.type) {
+      case "CREATED":
+        await api.jet.createFunctionFile({
+          projectUuid,
+          functionName,
+          path: fileChange.entry.path,
+          content: await fileChange.entry.content(),
+        });
+
+        createFunctionFileQuery.execute({
+          path: fileChange.entry.path,
+          hash: await fileChange.entry.digest(),
+        });
+
+        break;
+
+      case "UPDATED":
+        await api.jet.updateFunctionFile({
+          projectUuid,
+          functionName,
+          path: fileChange.entry.path,
+          content: await fileChange.entry.content(),
+        });
+
+        updateFunctionFileQuery.execute({
+          path: fileChange.entry.path,
+          hash: await fileChange.entry.digest(),
+        });
+
+        break;
+
+      case "DELETED":
+        await api.jet.deleteFunctionFile({
+          projectUuid,
+          functionName,
+          path: fileChange.entry.path,
+        });
+
+        deleteFunctionFileQuery.execute({ path: fileChange.entry.path });
+
+        break;
+    }
+  }
+}
+
 export async function pushFunctions(
   queries: PushFunctionQueries,
   projectUuid: string,
 ): Promise<void> {
   const {
     listFunctionNamesQuery,
-    listFunctionFileHashesQuery,
     createFunctionQuery,
     deleteFunctionQuery,
-    createFunctionFileQuery,
-    updateFunctionFileQuery,
-    deleteFunctionFileQuery,
   } = queries;
 
   for await (const change of diffFunctions(listFunctionNamesQuery)) {
-    if (change.type === "CREATED") {
-      await api.jet.createFunction({
-        projectUuid,
-        name: change.name,
-        title: change.name,
-      });
+    switch (change.type) {
+      case "CREATED":
+        await api.jet.createFunction({
+          projectUuid,
+          name: change.name,
+          title: change.name,
+        });
 
-      createFunctionQuery.execute({ name: change.name });
-    }
+        createFunctionQuery.execute({ name: change.name });
 
-    if (change.type === "DELETED") {
-      await api.jet.deleteFunction({
-        projectUuid,
-        functionName: change.name,
-      });
+        break;
 
-      deleteFunctionQuery.execute({ name: change.name });
+      case "DELETED":
+        await api.jet.deleteFunction({
+          projectUuid,
+          functionName: change.name,
+        });
+
+        deleteFunctionQuery.execute({ name: change.name });
+
+        break;
+
+      default:
+        break;
     }
 
     if (change.type !== "DELETED") {
-      for await (
-        const fileChange of diffFunctionFiles(
-          change.name,
-          listFunctionFileHashesQuery,
-        )
-      ) {
-        if (fileChange.type === "CREATED") {
-          await api.jet.createFunctionFile({
-            projectUuid,
-            functionName: change.name,
-            path: fileChange.entry.path,
-            content: await fileChange.entry.content(),
-          });
-
-          createFunctionFileQuery.execute({
-            path: fileChange.entry.path,
-            hash: await fileChange.entry.digest(),
-          });
-        }
-
-        if (fileChange.type === "UPDATED") {
-          await api.jet.updateFunctionFile({
-            projectUuid,
-            functionName: change.name,
-            path: fileChange.entry.path,
-            content: await fileChange.entry.content(),
-          });
-
-          updateFunctionFileQuery.execute({
-            path: fileChange.entry.path,
-            hash: await fileChange.entry.digest(),
-          });
-        }
-
-        if (fileChange.type === "DELETED") {
-          await api.jet.deleteFunctionFile({
-            projectUuid,
-            functionName: change.name,
-            path: fileChange.entry.path,
-          });
-
-          deleteFunctionFileQuery.execute({ path: fileChange.entry.path });
-        }
-      }
+      await pushFunctionFiles(queries, projectUuid, change.name);
     }
   }
 }
