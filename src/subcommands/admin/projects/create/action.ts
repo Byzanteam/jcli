@@ -38,13 +38,13 @@ export default async function (
 ) {
   const projectName = await validateProjectName(rawProjectName);
 
-  console.log("Creating project in Jet...");
+  api.console.log("Creating project in Jet...");
   const project = await api.jet.createProject({
     name: projectName,
     title: projectName,
   });
 
-  console.info("Provisioning local files...");
+  api.console.log("Provisioning local files...");
   await api.fs.mkdir(projectName);
   await api.fs.mkdir(`${projectName}/migrations`);
   await api.fs.mkdir(`${projectName}/functions`);

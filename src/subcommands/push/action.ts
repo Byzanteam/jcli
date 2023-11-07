@@ -47,10 +47,12 @@ export default async function (options: PushOptions) {
     const { projectId } = await config.get();
 
     if (flags.pushFunctions) {
+      api.console.log("Pushing functions...");
       await pushFunctions(pushFunctionQueries!, projectId);
     }
 
     if (flags.pushMigrations) {
+      api.console.log("Pushing migrations...");
       await pushMigrations(pushMigrationQueries!, projectId);
     }
   } finally {

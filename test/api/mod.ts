@@ -1,5 +1,6 @@
 import { APIClient } from "@/api/mod.ts";
 
+import { _console } from "@test/api/console.ts";
 import { DBTest, makeDB } from "@test/api/db.ts";
 import { FSTest, makeFS } from "@test/api/fs.ts";
 import { JetTest, makeJet } from "@test/api/jet.ts";
@@ -21,6 +22,7 @@ export function makeAPIClient(): APIClientTest {
   const fs = makeFS();
 
   return {
+    console: _console,
     db: db,
     fs,
     jet: makeJet(),
