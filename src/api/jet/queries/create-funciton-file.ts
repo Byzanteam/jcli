@@ -3,9 +3,9 @@ export const createFunctionFileMutation = `
     $projectUuid: UUID!,
     $functionName: String!,
     $path: String!,
-    $content: String!
+    $code: String!
   ) {
-    createDraftFile(input: { projectUuid: $projectUuid, functionName: $functionName, path: $path, content: $content }) {
+    createDraftFile(input: { projectUuid: $projectUuid, functionName: $functionName, path: $path, code: $code }) {
       draftFile {
         path
       }

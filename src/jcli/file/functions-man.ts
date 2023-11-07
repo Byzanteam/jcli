@@ -194,7 +194,7 @@ async function pushFunctionFile(
         projectUuid,
         functionName,
         path: fileChange.entry.path,
-        content: await fileChange.entry.content(),
+        code: await fileChange.entry.content(),
       });
 
       createFunctionFileQuery.execute({
@@ -209,7 +209,7 @@ async function pushFunctionFile(
         projectUuid,
         functionName,
         path: fileChange.entry.path,
-        content: await fileChange.entry.content(),
+        code: await fileChange.entry.content(),
       });
 
       updateFunctionFileQuery.execute({

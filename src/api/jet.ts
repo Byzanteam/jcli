@@ -31,14 +31,14 @@ export interface CreateFunctionFileArgs {
   projectUuid: string;
   functionName: string;
   path: string;
-  content: string;
+  code: string;
 }
 
 export interface UpdateFunctionFileArgs {
   projectUuid: string;
   functionName: string;
   path: string;
-  content: string;
+  code: string;
 }
 
 export interface DeleteFunctionFileArgs {

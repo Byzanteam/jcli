@@ -106,7 +106,7 @@ export function makeJet(): JetTest {
       return Promise.resolve();
     },
 
-    createFunctionFile({ projectUuid, functionName, path, content }) {
+    createFunctionFile({ projectUuid, functionName, path, code }) {
       return new Promise((resolve, reject) => {
         const func = projectFunctions.get(projectUuid)?.get(functionName);
 
@@ -118,10 +118,10 @@ export function makeJet(): JetTest {
           const dir = dirname(path);
 
           if ("" === dir) {
-            func.files.writeTextFile(path, content, { createNew: true });
+            func.files.writeTextFile(path, code, { createNew: true });
           } else {
             tryMkdirRecursively(dir, func.files).then(() => {
-              func.files.writeTextFile(path, content, { createNew: true });
+              func.files.writeTextFile(path, code, { createNew: true });
               resolve();
             });
           }
@@ -132,7 +132,7 @@ export function makeJet(): JetTest {
     },
 
     updateFunctionFile(
-      { projectUuid, functionName, path, content },
+      { projectUuid, functionName, path, code },
     ): Promise<void> {
       return new Promise((resolve, reject) => {
         const func = projectFunctions.get(projectUuid)?.get(functionName);
@@ -141,7 +141,7 @@ export function makeJet(): JetTest {
           if (!func.files.hasFile(path)) {
             reject(new Error("File not found"));
           } else {
-            func.files.writeTextFile(path, content);
+            func.files.writeTextFile(path, code);
             resolve();
           }
         } else {
