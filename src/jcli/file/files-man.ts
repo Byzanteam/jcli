@@ -93,7 +93,7 @@ export async function buildFileChange<T extends FileEntry>(
  *      console.log(`Found: "${e}"`);
  *    }
  *  Found: "entry.ts"
- *  Found: "utilities.ts"
+ *  Found: "utility.ts"
  */
 export async function* listFiles(
   path: string,
@@ -119,7 +119,7 @@ export async function* listFiles(
  *     - tsconfig.json
  *     - users/
  *       - index.ts
- *       - [id]/
+ *       - _id/
  *         - show.ts
  *     - posts/
  *       - index.ts
@@ -129,7 +129,7 @@ export async function* listFiles(
  *    }
  *  Found: "entry.ts"
  *  Found: "users/index.ts"
- *  Found: "users/[id]/show.ts"
+ *  Found: "users/_id/show.ts"
  *  Found: "posts/index.ts"
  */
 export async function* listFilesRec(
