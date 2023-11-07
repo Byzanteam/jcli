@@ -2,6 +2,6 @@ export interface Console {
   log(message: string): void;
 }
 
-export const _console: Console = {
+export const consoleImpl: Console = {
   log: console.log,
 };

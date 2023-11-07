@@ -1,4 +1,4 @@
-import { _console, Console } from "@/api/console.ts";
+import { Console, consoleImpl } from "@/api/console.ts";
 import { DB, db, DBClass } from "@/api/db.ts";
 import { DirEntry, FS, fs, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
 import { Jet, jet } from "@/api/jet.ts";
@@ -40,7 +40,7 @@ export interface APIClient {
 }
 
 export const api: APIClient = {
-  console: _console,
+  console: consoleImpl,
   db,
   fs,
   jet,

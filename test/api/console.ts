@@ -1,5 +1,5 @@
 import { Console } from "@/api/mod.ts";
 
-export const _console: Console = {
+export const consoleImpl: Console = {
   log(_message: string) {},
 };
