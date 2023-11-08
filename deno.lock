@@ -2,11 +2,26 @@
   "version": "3",
   "packages": {
     "specifiers": {
-      "npm:@scure/base@1.1.3": "npm:@scure/base@1.1.3"
+      "npm:@scure/base@1.1.3": "npm:@scure/base@1.1.3",
+      "npm:jsonpatch@3.1.0": "npm:jsonpatch@3.1.0",
+      "npm:jsonschema@1.4.1": "npm:jsonschema@1.4.1",
+      "npm:just-diff@6.0.2": "npm:just-diff@6.0.2"
     },
     "npm": {
       "@scure/base@1.1.3": {
         "integrity": "sha512-/+SgoRjLq7Xlf0CWuLHq2LUZeL/w65kfzAPG5NH9pcmBhs+nunQTn4gvdwgMTIXnt9b2C/1SeL2XiysZEyIC9Q==",
+        "dependencies": {}
+      },
+      "jsonpatch@3.1.0": {
+        "integrity": "sha512-rJa0FepwDzebgYAuT389AtziWfn3EZA4N5e/B8d50IC1glqlZ7njo7iAI/ph5MYw2GGH7lCE6DGqBGQ7TVa06w==",
+        "dependencies": {}
+      },
+      "jsonschema@1.4.1": {
+        "integrity": "sha512-S6cATIPVv1z0IlxdN+zUk5EPjkGCdnhN4wVSBlvoUO1tOLJootbo9CquNJmbIh4yikWHiUedhRYrNPn1arpEmQ==",
+        "dependencies": {}
+      },
+      "just-diff@6.0.2": {
+        "integrity": "sha512-S59eriX5u3/QhMNq3v/gm8Kd0w8OS6Tz2FS1NG4blv+z0MuQcBRJyFWjdovM0Rad4/P4aUPFtnkNjMjyMlMSYA==",
         "dependencies": {}
       }
     }

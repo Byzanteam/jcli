@@ -7,6 +7,11 @@ import {
 } from "@/jcli/config/metadata-json.ts";
 
 import {
+  prepareQueries as preparePushConfigurationQueries,
+  pushConfiguration,
+} from "@/jcli/file/configuration-man.ts";
+
+import {
   prepareQueries as preparePushFunctionQueries,
   pushFunctions,
 } from "@/jcli/file/functions-man.ts";
@@ -20,19 +25,45 @@ import { PushOptions } from "./option.ts";
 
 function buildFeatureFlags(
   options: PushOptions,
-): { pushFunctions: boolean; pushMigrations: boolean } {
-  if (options.onlyFunctions) {
-    return { pushFunctions: true, pushMigrations: false };
+): {
+  pushConfiguration: boolean;
+  pushFunctions: boolean;
+  pushMigrations: boolean;
+} {
+  if (options.onlyConfiguration) {
+    return {
+      pushConfiguration: true,
+      pushFunctions: false,
+      pushMigrations: false,
+    };
+  } else if (options.onlyFunctions) {
+    return {
+      pushConfiguration: false,
+      pushFunctions: true,
+      pushMigrations: false,
+    };
   } else if (options.onlyMigrations) {
-    return { pushFunctions: false, pushMigrations: true };
+    return {
+      pushConfiguration: false,
+      pushFunctions: false,
+      pushMigrations: true,
+    };
   } else {
-    return { pushFunctions: true, pushMigrations: true };
+    return {
+      pushConfiguration: true,
+      pushFunctions: true,
+      pushMigrations: true,
+    };
   }
 }
 
 export default async function (options: PushOptions) {
   const db = await api.db.connect(PROJECT_DB_PATH);
   const flags = buildFeatureFlags(options);
+
+  const pushConfigurationQueries = flags.pushConfiguration
+    ? preparePushConfigurationQueries(db)
+    : undefined;
 
   const pushFunctionQueries = flags.pushFunctions
     ? preparePushFunctionQueries(db)
@@ -46,6 +77,11 @@ export default async function (options: PushOptions) {
     const config = new Config<MetadataDotJSON>(metadataDotJSONPath());
     const { projectId } = await config.get();
 
+    if (flags.pushConfiguration) {
+      api.console.log("Pushing configuration...");
+      await pushConfiguration(pushConfigurationQueries!, projectId);
+    }
+
     if (flags.pushFunctions) {
       api.console.log("Pushing functions...");
       await pushFunctions(pushFunctionQueries!, projectId);
@@ -56,6 +92,7 @@ export default async function (options: PushOptions) {
       await pushMigrations(pushMigrationQueries!, projectId);
     }
   } finally {
+    pushConfigurationQueries?.finalize();
     pushFunctionQueries?.finalize();
     pushMigrationQueries?.finalize();
 

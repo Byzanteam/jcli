@@ -4,6 +4,7 @@ import { Jet } from "@/api/mod.ts";
 import { Project } from "@/jet/project.ts";
 
 import { FSTest, makeFS } from "@test/api/mod.ts";
+import { ProjectPatch } from "@/jcli/config/project-json.ts";
 
 interface ProjectQuery {
   projectName?: string;
@@ -32,6 +33,7 @@ export interface MigrationObject {
 export interface JetTest extends Jet {
   hasProject(query: ProjectQuery): boolean;
   getProject(query: ProjectQuery): ProjectObject | undefined;
+  getConfigurationPatches(projectUuid: string): Array<ProjectPatch> | undefined;
   getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined;
   getMigrations(projectUuid: string): Map<number, MigrationObject> | undefined;
 }
@@ -39,6 +41,8 @@ export interface JetTest extends Jet {
 export function makeJet(): JetTest {
   const projectNameIdMappings = new Map<string, string>();
   const projects = new Map<string, ProjectObject>();
+
+  const projectConfigurationPatches: Array<ProjectPatch> = [];
 
   const projectFunctions = new Map<string, Map<string, FunctionObject>>();
 
@@ -78,6 +82,17 @@ export function makeJet(): JetTest {
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
           reject(new Error(`Project ${name} has already exist.`));
+        }
+      });
+    },
+
+    updateConfiguration({ projectUuid, commands }): Promise<void> {
+      return new Promise((resolve, reject) => {
+        if (projects.has(projectUuid)) {
+          projectConfigurationPatches.push(commands);
+          resolve();
+        } else {
+          reject(new Error("Project not found"));
         }
       });
     },
@@ -223,11 +238,21 @@ export function makeJet(): JetTest {
       }
     },
 
-    getFunctions(projectUuid): Map<string, FunctionObject> | undefined {
+    getConfigurationPatches(
+      projectUuid: string,
+    ): Array<ProjectPatch> | undefined {
+      if (projects.has(projectUuid)) {
+        return projectConfigurationPatches;
+      }
+    },
+
+    getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined {
       return projectFunctions.get(projectUuid);
     },
 
-    getMigrations(projectUuid): Map<number, MigrationObject> | undefined {
+    getMigrations(
+      projectUuid: string,
+    ): Map<number, MigrationObject> | undefined {
       return projectMigrations.get(projectUuid);
     },
   };

@@ -8,10 +8,12 @@ import {
   deleteFunction as doDeleteFunction,
   deleteFunctionFile as doDeleteFunctionFile,
   deleteMigration as doDeleteMigration,
+  updateConfiguration as doUpdateConfiguration,
   updateFunctionFile as doUpdateFunctionFile,
   updateMigration as doUpdateMigration,
 } from "@/api/jet/mod.ts";
 
+import { ProjectPatch } from "@/jcli/config/project-json.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
 import { getLogger } from "@/jcli/logger.ts";
 import { Project } from "@/jet/project.ts";
@@ -19,6 +21,11 @@ import { Project } from "@/jet/project.ts";
 export interface CreateProjectArgs {
   name: string;
   title: string;
+}
+
+export interface UpdateConfigurationArgs {
+  projectUuid: string;
+  commands: ProjectPatch;
 }
 
 export interface CreateFunctionArgs {
@@ -71,6 +78,7 @@ export interface DeleteMigrationArgs {
 
 export interface Jet {
   createProject(args: CreateProjectArgs): Promise<Project>;
+  updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
   createFunction(args: CreateFunctionArgs): Promise<void>;
   deleteFunction(args: DeleteFunctionArgs): Promise<void>;
   createFunctionFile(args: CreateFunctionFileArgs): Promise<void>;
@@ -106,6 +114,10 @@ function logDebugMetricsWrapper<T, U>(
 
 export const jet: Jet = {
   createProject: logDebugMetricsWrapper(doCreateProject, "create project"),
+  updateConfiguration: logDebugMetricsWrapper(
+    doUpdateConfiguration,
+    "update configuration",
+  ),
   createFunction: logDebugMetricsWrapper(
     doCreateFunction,
     "create function",

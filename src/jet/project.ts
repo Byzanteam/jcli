@@ -1,7 +1,7 @@
-export type ProjectDatabaseCapabilityPayload = {
+export interface ProjectDatabaseCapabilityPayload {
   __type__: "database";
   schema: string;
-};
+}
 
 export type ProjectCapabilityPayload = ProjectDatabaseCapabilityPayload;
 
@@ -13,7 +13,7 @@ export interface ProjectCapability {
 export interface ProjectPluginInstance {
   pluginName: string;
   name: string;
-  description: string;
+  description?: string;
   config: object;
   capabilityNames: Array<string>;
 }

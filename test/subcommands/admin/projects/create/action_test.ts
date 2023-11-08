@@ -149,6 +149,45 @@ describe("works", () => {
 
     database.close();
   });
+
+  it("provision configuration.db", async () => {
+    await action(options, "my_proj");
+
+    const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
+
+    assert(api.db.hasDatabase(expectedDatabase));
+
+    const database = await api.db.connect(expectedDatabase);
+
+    const columns = database.queryEntries<
+      { name: string; type: string; notnull: number; pk: number }
+    >(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
+      { tableName: "configuration" },
+    );
+
+    assertEquals(columns.length, 1);
+
+    assertObjectMatch(columns[0], {
+      name: "data",
+      type: "TEXT",
+      notnull: 1,
+      pk: 0,
+    });
+
+    const data = database.query<[string]>("SELECT data FROM configuration");
+
+    assertEquals(data.length, 1);
+
+    assertObjectMatch(JSON.parse(data[0][0]), {
+      name: "my_proj",
+      title: "my_proj",
+      capabilities: [],
+      instances: [],
+    });
+
+    database.close();
+  });
 });
 
 describe("fails", () => {
