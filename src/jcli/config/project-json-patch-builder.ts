@@ -40,6 +40,18 @@ type BuilderFn = (
   context: BuilderContext,
 ) => void;
 
+/**
+ * To run a BuilderNode, the path of a diffPatch must be perfect matched
+ * a path of the BuilderNode tree.
+ *
+ * BuilderNodes on the path will not be executed. Only the leaf nodes will.
+ * And if the execution process reached the leaf node and the path is not
+ * all consumed, an error will be thrown.
+ *
+ * The `alwaysRun` option has different behaviours. A BuilderNode with
+ * `aywaysRun` enabled will always be executed no matther whether it is a leaf
+ * or the path is all consumed.
+ */
 class BuilderNode {
   #alwaysRun: boolean;
 
