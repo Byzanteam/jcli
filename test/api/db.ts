@@ -1,7 +1,5 @@
 import { DB, DBClass } from "@/api/db.ts";
-import { dirname, join } from "path";
-
-export { DBClass };
+import { join } from "path";
 
 export interface DBTest extends DB {
   chdir(path: string): void;
@@ -9,49 +7,65 @@ export interface DBTest extends DB {
   hasDatabase(path: string): boolean;
 }
 
-export function makeDB(): DBTest {
-  const databases = new Set<string>();
-  const origNamespaceDir = join("test/tmp", crypto.randomUUID());
-  let namespaceDir = origNamespaceDir;
+class TestDB extends DBClass {
+  #connectionCount = 0;
 
-  let hasDir = false;
+  countConnection(): void {
+    this.#connectionCount++;
+  }
 
-  const buildPath = (path: string): string => {
-    if (!hasDir) {
-      const databaseDir = join(namespaceDir, dirname(path));
-      Deno.mkdirSync(databaseDir, { recursive: true });
-      hasDir = true;
+  close(_force: boolean) {
+    this.#connectionCount--;
+  }
+
+  doClose(force = false): void {
+    if (this.#connectionCount > 0) {
+      throw new Error("Database is not closed.");
+    } else {
+      super.close(force);
     }
+  }
+}
 
-    return join(namespaceDir, path);
-  };
+export function makeDB(): DBTest {
+  const databases = new Map<string, TestDB>();
+
+  let cwd = "";
 
   return {
     createDatabase(path: string): DBClass {
-      const db = new DBClass(buildPath(path));
-      databases.add(path);
+      const db = new TestDB();
+      db.countConnection();
+      databases.set(path, db);
+
       return db;
     },
 
     connect(path: string): Promise<DBClass> {
-      return new Promise((resolve) => {
-        const db = new DBClass(buildPath(path), { mode: "write" });
-        resolve(db);
+      return new Promise((resolve, reject) => {
+        const instance = databases.get(join(cwd, path));
+
+        if (instance) {
+          instance.countConnection();
+          resolve(instance);
+        } else {
+          reject("No such database.");
+        }
       });
     },
 
     chdir(path: string): void {
-      namespaceDir = join(namespaceDir, path);
+      cwd = path;
     },
 
     cleanup(): void {
-      if (hasDir) {
-        Deno.removeSync(origNamespaceDir, { recursive: true });
+      for (const instance of databases.values()) {
+        instance.doClose();
       }
     },
 
     hasDatabase(path: string): boolean {
-      return databases.has(path);
+      return databases.has(join(cwd, path));
     },
   };
 }
