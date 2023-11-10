@@ -1,6 +1,7 @@
 import { GlobalOptions } from "@/args.ts";
 
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
+import { createMetadataQuery } from "@/api/db/queries/create-metadata.ts";
 import { createTableObjectsQuery } from "@/api/db/queries/create-table-objects.ts";
 import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
 import { createConfigurationQuery } from "@/api/db/queries/create-configuration.ts";
@@ -10,10 +11,6 @@ import {
   ProjectDotJSON,
   projectDotJSONPath,
 } from "@/jcli/config/project-json.ts";
-import {
-  MetadataDotJSON,
-  metadataDotJSONPath,
-} from "@/jcli/config/metadata-json.ts";
 
 const PROJECT_NAME_FORMAT = /^[a-z_][a-z0-9_]{0,39}$/;
 
@@ -57,13 +54,13 @@ export default async function (
 
   await projectDotJSON.set(new ProjectDotJSON(project), { createNew: true });
 
-  const metadataDotJSON = new Config<MetadataDotJSON>(
-    `${projectName}/${metadataDotJSONPath()}`,
-  );
-
-  await metadataDotJSON.set({ projectId: project.id }, { createNew: true });
-
   const db = api.db.createDatabase(`${projectName}/${PROJECT_DB_PATH}`);
+
+  db.execute(createMetadataQuery);
+  db.query("INSERT INTO metadata (project_id) VALUES (:projectId)", {
+    projectId: project.id,
+  });
+
   db.execute(createTableObjectsQuery);
   db.execute(createFunctionsQuery);
   db.execute(createConfigurationQuery);

@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, it } from "@test/mod.ts";
 
 import { setupAPI } from "@/api/mod.ts";
 
-import { APIClientTest, makeAPIClient, ProjectObject } from "@test/api/mod.ts";
+import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import action from "@/subcommands/admin/projects/create/action.ts";
 
@@ -66,18 +66,44 @@ describe("works", () => {
     });
   });
 
-  it("provision my_proj/.jcli/metadata.json", async () => {
+  it("provision metadata.db", async () => {
     await action(options, "my_proj");
 
-    const metadata = JSON.parse(
-      await api.fs.readTextFile("my_proj/.jcli/metadata.json"),
-    ) as Record<"projectId", unknown>;
+    const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
+
+    assert(api.db.hasDatabase(expectedDatabase));
+
+    const database = await api.db.connect(expectedDatabase);
+
+    const columns = database.queryEntries<
+      { name: string; type: string; notnull: number; pk: number }
+    >(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
+      { tableName: "metadata" },
+    );
+
+    assertEquals(columns.length, 1);
+
+    assertObjectMatch(columns[0], {
+      name: "project_id",
+      type: "TEXT",
+      notnull: 1,
+      pk: 0,
+    });
+
+    const metadata = database.query<[string]>(
+      "SELECT project_id FROM metadata",
+    );
+
+    assertEquals(metadata.length, 1);
 
     const project = api.jet.getProject({
       projectName: "my_proj",
-    }) as ProjectObject;
+    })!;
 
-    assertObjectMatch(metadata, { projectId: project.id });
+    assertEquals(metadata[0][0], project.id);
+
+    database.close();
   });
 
   it("provision objects.db", async () => {
