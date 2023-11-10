@@ -7,6 +7,8 @@ import {
   DeleteFunctionArgs,
   DeleteFunctionFileArgs,
   DeleteMigrationArgs,
+  MigrateDBArgs,
+  RollbackDBArgs,
   UpdateConfigurationArgs,
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
@@ -29,6 +31,9 @@ import { deleteFunctionFileMutation } from "@/api/jet/queries/delete-function-fi
 import { createMigrationMutation } from "@/api/jet/queries/create-migration.ts";
 import { updateMigrationMutation } from "@/api/jet/queries/update-migration.ts";
 import { deleteMigrationMutation } from "@/api/jet/queries/delete-migration.ts";
+
+import { migrateDBMutation } from "@/api/jet/queries/migrate-db.ts";
+import { rollbackDBMutation } from "@/api/jet/queries/rollback-db.ts";
 
 async function query<T>(
   query: string,
@@ -147,4 +152,18 @@ export async function deleteMigration(
   config: JcliConfigDotJSON,
 ): Promise<void> {
   await query(deleteMigrationMutation, args, config);
+}
+
+export async function migrateDB(
+  args: MigrateDBArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(migrateDBMutation, args, config);
+}
+
+export async function rollbackDB(
+  args: RollbackDBArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(rollbackDBMutation, args, config);
 }

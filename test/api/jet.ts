@@ -36,6 +36,8 @@ export interface JetTest extends Jet {
   getConfigurationPatches(projectUuid: string): Array<ProjectPatch> | undefined;
   getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined;
   getMigrations(projectUuid: string): Map<number, MigrationObject> | undefined;
+  getRunMigrationCount(projectUuid: string): number | undefined;
+  getRunRollbackCount(projectUuid: string): number | undefined;
 }
 
 export function makeJet(): JetTest {
@@ -50,6 +52,9 @@ export function makeJet(): JetTest {
     string,
     Map<number, MigrationObject>
   >();
+
+  let projectRunMigrationCount = 0;
+  let projectRunRollbackCount = 0;
 
   const tryMkdirRecursively = async (
     path: string,
@@ -218,6 +223,28 @@ export function makeJet(): JetTest {
       return Promise.resolve();
     },
 
+    migrateDB({ projectUuid }): Promise<void> {
+      return new Promise((resolve, reject) => {
+        if (projects.has(projectUuid)) {
+          projectRunMigrationCount++;
+          resolve();
+        } else {
+          reject(new Error("Project not found"));
+        }
+      });
+    },
+
+    rollbackDB({ projectUuid }): Promise<void> {
+      return new Promise((resolve, reject) => {
+        if (projects.has(projectUuid)) {
+          projectRunRollbackCount++;
+          resolve();
+        } else {
+          reject(new Error("Project not found"));
+        }
+      });
+    },
+
     hasProject({ projectName, projectId }): boolean {
       if (undefined !== projectName) {
         return projectNameIdMappings.has(projectName);
@@ -254,6 +281,18 @@ export function makeJet(): JetTest {
       projectUuid: string,
     ): Map<number, MigrationObject> | undefined {
       return projectMigrations.get(projectUuid);
+    },
+
+    getRunMigrationCount(projectUuid): number | undefined {
+      if (projects.has(projectUuid)) {
+        return projectRunMigrationCount;
+      }
+    },
+
+    getRunRollbackCount(projectUuid): number | undefined {
+      if (projects.has(projectUuid)) {
+        return projectRunRollbackCount;
+      }
     },
   };
 }

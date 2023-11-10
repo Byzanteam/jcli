@@ -10,6 +10,7 @@ import migrationsCommand from "@/subcommands/migrations/mod.ts";
 import functionsCommand from "@/subcommands/functions/mod.ts";
 import adminCommand from "@/subcommands/admin/mod.ts";
 import pushCommand from "@/subcommands/push/mod.ts";
+import dbCommand from "@/subcommands/db/mod.ts";
 
 const DEFAULT_LOG_LEVEL = "INFO";
 const { logLevel = DEFAULT_LOG_LEVEL } = await getConfig().get();
@@ -26,4 +27,5 @@ await new Command()
   .command("migrations", migrationsCommand)
   .command("functions", functionsCommand)
   .command("push", pushCommand)
+  .command("db", dbCommand)
   .parse(Deno.args);
