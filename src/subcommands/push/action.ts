@@ -1,11 +1,5 @@
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
 
-import { Config } from "@/jcli/config/config.ts";
-import {
-  MetadataDotJSON,
-  metadataDotJSONPath,
-} from "@/jcli/config/metadata-json.ts";
-
 import {
   prepareQueries as preparePushConfigurationQueries,
   pushConfiguration,
@@ -74,8 +68,7 @@ export default async function (options: PushOptions) {
     : undefined;
 
   try {
-    const config = new Config<MetadataDotJSON>(metadataDotJSONPath());
-    const { projectId } = await config.get();
+    const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
     if (flags.pushConfiguration) {
       api.console.log("Pushing configuration...");
