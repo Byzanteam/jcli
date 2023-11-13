@@ -7,6 +7,7 @@ import {
   DeleteFunctionArgs,
   DeleteFunctionFileArgs,
   DeleteMigrationArgs,
+  UpdateConfigurationArgs,
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
 } from "@/api/jet.ts";
@@ -16,6 +17,8 @@ import {
   createProjectMutation,
   CreateProjectMutationResponse,
 } from "@/api/jet/queries/create-project.ts";
+
+import { updateConfigurationMutation } from "@/api/jet/queries/update-configuration.ts";
 
 import { createFunctionMutation } from "@/api/jet/queries/create-function.ts";
 import { deleteFunctionMutation } from "@/api/jet/queries/delete-function.ts";
@@ -83,6 +86,18 @@ export async function createFunction(
   config: JcliConfigDotJSON,
 ): Promise<void> {
   await query(createFunctionMutation, args, config);
+}
+
+export async function updateConfiguration(
+  rawArgs: UpdateConfigurationArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  const args = {
+    projectUuid: rawArgs.projectUuid,
+    commands: JSON.stringify(rawArgs.commands),
+  };
+
+  await query(updateConfigurationMutation, args, config);
 }
 
 export async function deleteFunction(
