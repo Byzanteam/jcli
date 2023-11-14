@@ -12,11 +12,11 @@ import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import createProject from "@/subcommands/admin/projects/create/action.ts";
 import push from "@/subcommands/push/action.ts";
-import action from "@/subcommands/db/migrate/action.ts";
+import migrate from "@/subcommands/db/migrate/action.ts";
+import action from "@/subcommands/db/migrations/action.ts";
 
 describe("functions", () => {
   let api: APIClientTest;
-  let projectUuid: string;
 
   const options = {};
 
@@ -26,15 +26,19 @@ describe("functions", () => {
 
     await createProject({}, "my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
-
     api.chdir("my_proj");
 
     api.fs.writeTextFile("migrations/202000000000_a.sql", "a", {
       createNew: true,
     });
 
+    api.fs.writeTextFile("migrations/202000000001_b.sql", "b", {
+      createNew: true,
+    });
+
     await push({ onlyMigrations: true });
+
+    await migrate({});
   });
 
   afterEach(() => {
@@ -42,15 +46,12 @@ describe("functions", () => {
   });
 
   it("Call Jet to migrate database", async () => {
-    let executedMigrations = await api.jet.listMigrations({ projectUuid });
-
-    assertEquals(executedMigrations.length, 0);
+    api.console.configure({ capture: true });
 
     await action(options);
 
-    executedMigrations = await api.jet.listMigrations({ projectUuid });
-
-    assertEquals(executedMigrations.length, 1);
-    assertEquals(executedMigrations[0], 202000000000);
+    assertEquals(api.console.logs.length, 2);
+    assertEquals(api.console.logs[0], "202000000000");
+    assertEquals(api.console.logs[1], "202000000001");
   });
 });

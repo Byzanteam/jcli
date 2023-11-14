@@ -8,6 +8,7 @@ import {
   deleteFunction as doDeleteFunction,
   deleteFunctionFile as doDeleteFunctionFile,
   deleteMigration as doDeleteMigration,
+  listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
   rollbackDB as doRollbackDB,
   updateConfiguration as doUpdateConfiguration,
@@ -86,6 +87,10 @@ export interface RollbackDBArgs {
   projectUuid: string;
 }
 
+export interface ListMigrationsArgs {
+  projectUuid: string;
+}
+
 export interface Jet {
   createProject(args: CreateProjectArgs): Promise<Project>;
   updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
@@ -99,6 +104,7 @@ export interface Jet {
   deleteMigration(args: DeleteMigrationArgs): Promise<void>;
   migrateDB(args: MigrateDBArgs): Promise<void>;
   rollbackDB(args: RollbackDBArgs): Promise<void>;
+  listMigrations(args: ListMigrationsArgs): Promise<Array<number>>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -156,6 +162,10 @@ export const jet: Jet = {
   ),
   migrateDB: logDebugMetricsWrapper(doMigrateDB, "migrate DB"),
   rollbackDB: logDebugMetricsWrapper(doRollbackDB, "rollback DB"),
+  listMigrations: logDebugMetricsWrapper(
+    doListMigrations,
+    "list DB migrations",
+  ),
   deleteFunction: logDebugMetricsWrapper(
     doDeleteFunction,
     "delete function",
