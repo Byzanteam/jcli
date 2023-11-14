@@ -28,17 +28,29 @@ describe("functions", () => {
 
     api.chdir("my_proj");
 
-    api.fs.writeTextFile("migrations/202000000000_a.sql", "a", {
-      createNew: true,
-    });
-
-    api.fs.writeTextFile("migrations/202000000001_b.sql", "b", {
-      createNew: true,
-    });
+    for (let i = 0; i < 3; i++) {
+      api.fs.writeTextFile(`migrations/20200000000${i}.sql`, i.toString(), {
+        createNew: true,
+      });
+    }
 
     await push({ onlyMigrations: true });
 
     await migrate({});
+
+    for (let i = 3; i < 5; i++) {
+      api.fs.writeTextFile(`migrations/20200000000${i}.sql`, i.toString(), {
+        createNew: true,
+      });
+    }
+
+    await push({ onlyMigrations: true });
+
+    api.fs.writeTextFile(`migrations/202000000001.sql`, "111");
+
+    api.fs.writeTextFile(`migrations/202000000005.sql`, "5", {
+      createNew: true,
+    });
   });
 
   afterEach(() => {
@@ -50,8 +62,18 @@ describe("functions", () => {
 
     await action(options);
 
-    assertEquals(api.console.logs.length, 2);
+    assertEquals(api.console.logs.length, 6);
     assertEquals(api.console.logs[0], "202000000000");
-    assertEquals(api.console.logs[1], "202000000001");
+    assertEquals(
+      api.console.logs[1],
+      "202000000001 (has local changes not pushed to Jet)",
+    );
+    assertEquals(api.console.logs[2], "202000000002");
+    assertEquals(api.console.logs[3], "202000000003 (not migrated)");
+    assertEquals(api.console.logs[4], "202000000004 (not migrated)");
+    assertEquals(
+      api.console.logs[5],
+      "202000000005 (not migrated; not pushed to Jet)",
+    );
   });
 });
