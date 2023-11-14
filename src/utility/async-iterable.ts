@@ -34,15 +34,3 @@ export async function* chunk<T>(
 
   if (0 !== chunk.length) yield chunk;
 }
-
-export async function toArray<T>(
-  iterable: AsyncIterable<T>,
-): Promise<Array<T>> {
-  const arr: Array<T> = [];
-
-  for await (const e of iterable) {
-    arr.push(e);
-  }
-
-  return arr;
-}

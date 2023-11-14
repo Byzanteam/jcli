@@ -40,9 +40,7 @@ function formatMessage(
     ? "has local changes not pushed to Jet"
     : "";
 
-  const tags = [migrated, inLocal, inJet, hasLocalChanges].filter((e) =>
-    "" !== e
-  );
+  const tags = [migrated, inLocal, inJet, hasLocalChanges].filter(Boolean);
 
   if (0 === tags.length) {
     return version.toString();
