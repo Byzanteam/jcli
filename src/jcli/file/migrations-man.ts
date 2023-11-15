@@ -11,7 +11,7 @@ import {
 
 import { chunk } from "@/utility/async-iterable.ts";
 
-const BASE_PATH = "./migrations";
+export const BASE_PATH = "./migrations";
 
 /**
  * A migration filename looks like:
@@ -49,6 +49,10 @@ export class MigrationFileEntry extends FileEntry {
   }
 }
 
+async function* listMigrationFiles(): AsyncIterable<string> {
+  yield* listFiles(BASE_PATH, ".sql");
+}
+
 async function* diffMigrations(
   listMigrationHashesQuery: () => ReadonlyArray<[path: string, hash: string]>,
 ): AsyncIterable<FileChange<MigrationFileEntry>> {
@@ -56,7 +60,7 @@ async function* diffMigrations(
 
   const newMigrationPaths = new Set<string>();
 
-  for await (const relativePath of listFiles(BASE_PATH, ".sql")) {
+  for await (const relativePath of listMigrationFiles()) {
     const path = join(BASE_PATH, relativePath);
     newMigrationPaths.add(path);
 
@@ -68,6 +72,44 @@ async function* diffMigrations(
 
     if (fileChange) {
       yield fileChange;
+    }
+  }
+
+  for (const path of existingMigrationHashes.keys()) {
+    if (!newMigrationPaths.has(path)) {
+      yield { type: "DELETED", entry: new MigrationFileEntry(path) };
+    }
+  }
+}
+
+export interface FileNotChanged<T extends FileEntry> {
+  type: "NOT_CHANGED";
+  entry: T;
+}
+
+export type FileStatus<T extends FileEntry> = FileChange<T> | FileNotChanged<T>;
+
+export async function* getMigrationsStatus(
+  listMigrationHashesQuery: () => ReadonlyArray<[path: string, hash: string]>,
+): AsyncIterable<FileStatus<MigrationFileEntry>> {
+  const existingMigrationHashes = new Map(listMigrationHashesQuery());
+
+  const newMigrationPaths = new Set<string>();
+
+  for await (const relativePath of listMigrationFiles()) {
+    const path = join(BASE_PATH, relativePath);
+    newMigrationPaths.add(path);
+
+    const fileChange = await buildFileChange(
+      path,
+      existingMigrationHashes,
+      MigrationFileEntry,
+    );
+
+    if (fileChange) {
+      yield fileChange;
+    } else {
+      yield { type: "NOT_CHANGED", entry: new MigrationFileEntry(path) };
     }
   }
 
@@ -102,6 +144,12 @@ export interface PushMigrationQueries {
   finalize(): void;
 }
 
+export function listMigrationHashesQuery(db: DBClass) {
+  return db.query<[path: string, hash: string]>(
+    "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
+  );
+}
+
 export function prepareQueries(db: DBClass): PushMigrationQueries {
   const createMigrationQuery = db.prepareQuery<
     never,
@@ -125,9 +173,7 @@ export function prepareQueries(db: DBClass): PushMigrationQueries {
 
   return {
     listMigrationHashesQuery() {
-      return db.query<[path: string, hash: string]>(
-        "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
-      );
+      return listMigrationHashesQuery(db);
     },
     createMigrationQuery,
     updateMigrationQuery,

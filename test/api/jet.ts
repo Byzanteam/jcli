@@ -36,8 +36,6 @@ export interface JetTest extends Jet {
   getConfigurationPatches(projectUuid: string): Array<ProjectPatch> | undefined;
   getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined;
   getMigrations(projectUuid: string): Map<number, MigrationObject> | undefined;
-  getRunMigrationCount(projectUuid: string): number | undefined;
-  getRunRollbackCount(projectUuid: string): number | undefined;
 }
 
 export function makeJet(): JetTest {
@@ -53,8 +51,7 @@ export function makeJet(): JetTest {
     Map<number, MigrationObject>
   >();
 
-  let projectRunMigrationCount = 0;
-  let projectRunRollbackCount = 0;
+  const projectExecutedMigrations = new Map<string, Array<number>>();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -83,6 +80,7 @@ export function makeJet(): JetTest {
           projectNameIdMappings.set(name, id);
           projects.set(id, { id, name, title: name });
           projectMigrations.set(id, new Map());
+          projectExecutedMigrations.set(id, []);
           projectFunctions.set(id, new Map());
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
@@ -225,22 +223,56 @@ export function makeJet(): JetTest {
 
     migrateDB({ projectUuid }): Promise<void> {
       return new Promise((resolve, reject) => {
-        if (projects.has(projectUuid)) {
-          projectRunMigrationCount++;
-          resolve();
+        const migrations = projectMigrations.get(projectUuid);
+
+        if (!migrations) reject(new Error("Project not found"));
+
+        const executedMigrations = projectExecutedMigrations.get(
+          projectUuid,
+        )!;
+
+        let migrationsToExecute: Array<number>;
+
+        if (0 === executedMigrations.length) {
+          migrationsToExecute = Array.from(migrations!.keys());
         } else {
-          reject(new Error("Project not found"));
+          const latestVersion =
+            executedMigrations[executedMigrations.length - 1];
+
+          migrationsToExecute = Array.from(migrations!.keys()).filter((e) =>
+            e > latestVersion
+          );
         }
+
+        for (const version of migrationsToExecute.sort()) {
+          executedMigrations.push(version);
+        }
+
+        resolve();
       });
     },
 
     rollbackDB({ projectUuid }): Promise<void> {
       return new Promise((resolve, reject) => {
-        if (projects.has(projectUuid)) {
-          projectRunRollbackCount++;
-          resolve();
-        } else {
+        const executedMigrations = projectExecutedMigrations.get(projectUuid);
+
+        if (undefined === executedMigrations) {
           reject(new Error("Project not found"));
+        } else {
+          executedMigrations.pop();
+          resolve();
+        }
+      });
+    },
+
+    listMigrations({ projectUuid }): Promise<Array<number>> {
+      return new Promise((resolve, reject) => {
+        const executedMigrations = projectExecutedMigrations.get(projectUuid);
+
+        if (undefined === executedMigrations) {
+          reject(new Error("Project not found"));
+        } else {
+          resolve(executedMigrations);
         }
       });
     },
@@ -281,18 +313,6 @@ export function makeJet(): JetTest {
       projectUuid: string,
     ): Map<number, MigrationObject> | undefined {
       return projectMigrations.get(projectUuid);
-    },
-
-    getRunMigrationCount(projectUuid): number | undefined {
-      if (projects.has(projectUuid)) {
-        return projectRunMigrationCount;
-      }
-    },
-
-    getRunRollbackCount(projectUuid): number | undefined {
-      if (projects.has(projectUuid)) {
-        return projectRunRollbackCount;
-      }
     },
   };
 }

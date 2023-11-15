@@ -1,6 +1,10 @@
 import { APIClient } from "@/api/mod.ts";
 
-import { consoleImpl } from "@test/api/console.ts";
+import {
+  ConsoleTest,
+  makeConsole,
+  MakeConsoleOptions,
+} from "@test/api/console.ts";
 import { DBTest, makeDB } from "@test/api/db.ts";
 import { FSTest, makeFS } from "@test/api/fs.ts";
 import { JetTest, makeJet } from "@test/api/jet.ts";
@@ -10,6 +14,7 @@ export * from "@test/api/fs.ts";
 export * from "@test/api/jet.ts";
 
 export interface APIClientTest extends APIClient {
+  console: ConsoleTest;
   db: DBTest;
   fs: FSTest;
   jet: JetTest;
@@ -17,12 +22,18 @@ export interface APIClientTest extends APIClient {
   cleanup(): void;
 }
 
-export function makeAPIClient(): APIClientTest {
+export interface MakeAPIClientOptions {
+  console?: MakeConsoleOptions;
+}
+
+export function makeAPIClient(
+  options: MakeAPIClientOptions = {},
+): APIClientTest {
   const db = makeDB();
   const fs = makeFS();
 
   return {
-    console: consoleImpl,
+    console: makeConsole(options.console),
     db: db,
     fs,
     jet: makeJet(),
