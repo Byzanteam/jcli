@@ -1,5 +1,6 @@
 import { Project } from "@/jet/project.ts";
 import {
+  CommitArgs,
   CreateFunctionArgs,
   CreateFunctionFileArgs,
   CreateMigrationArgs,
@@ -36,6 +37,8 @@ import { deleteMigrationMutation } from "@/api/jet/queries/delete-migration.ts";
 import { migrateDBMutation } from "@/api/jet/queries/migrate-db.ts";
 import { rollbackDBMutation } from "@/api/jet/queries/rollback-db.ts";
 import { listMigrationsQuery } from "@/api/jet/queries/list-migrations.ts";
+
+import { commitMutation } from "@/api/jet/queries/commit.ts";
 
 async function query<T>(
   query: string,
@@ -181,4 +184,8 @@ export async function listMigrations(
   );
 
   return draftMigrations.map((e) => e.version);
+}
+
+export async function commit(args: CommitArgs, config: JcliConfigDotJSON) {
+  await query(commitMutation, args, config);
 }

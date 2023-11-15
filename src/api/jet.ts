@@ -1,6 +1,7 @@
 import { getConfig } from "@/api/mod.ts";
 
 import {
+  commit as doCommit,
   createFunction as doCreateFunction,
   createFunctionFile as doCreateFunctionFile,
   createMigration as doCreateMigration,
@@ -91,6 +92,12 @@ export interface ListMigrationsArgs {
   projectUuid: string;
 }
 
+export interface CommitArgs {
+  projectUuid: string;
+  message?: string;
+  expectedProjectHash: string;
+}
+
 export interface Jet {
   createProject(args: CreateProjectArgs): Promise<Project>;
   updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
@@ -105,6 +112,7 @@ export interface Jet {
   migrateDB(args: MigrateDBArgs): Promise<void>;
   rollbackDB(args: RollbackDBArgs): Promise<void>;
   listMigrations(args: ListMigrationsArgs): Promise<Array<number>>;
+  commit(args: CommitArgs): Promise<void>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -174,4 +182,5 @@ export const jet: Jet = {
     doDeleteMigration,
     "delete migration",
   ),
+  commit: logDebugMetricsWrapper(doCommit, "commit"),
 };
