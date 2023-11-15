@@ -11,6 +11,7 @@ import functionsCommand from "@/subcommands/functions/mod.ts";
 import adminCommand from "@/subcommands/admin/mod.ts";
 import pushCommand from "@/subcommands/push/mod.ts";
 import dbCommand from "@/subcommands/db/mod.ts";
+import commitCommand from "@/subcommands/commit/mod.ts";
 
 const DEFAULT_LOG_LEVEL = "INFO";
 const { logLevel = DEFAULT_LOG_LEVEL } = await getConfig().get();
@@ -28,4 +29,5 @@ await new Command()
   .command("functions", functionsCommand)
   .command("push", pushCommand)
   .command("db", dbCommand)
+  .command("commit", commitCommand)
   .parse(Deno.args);

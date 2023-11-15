@@ -30,12 +30,20 @@ export interface MigrationObject {
   content: string;
 }
 
+export interface CommitRequest {
+  message?: string;
+  expectedProjectHash: string;
+}
+
 export interface JetTest extends Jet {
   hasProject(query: ProjectQuery): boolean;
   getProject(query: ProjectQuery): ProjectObject | undefined;
   getConfigurationPatches(projectUuid: string): Array<ProjectPatch> | undefined;
   getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined;
   getMigrations(projectUuid: string): Map<number, MigrationObject> | undefined;
+  getCommitRequests(
+    projectUuid: string,
+  ): ReadonlyArray<CommitRequest> | undefined;
 }
 
 export function makeJet(): JetTest {
@@ -52,6 +60,8 @@ export function makeJet(): JetTest {
   >();
 
   const projectExecutedMigrations = new Map<string, Array<number>>();
+
+  const commitRequests = new Map<string, Array<CommitRequest>>();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -82,6 +92,7 @@ export function makeJet(): JetTest {
           projectMigrations.set(id, new Map());
           projectExecutedMigrations.set(id, []);
           projectFunctions.set(id, new Map());
+          commitRequests.set(id, []);
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
           reject(new Error(`Project ${name} has already exist.`));
@@ -277,6 +288,19 @@ export function makeJet(): JetTest {
       });
     },
 
+    commit({ projectUuid, message, expectedProjectHash }): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const requests = commitRequests.get(projectUuid);
+
+        if (undefined === requests) {
+          reject(new Error("Project not found"));
+        } else {
+          requests.push({ message, expectedProjectHash });
+          resolve();
+        }
+      });
+    },
+
     hasProject({ projectName, projectId }): boolean {
       if (undefined !== projectName) {
         return projectNameIdMappings.has(projectName);
@@ -313,6 +337,10 @@ export function makeJet(): JetTest {
       projectUuid: string,
     ): Map<number, MigrationObject> | undefined {
       return projectMigrations.get(projectUuid);
+    },
+
+    getCommitRequests(projectUuid: string): Array<CommitRequest> | undefined {
+      return commitRequests.get(projectUuid);
     },
   };
 }
