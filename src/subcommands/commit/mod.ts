@@ -6,7 +6,7 @@ import action from "./action.ts";
 
 const command = new Command<CommitOptions>()
   .description("Commit changes in Jet.")
-  .option("--message <message>", "Pushes only changes of functions")
+  .option("--message <message>", "The message of commit.")
   .error(errorHandler)
   .action(action);
 

@@ -9,6 +9,7 @@ import {
   deleteFunction as doDeleteFunction,
   deleteFunctionFile as doDeleteFunctionFile,
   deleteMigration as doDeleteMigration,
+  deploy as doDeploy,
   listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
   rollbackDB as doRollbackDB,
@@ -98,6 +99,11 @@ export interface CommitArgs {
   expectedProjectHash: string;
 }
 
+export interface DeployArgs {
+  projectUuid: string;
+  commitId?: string;
+}
+
 export interface Jet {
   createProject(args: CreateProjectArgs): Promise<Project>;
   updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
@@ -113,6 +119,7 @@ export interface Jet {
   rollbackDB(args: RollbackDBArgs): Promise<void>;
   listMigrations(args: ListMigrationsArgs): Promise<Array<number>>;
   commit(args: CommitArgs): Promise<void>;
+  deploy(args: DeployArgs): Promise<void>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -183,4 +190,5 @@ export const jet: Jet = {
     "delete migration",
   ),
   commit: logDebugMetricsWrapper(doCommit, "commit"),
+  deploy: logDebugMetricsWrapper(doDeploy, "deploy"),
 };

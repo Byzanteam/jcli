@@ -12,11 +12,13 @@ import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import createProject from "@/subcommands/admin/projects/create/action.ts";
 import push from "@/subcommands/push/action.ts";
-import action from "@/subcommands/commit/action.ts";
+import commit from "@/subcommands/commit/action.ts";
+import action from "@/subcommands/deploy/action.ts";
 
 describe("commit", () => {
   let api: APIClientTest;
   let projectUuid: string;
+  const options = {};
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -35,27 +37,30 @@ describe("commit", () => {
     }
 
     await push({ onlyMigrations: true });
+
+    await commit({});
   });
 
   afterEach(() => {
     api.cleanup();
   });
 
-  it("commit without message", async () => {
-    await action({});
+  it("deploy latest version", async () => {
+    await action(options);
 
-    const commitRequests = api.jet.getCommitRequests(projectUuid)!;
+    const deployRequests = api.jet.getDeployRequests(projectUuid)!;
 
-    assertEquals(commitRequests.length, 1);
-    assertEquals(commitRequests[0].message, undefined);
+    assertEquals(deployRequests.length, 1);
+    assertEquals(deployRequests[0].commitId, undefined);
   });
 
-  it("commit with message", async () => {
-    await action({ message: "commit message" });
+  it("deploy given commit", async () => {
+    const commitId = crypto.randomUUID();
+    await action(options, commitId);
 
-    const commitRequests = api.jet.getCommitRequests(projectUuid)!;
+    const deployRequests = api.jet.getDeployRequests(projectUuid)!;
 
-    assertEquals(commitRequests.length, 1);
-    assertEquals(commitRequests[0].message, "commit message");
+    assertEquals(deployRequests.length, 1);
+    assertEquals(deployRequests[0].commitId, commitId);
   });
 });
