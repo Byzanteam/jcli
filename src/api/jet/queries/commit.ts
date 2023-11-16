@@ -2,9 +2,9 @@ export const commitMutation = `
   mutation commit(
     $projectUuid: UUID!,
     $message: String,
-    $expectedProjectHash: String!,
+    $expectedProjectHash: String!
   ) {
-    commit(input: { projectUuid: $projectUuid, message: $message, expectedProjectHash: }) {
+    commit(input: { projectUuid: $projectUuid, message: $message, expectedProjectHash: $expectedProjectHash }) {
       uuid
     }
   }

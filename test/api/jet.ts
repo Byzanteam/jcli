@@ -35,6 +35,10 @@ export interface CommitRequest {
   expectedProjectHash: string;
 }
 
+export interface DeployRequest {
+  commitId?: string;
+}
+
 export interface JetTest extends Jet {
   hasProject(query: ProjectQuery): boolean;
   getProject(query: ProjectQuery): ProjectObject | undefined;
@@ -44,6 +48,9 @@ export interface JetTest extends Jet {
   getCommitRequests(
     projectUuid: string,
   ): ReadonlyArray<CommitRequest> | undefined;
+  getDeployRequests(
+    projectUuid: string,
+  ): ReadonlyArray<DeployRequest> | undefined;
 }
 
 export function makeJet(): JetTest {
@@ -62,6 +69,8 @@ export function makeJet(): JetTest {
   const projectExecutedMigrations = new Map<string, Array<number>>();
 
   const commitRequests = new Map<string, Array<CommitRequest>>();
+
+  const deployRequests = new Map<string, Array<DeployRequest>>();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -93,6 +102,7 @@ export function makeJet(): JetTest {
           projectExecutedMigrations.set(id, []);
           projectFunctions.set(id, new Map());
           commitRequests.set(id, []);
+          deployRequests.set(id, []);
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
           reject(new Error(`Project ${name} has already exist.`));
@@ -301,6 +311,19 @@ export function makeJet(): JetTest {
       });
     },
 
+    deploy({ projectUuid, commitId }): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const requests = deployRequests.get(projectUuid);
+
+        if (undefined === requests) {
+          reject(new Error("Project not found"));
+        } else {
+          requests.push({ commitId });
+          resolve();
+        }
+      });
+    },
+
     hasProject({ projectName, projectId }): boolean {
       if (undefined !== projectName) {
         return projectNameIdMappings.has(projectName);
@@ -341,6 +364,10 @@ export function makeJet(): JetTest {
 
     getCommitRequests(projectUuid: string): Array<CommitRequest> | undefined {
       return commitRequests.get(projectUuid);
+    },
+
+    getDeployRequests(projectUuid: string): Array<DeployRequest> | undefined {
+      return deployRequests.get(projectUuid);
     },
   };
 }
