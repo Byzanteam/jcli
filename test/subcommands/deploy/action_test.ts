@@ -18,6 +18,7 @@ import action from "@/subcommands/deploy/action.ts";
 describe("commit", () => {
   let api: APIClientTest;
   let projectUuid: string;
+  const options = {};
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -45,7 +46,7 @@ describe("commit", () => {
   });
 
   it("deploy latest version", async () => {
-    await action({});
+    await action(options);
 
     const deployRequests = api.jet.getDeployRequests(projectUuid)!;
 
@@ -55,7 +56,7 @@ describe("commit", () => {
 
   it("deploy given commit", async () => {
     const commitId = crypto.randomUUID();
-    await action({ commit: commitId });
+    await action(options, commitId);
 
     const deployRequests = api.jet.getDeployRequests(projectUuid)!;
 

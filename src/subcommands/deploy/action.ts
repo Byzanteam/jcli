@@ -1,7 +1,7 @@
-import { DeployOptions } from "./option.ts";
+import { GlobalOptions } from "@/args.ts";
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
 
-export default async function (options: DeployOptions) {
+export default async function (_options: GlobalOptions, commit?: string) {
   const db = await api.db.connect(PROJECT_DB_PATH);
 
   try {
@@ -9,7 +9,7 @@ export default async function (options: DeployOptions) {
 
     await api.jet.deploy({
       projectUuid: projectId,
-      commitId: options.commit,
+      commitId: commit,
     });
   } finally {
     db.close();

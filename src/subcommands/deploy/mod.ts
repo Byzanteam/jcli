@@ -1,12 +1,12 @@
 import { Command } from "cliffy";
+import { GlobalOptions } from "@/args.ts";
 import errorHandler from "@/error-handler.ts";
 
-import { DeployOptions } from "./option.ts";
 import action from "./action.ts";
 
-const command = new Command<DeployOptions>()
+const command = new Command<GlobalOptions>()
   .description("Deploy project in Jet.")
-  .option("--commit <commit>", "Specify the commit to be deployed.")
+  .arguments("[commit:string]")
   .error(errorHandler)
   .action(action);
 
