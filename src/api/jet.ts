@@ -67,13 +67,15 @@ export interface DeleteFunctionArgs {
 export interface CreateMigrationArgs {
   projectUuid: string;
   version: number;
+  name: string | null;
   content: string;
 }
 
 export interface UpdateMigrationArgs {
   projectUuid: string;
   migrationVersion: number;
-  content: string;
+  name?: string | null;
+  content?: string;
 }
 
 export interface DeleteMigrationArgs {

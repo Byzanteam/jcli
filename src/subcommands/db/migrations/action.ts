@@ -16,7 +16,7 @@ async function renderMigrations(
   for await (
     const s of getMigrationsStatus(() => listMigrationHashesQuery(db))
   ) {
-    const version = await s.entry.version();
+    const version = s.entry.version;
     statuses.set(version, s.type);
     allVersions.add(version);
   }

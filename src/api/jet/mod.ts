@@ -152,7 +152,7 @@ export async function updateMigration(
   args: UpdateMigrationArgs,
   config: JcliConfigDotJSON,
 ): Promise<void> {
-  await query(updateMigrationMutation, args, config);
+  await query(updateMigrationMutation, { input: args }, config);
 }
 
 export async function deleteMigration(

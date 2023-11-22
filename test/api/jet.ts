@@ -27,6 +27,7 @@ export interface FunctionObject {
 export interface MigrationObject {
   projectUuid: string;
   version: number;
+  name: string | null;
   content: string;
 }
 
@@ -200,12 +201,12 @@ export function makeJet(): JetTest {
       return Promise.resolve();
     },
 
-    createMigration({ projectUuid, version, content }): Promise<void> {
+    createMigration({ projectUuid, version, name, content }): Promise<void> {
       return new Promise((resolve, reject) => {
         const migrations = projectMigrations.get(projectUuid);
 
         if (migrations && !migrations.has(version)) {
-          migrations.set(version, { projectUuid, version, content });
+          migrations.set(version, { projectUuid, version, name, content });
           resolve();
         }
 
@@ -213,7 +214,9 @@ export function makeJet(): JetTest {
       });
     },
 
-    updateMigration({ projectUuid, migrationVersion, content }): Promise<void> {
+    updateMigration(args): Promise<void> {
+      const { projectUuid, migrationVersion } = args;
+
       return new Promise((resolve, reject) => {
         const migration = projectMigrations.get(projectUuid)?.get(
           migrationVersion,
@@ -223,7 +226,13 @@ export function makeJet(): JetTest {
           reject(new Error("Migration not found"));
         }
 
-        migration!.content = content;
+        if (undefined !== args.content) {
+          migration!.content = args.content;
+        }
+
+        if (undefined !== args.name) {
+          migration!.name = args.name;
+        }
 
         resolve();
       });
