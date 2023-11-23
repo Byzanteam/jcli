@@ -60,15 +60,15 @@ export async function* zipFiles<K, T extends FileEntry>(
 ): AsyncIterable<
   [undefined, T] | [T, T] | [T, undefined]
 > {
-  const visitedKeys: Array<K> = [];
+  const visitedKeys = new Set<K>();
 
   for await (const [key, entry] of fileEntries) {
-    visitedKeys.push(key);
+    visitedKeys.add(key);
     yield [fileEntriesWas.get(key), entry] as [undefined, T] | [T, T];
   }
 
   for (const key of fileEntriesWas.keys()) {
-    if (!visitedKeys.includes(key)) {
+    if (!visitedKeys.has(key)) {
       yield [fileEntriesWas.get(key)!, undefined];
     }
   }
