@@ -78,7 +78,7 @@ export function makeJet(): JetTest {
     fs: FSTest,
   ): Promise<void> => {
     try {
-      return await fs.mkdir(path, { recursive: true });
+      await fs.mkdir(path, { recursive: true });
     } catch {
       return;
     }
@@ -146,59 +146,53 @@ export function makeJet(): JetTest {
       return Promise.resolve();
     },
 
-    createFunctionFile({ projectUuid, functionName, path, code }) {
-      return new Promise((resolve, reject) => {
-        const func = projectFunctions.get(projectUuid)?.get(functionName);
+    async createFunctionFile({ projectUuid, functionName, path, code }) {
+      const func = projectFunctions.get(projectUuid)?.get(functionName);
 
-        if (func) {
-          if (func.files.hasFile(path)) {
-            reject(new Error("File already exists"));
-          }
-
-          const { dir, base } = parse(path);
-
-          if ("" === dir || "/" === dir) {
-            func.files.writeTextFile(base, code, { createNew: true });
-            resolve();
-          } else {
-            tryMkdirRecursively(dir, func.files).then(() => {
-              func.files.writeTextFile(path, code, { createNew: true });
-              resolve();
-            });
-          }
-        } else {
-          reject(new Error("Function not found"));
+      if (func) {
+        if (func.files.hasFile(path)) {
+          throw new Error("File already exists");
         }
-      });
+
+        const { dir, base } = parse(path);
+
+        if ("" === dir || "/" === dir) {
+          await func.files.writeTextFile(base, code, { createNew: true });
+        } else {
+          await tryMkdirRecursively(dir, func.files);
+          await func.files.writeTextFile(path, code, {
+            createNew: true,
+          });
+        }
+      } else {
+        throw new Error("Function not found");
+      }
     },
 
-    updateFunctionFile(
+    async updateFunctionFile(
       { projectUuid, functionName, path, code },
     ): Promise<void> {
-      return new Promise((resolve, reject) => {
-        const func = projectFunctions.get(projectUuid)?.get(functionName);
+      const func = projectFunctions.get(projectUuid)?.get(functionName);
 
-        if (func) {
-          if (!func.files.hasFile(path)) {
-            reject(new Error("File not found"));
-          } else {
-            func.files.writeTextFile(path, code);
-            resolve();
-          }
+      if (func) {
+        if (!func.files.hasFile(path)) {
+          throw new Error("File not found");
         } else {
-          reject(new Error("Function not found"));
+          await func.files.writeTextFile(path, code);
         }
-      });
+      } else {
+        throw new Error("Function not found");
+      }
     },
 
-    deleteFunctionFile({ projectUuid, functionName, path }): Promise<void> {
+    async deleteFunctionFile(
+      { projectUuid, functionName, path },
+    ): Promise<void> {
       const func = projectFunctions.get(projectUuid)?.get(functionName);
 
       if (func?.files.hasFile(path)) {
-        func.files.remove(path);
+        await func.files.remove(path);
       }
-
-      return Promise.resolve();
     },
 
     createMigration({ projectUuid, version, name, content }): Promise<void> {
