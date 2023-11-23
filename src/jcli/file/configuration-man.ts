@@ -7,6 +7,7 @@ import { api, DBClass } from "@/api/mod.ts";
 
 import { Config } from "@/jcli/config/config.ts";
 import {
+  isPatchEmpty,
   ProjectDotJSON,
   projectDotJSONPath,
 } from "@/jcli/config/project-json.ts";
@@ -47,10 +48,12 @@ export async function pushConfiguration(
 ): Promise<void> {
   const configWas = getConfigurationFromDB(queries);
   const config = await getConfigurationFromFile();
-  const commands = configWas.diff(config);
+  const command = configWas.diff(config);
 
-  await api.jet.updateConfiguration({ projectUuid, commands });
-  queries.updateConfigurationQuery.execute({ data: JSON.stringify(config) });
+  if (!isPatchEmpty(command)) {
+    await api.jet.updateConfiguration({ projectUuid, command });
+    queries.updateConfigurationQuery.execute({ data: JSON.stringify(config) });
+  }
 }
 
 function getConfigurationFromDB(

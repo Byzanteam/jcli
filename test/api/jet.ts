@@ -111,10 +111,10 @@ export function makeJet(): JetTest {
       });
     },
 
-    updateConfiguration({ projectUuid, commands }): Promise<void> {
+    updateConfiguration({ projectUuid, command }): Promise<void> {
       return new Promise((resolve, reject) => {
         if (projects.has(projectUuid)) {
-          projectConfigurationPatches.push(commands);
+          projectConfigurationPatches.push(command);
           resolve();
         } else {
           reject(new Error("Project not found"));

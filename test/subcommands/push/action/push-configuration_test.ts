@@ -76,14 +76,14 @@ describe("configuration", () => {
         title: "title",
         capabilities: [
           {
-            action: "CREATE",
+            action: "create",
             name: "capability1",
             payload: { __type__: "database", schema: "schema" },
           },
         ],
         instances: [
           {
-            action: "CREATE",
+            action: "create",
             pluginName: "plugin",
             name: "instance",
             description: "description",

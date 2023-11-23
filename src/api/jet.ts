@@ -30,7 +30,7 @@ export interface CreateProjectArgs {
 
 export interface UpdateConfigurationArgs {
   projectUuid: string;
-  commands: ProjectPatch;
+  command: ProjectPatch;
 }
 
 export interface CreateFunctionArgs {

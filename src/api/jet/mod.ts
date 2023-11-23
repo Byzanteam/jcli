@@ -23,6 +23,8 @@ import {
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
 } from "@/api/jet.ts";
+
+import { ProjectPatch } from "@/jcli/config/project-json.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
 
 import {
@@ -86,11 +88,54 @@ export async function updateConfiguration(
   config: JcliConfigDotJSON,
 ): Promise<void> {
   const args = {
-    projectUuid: rawArgs.projectUuid,
-    commands: JSON.stringify(rawArgs.commands),
+    projectId: rawArgs.projectUuid,
+    command: buildCommandArgument(rawArgs.command),
   };
 
   await query(updateConfigurationMutation, args, config);
+}
+
+function buildCommandArgument(command: ProjectPatch) {
+  const capabilities = command.capabilities.map((e) => {
+    if ("create" === e.action || "update" === e.action) {
+      const { action, name, payload, ...elem } = e;
+      const { __type__, ...payloadRest } = payload;
+
+      return {
+        [action]: {
+          capabilityName: name,
+          payload: { [__type__]: payloadRest },
+          ...elem,
+        },
+      };
+    } else {
+      const { action, name, ...elem } = e;
+
+      return {
+        [action]: {
+          capabilityName: name,
+          ...elem,
+        },
+      };
+    }
+  });
+
+  const instances = command.instances.map((e) => {
+    const { action, name, ...elem } = e;
+
+    return {
+      [action]: {
+        instanceName: name,
+        ...elem,
+      },
+    };
+  });
+
+  return {
+    title: command.title,
+    capabilities,
+    instances,
+  };
 }
 
 export async function deleteFunction(
