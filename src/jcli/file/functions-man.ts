@@ -96,11 +96,11 @@ async function* listFunctionFileEntries<T extends FileEntry>(
   const functionPath = join(BASE_PATH, functionName);
 
   for await (const path of listFilesRec(functionPath)) {
-    yield [path, new FileEntryConstructor(path)];
+    yield [join(functionPath, path), new FileEntryConstructor(path)];
   }
 }
 
-async function* diffFunctionFiles1<
+async function* diffFunctionFiles<
   T extends FileEntry & FunctionFileEntryBase,
 >(
   functionName: string,
@@ -131,7 +131,7 @@ async function* diffFunctionFiles1<
       yield { type: "CREATED", entry: entry! };
     } else if (!entry) {
       yield { type: "DELETED", entry: entryWas };
-    } else if (await entry.digest() === await entryWas.digest()) {
+    } else if (await entry.digest() !== await entryWas.digest()) {
       yield { type: "UPDATED", entry };
     }
   }
@@ -293,7 +293,7 @@ async function pushFunctionFiles(
 ): Promise<void> {
   for await (
     const fileChanges of chunk(
-      diffFunctionFiles1(
+      diffFunctionFiles(
         functionName,
         queries.listFunctionFileHashesQuery,
         FunctionFileEntry(functionName),
