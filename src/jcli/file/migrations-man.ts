@@ -3,10 +3,10 @@ import { PreparedQuery } from "sqlite";
 
 import { api, DBClass } from "@/api/mod.ts";
 import {
-  buildFileChange,
   FileChange,
   FileEntry,
   listFiles,
+  zipFiles,
 } from "@/jcli/file/files-man.ts";
 
 import { chunk } from "@/utility/async-iterable.ts";
@@ -25,60 +25,80 @@ const MIGRATION_FILENAME_FORMAT =
   /^(?<version>\d{12})(_(?<name>[a-z0-9_]{0,26}))?$/;
 
 export class MigrationFileEntry extends FileEntry {
-  #version: number | undefined;
+  #properties?: { version: number; name: string | null };
+  #entryWas?: MigrationFileEntry;
 
   constructor(path: string) {
     super(path);
   }
 
-  version(): Promise<number> {
-    return new Promise((resolve, reject) => {
-      if (undefined === this.#version) {
-        const { name } = parse(this.path);
-        const result = MIGRATION_FILENAME_FORMAT.exec(name);
+  async setDiff(entry: MigrationFileEntry): Promise<boolean> {
+    if (
+      this.name === entry.name && await this.digest() === await entry.digest()
+    ) {
+      return false;
+    }
 
-        if (result === null) {
-          reject(new Error(`Invalid migration filename ${name}`));
-        }
+    this.#entryWas = entry;
+    return true;
+  }
 
-        this.#version = parseInt(result!.groups!.version, 10);
-      }
+  async getDiff(): Promise<{ name?: string | null; content?: string }> {
+    if (!this.#entryWas) throw new Error("Diff not set");
 
-      resolve(this.#version);
-    });
+    return {
+      name: this.name === this.#entryWas.name ? undefined : this.name,
+      content: await this.digest() === await this.#entryWas.digest()
+        ? undefined
+        : await this.content(),
+    };
+  }
+
+  setDigest(digest: string): MigrationFileEntry {
+    this._digest = digest;
+    return this;
+  }
+
+  get version(): number {
+    this.#parseProperties();
+    return this.#properties!.version;
+  }
+
+  get name(): string | null {
+    this.#parseProperties();
+    return this.#properties!.name;
+  }
+
+  get pathWas(): string {
+    if (!this.#entryWas) throw new Error("Diff not set");
+    return this.#entryWas.path;
+  }
+
+  #parseProperties(): void {
+    if (undefined !== this.#properties) return;
+
+    const { name } = parse(this.path);
+    const result = MIGRATION_FILENAME_FORMAT.exec(name);
+
+    if (result === null) {
+      throw new Error(`Invalid migration filename ${name}`);
+    }
+
+    this.#properties = {
+      version: parseInt(result!.groups!.version, 10),
+      name: result!.groups!.name ?? null,
+    };
   }
 }
 
-async function* listMigrationFiles(): AsyncIterable<string> {
-  yield* listFiles(BASE_PATH, ".sql");
-}
-
-async function* diffMigrations(
-  listMigrationHashesQuery: () => ReadonlyArray<[path: string, hash: string]>,
-): AsyncIterable<FileChange<MigrationFileEntry>> {
-  const existingMigrationHashes = new Map(listMigrationHashesQuery());
-
-  const newMigrationPaths = new Set<string>();
-
-  for await (const relativePath of listMigrationFiles()) {
+async function* listMigrationFileEntries(): AsyncIterable<
+  [key: number, entry: MigrationFileEntry]
+> {
+  for await (const relativePath of listFiles(BASE_PATH, ".sql")) {
     const path = join(BASE_PATH, relativePath);
-    newMigrationPaths.add(path);
+    const entry = new MigrationFileEntry(path);
 
-    const fileChange = await buildFileChange(
-      path,
-      existingMigrationHashes,
-      MigrationFileEntry,
-    );
-
-    if (fileChange) {
-      yield fileChange;
-    }
-  }
-
-  for (const path of existingMigrationHashes.keys()) {
-    if (!newMigrationPaths.has(path)) {
-      yield { type: "DELETED", entry: new MigrationFileEntry(path) };
-    }
+    yield [entry.version, entry];
   }
 }
 
@@ -92,30 +112,27 @@ export type FileStatus<T extends FileEntry> = FileChange<T> | FileNotChanged<T>;
 export async function* getMigrationsStatus(
   listMigrationHashesQuery: () => ReadonlyArray<[path: string, hash: string]>,
 ): AsyncIterable<FileStatus<MigrationFileEntry>> {
-  const existingMigrationHashes = new Map(listMigrationHashesQuery());
+  const migrationsWas = new Map<number, MigrationFileEntry>(
+    listMigrationHashesQuery().map(([path, hash]) => {
+      const entry = new MigrationFileEntry(path).setDigest(hash);
+      return [entry.version, entry];
+    }),
+  );
 
-  const newMigrationPaths = new Set<string>();
-
-  for await (const relativePath of listMigrationFiles()) {
-    const path = join(BASE_PATH, relativePath);
-    newMigrationPaths.add(path);
-
-    const fileChange = await buildFileChange(
-      path,
-      existingMigrationHashes,
-      MigrationFileEntry,
-    );
-
-    if (fileChange) {
-      yield fileChange;
+  for await (
+    const [entryWas, entry] of zipFiles(
+      migrationsWas,
+      listMigrationFileEntries(),
+    )
+  ) {
+    if (!entryWas) {
+      yield { type: "CREATED", entry };
+    } else if (!entry) {
+      yield { type: "DELETED", entry: entryWas };
+    } else if (await entry.setDiff(entryWas)) {
+      yield { type: "UPDATED", entry };
     } else {
-      yield { type: "NOT_CHANGED", entry: new MigrationFileEntry(path) };
-    }
-  }
-
-  for (const path of existingMigrationHashes.keys()) {
-    if (!newMigrationPaths.has(path)) {
-      yield { type: "DELETED", entry: new MigrationFileEntry(path) };
+      yield { type: "NOT_CHANGED", entry };
     }
   }
 }
@@ -132,7 +149,7 @@ export interface PushMigrationQueries {
   updateMigrationQuery: PreparedQuery<
     never,
     never,
-    { path: string; hash: string }
+    { pathWas: string; path: string; hash: string }
   >;
 
   deleteMigrationQuery: PreparedQuery<
@@ -162,9 +179,9 @@ export function prepareQueries(db: DBClass): PushMigrationQueries {
   const updateMigrationQuery = db.prepareQuery<
     never,
     never,
-    { path: string; hash: string }
+    { pathWas: string; path: string; hash: string }
   >(
-    "UPDATE objects SET hash = :hash WHERE path = :path",
+    "UPDATE objects SET hash = :hash, path = :path WHERE path = :pathWas",
   );
 
   const deleteMigrationQuery = db.prepareQuery<never, never, { path: string }>(
@@ -187,7 +204,7 @@ export function prepareQueries(db: DBClass): PushMigrationQueries {
 }
 
 async function pushMigrationsChange(
-  change: FileChange<MigrationFileEntry>,
+  change: FileStatus<MigrationFileEntry>,
   queries: PushMigrationQueries,
   projectUuid: string,
 ) {
@@ -201,7 +218,8 @@ async function pushMigrationsChange(
     case "CREATED":
       await api.jet.createMigration({
         projectUuid,
-        version: await change.entry.version(),
+        version: change.entry.version,
+        name: change.entry.name,
         content: await change.entry.content(),
       });
 
@@ -215,11 +233,12 @@ async function pushMigrationsChange(
     case "UPDATED":
       await api.jet.updateMigration({
         projectUuid,
-        migrationVersion: await change.entry.version(),
-        content: await change.entry.content(),
+        migrationVersion: change.entry.version,
+        ...await change.entry.getDiff(),
       });
 
       updateMigrationQuery.execute({
+        pathWas: change.entry.pathWas,
         path: change.entry.path,
         hash: await change.entry.digest(),
       });
@@ -229,7 +248,7 @@ async function pushMigrationsChange(
     case "DELETED":
       await api.jet.deleteMigration({
         projectUuid,
-        migrationVersion: await change.entry.version(),
+        migrationVersion: change.entry.version,
       });
 
       deleteMigrationQuery.execute({ path: change.entry.path });
@@ -249,7 +268,7 @@ export async function pushMigrations(
 ): Promise<void> {
   for await (
     const fileChanges of chunk(
-      diffMigrations(queries.listMigrationHashesQuery),
+      getMigrationsStatus(queries.listMigrationHashesQuery),
       options?.concurrency ?? navigator.hardwareConcurrency,
     )
   ) {

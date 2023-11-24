@@ -4,18 +4,18 @@ import { digest } from "@/jcli/crypto.ts";
 
 export class FileEntry {
   #content: string | undefined;
-  #digest: string | undefined;
+  _digest: string | undefined;
 
   constructor(public readonly path: string) {}
 
   async digest(): Promise<string> {
-    if (undefined === this.#digest) {
+    if (undefined === this._digest) {
       const bytes = await api.fs.readFile(this.path);
-      this.#digest = await digest(bytes);
+      this._digest = await digest(bytes);
       this.#content = new TextDecoder().decode(bytes);
     }
 
-    return this.#digest;
+    return this._digest;
   }
 
   async content(): Promise<string> {
@@ -54,19 +54,38 @@ function filterFileByExtension(
   return hasExtension(entry.name, extension);
 }
 
+export async function* zipFiles<K, T extends FileEntry>(
+  fileEntriesWas: Map<K, T>,
+  fileEntries: AsyncIterable<[key: K, entry: T]>,
+): AsyncIterable<
+  [undefined, T] | [T, T] | [T, undefined]
+> {
+  const visitedKeys = new Set<K>();
+
+  for await (const [key, entry] of fileEntries) {
+    visitedKeys.add(key);
+    yield [fileEntriesWas.get(key), entry] as [undefined, T] | [T, T];
+  }
+
+  for (const key of fileEntriesWas.keys()) {
+    if (!visitedKeys.has(key)) {
+      yield [fileEntriesWas.get(key)!, undefined];
+    }
+  }
+}
+
 export async function buildFileChange<T extends FileEntry>(
   path: string,
   existingMigrationHashes: Map<string, string>,
   FileEntryConstructor: new (path: string) => T,
 ): Promise<FileChange<T> | undefined> {
   const entry = new FileEntryConstructor(path);
-  const entryDigest = await entry.digest();
 
   if (!existingMigrationHashes.has(entry.path)) {
     return { type: "CREATED", entry };
   }
 
-  if (entryDigest !== existingMigrationHashes.get!(entry.path)) {
+  if (await entry.digest() !== existingMigrationHashes.get!(entry.path)) {
     return {
       type: "UPDATED",
       entry,

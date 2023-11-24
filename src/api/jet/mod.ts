@@ -1,3 +1,10 @@
+import {
+  buildNodeId,
+  connectionIterator,
+  NodeType,
+  query,
+} from "./utilities.ts";
+
 import { Project } from "@/jet/project.ts";
 import {
   CommitArgs,
@@ -16,6 +23,8 @@ import {
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
 } from "@/api/jet.ts";
+
+import { ProjectPatch } from "@/jcli/config/project-json.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
 
 import {
@@ -37,41 +46,14 @@ import { deleteMigrationMutation } from "@/api/jet/queries/delete-migration.ts";
 
 import { migrateDBMutation } from "@/api/jet/queries/migrate-db.ts";
 import { rollbackDBMutation } from "@/api/jet/queries/rollback-db.ts";
-import { listMigrationsQuery } from "@/api/jet/queries/list-migrations.ts";
+import {
+  listMigrationsQuery,
+  ListMigrationsQueryResponse,
+} from "@/api/jet/queries/list-migrations.ts";
 
 import { commitMutation } from "@/api/jet/queries/commit.ts";
 
 import { deployMutation } from "@/api/jet/queries/deploy.ts";
-
-async function query<T>(
-  query: string,
-  variables: object,
-  config: JcliConfigDotJSON,
-): Promise<T> {
-  const response = await fetch(config.jetEndpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  const body = await response.json();
-
-  return resolveResponse<T>(body);
-}
-
-function resolveResponse<T>(
-  body: { errors?: ReadonlyArray<{ message: string }>; data?: T },
-): Promise<T> {
-  return new Promise((resolve, reject) => {
-    if (body.errors) {
-      reject(body.errors);
-    } else if (body.data) {
-      resolve(body.data);
-    }
-  });
-}
 
 export async function createProject(
   args: CreateProjectArgs,
@@ -106,11 +88,54 @@ export async function updateConfiguration(
   config: JcliConfigDotJSON,
 ): Promise<void> {
   const args = {
-    projectUuid: rawArgs.projectUuid,
-    commands: JSON.stringify(rawArgs.commands),
+    projectId: rawArgs.projectUuid,
+    command: buildCommandArgument(rawArgs.command),
   };
 
   await query(updateConfigurationMutation, args, config);
+}
+
+function buildCommandArgument(command: ProjectPatch) {
+  const capabilities = command.capabilities.map((e) => {
+    if ("create" === e.action || "update" === e.action) {
+      const { action, name, payload, ...elem } = e;
+      const { __type__, ...payloadRest } = payload;
+
+      return {
+        [action]: {
+          capabilityName: name,
+          payload: { [__type__]: payloadRest },
+          ...elem,
+        },
+      };
+    } else {
+      const { action, name, ...elem } = e;
+
+      return {
+        [action]: {
+          capabilityName: name,
+          ...elem,
+        },
+      };
+    }
+  });
+
+  const instances = command.instances.map((e) => {
+    const { action, name, ...elem } = e;
+
+    return {
+      [action]: {
+        instanceName: name,
+        ...elem,
+      },
+    };
+  });
+
+  return {
+    title: command.title,
+    capabilities,
+    instances,
+  };
 }
 
 export async function deleteFunction(
@@ -152,7 +177,7 @@ export async function updateMigration(
   args: UpdateMigrationArgs,
   config: JcliConfigDotJSON,
 ): Promise<void> {
-  await query(updateMigrationMutation, args, config);
+  await query(updateMigrationMutation, { input: args }, config);
 }
 
 export async function deleteMigration(
@@ -180,13 +205,36 @@ export async function listMigrations(
   args: ListMigrationsArgs,
   config: JcliConfigDotJSON,
 ): Promise<Array<number>> {
-  const draftMigrations = await query<Array<{ version: number }>>(
-    listMigrationsQuery,
-    args,
-    config,
-  );
+  function queryListMigrations(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListMigrationsQueryResponse>(listMigrationsQuery, {
+      projectId: buildNodeId(NodeType.project, args.projectUuid),
+      first,
+      after,
+    }, config);
+  }
 
-  return draftMigrations.map((e) => e.version);
+  function callback(response: ListMigrationsQueryResponse) {
+    const { node: { migrations: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map((e) => e.version),
+    };
+  }
+
+  const versions: Array<number> = [];
+
+  for await (
+    const version of connectionIterator(queryListMigrations, callback, {
+      perPage: 1,
+    })
+  ) {
+    versions.push(version);
+  }
+
+  return versions;
 }
 
 export async function commit(args: CommitArgs, config: JcliConfigDotJSON) {

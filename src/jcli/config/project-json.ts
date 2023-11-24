@@ -67,20 +67,25 @@ function buildPatch(
   return patch;
 }
 
+export function isPatchEmpty(patch: ProjectPatch): boolean {
+  return !("title" in patch) && !("name" in patch) &&
+    patch.capabilities.length === 0 && patch.instances.length === 0;
+}
+
 export interface ProjectCapabilityCreatePatch {
-  action: "CREATE";
+  action: "create";
   name: string;
   payload: ProjectCapabilityPayload;
 }
 
 export interface ProjectCapabilityUpdatePatch {
-  action: "UPDATE";
+  action: "update";
   name: string;
   payload: ProjectCapabilityPayload;
 }
 
 export interface ProjectCapabilityDeletePatch {
-  action: "DELETE";
+  action: "delete";
   name: string;
 }
 
@@ -90,7 +95,7 @@ export type ProjectCapabilityPatch =
   | ProjectCapabilityDeletePatch;
 
 export interface ProjectPluginInstanceCreatePatch {
-  action: "CREATE";
+  action: "create";
   pluginName: string;
   name: string;
   description?: string;
@@ -99,7 +104,7 @@ export interface ProjectPluginInstanceCreatePatch {
 }
 
 export interface ProjectPluginInstanceUpdatePatch {
-  action: "UPDATE";
+  action: "update";
   name: string;
   description?: string;
   config?: object;
@@ -107,7 +112,7 @@ export interface ProjectPluginInstanceUpdatePatch {
 }
 
 export interface ProjectPluginInstanceDeletePatch {
-  action: "DELETE";
+  action: "delete";
   name: string;
 }
 

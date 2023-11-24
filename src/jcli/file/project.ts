@@ -23,7 +23,7 @@ async function digestMigrations(db: DBClass): Promise<string> {
   const digests: Array<string> = [];
 
   for (const e of entries) {
-    const version = await new MigrationFileEntry(e.path).version();
+    const version = new MigrationFileEntry(e.path).version;
     digests.push(await digest(`${version}${e.hash}`));
   }
 

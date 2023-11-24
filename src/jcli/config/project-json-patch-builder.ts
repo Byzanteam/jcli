@@ -169,7 +169,7 @@ function buildCapabilitiesPatch(
 
     if (patch.capabilities.every((e) => e.name !== capability.name)) {
       patch.capabilities.push({
-        action: "UPDATE",
+        action: "update",
         name: capability.name,
         payload: capability.payload,
       });
@@ -188,14 +188,14 @@ function doBuildCapabilityPatch(
   switch (op) {
     case "add": {
       const { name, payload } = value as ProjectCapability;
-      patch.capabilities.push({ action: "CREATE", name, payload });
+      patch.capabilities.push({ action: "create", name, payload });
       break;
     }
 
     case "remove": {
       const { dataWas: { capabilities }, currentPathNode } = context;
       patch.capabilities.push({
-        action: "DELETE",
+        action: "delete",
         name: capabilities[currentPathNode as number].name,
       });
     }
@@ -250,7 +250,7 @@ function buildInstancesPatch(
     const instance = instances[currentPathNode as number];
 
     if (patch.instances.every((e) => e.name !== instance.name)) {
-      patch.instances.push({ action: "UPDATE", name: instance.name });
+      patch.instances.push({ action: "update", name: instance.name });
     }
 
     assigns.set("instance", instance);
@@ -269,7 +269,7 @@ function doBuildInstancesPatch(
         value as ProjectPluginInstance;
 
       patch.instances.push({
-        action: "CREATE",
+        action: "create",
         pluginName,
         name,
         description,
@@ -283,7 +283,7 @@ function doBuildInstancesPatch(
     case "remove": {
       const { dataWas: { instances }, currentPathNode } = context;
       patch.instances.push({
-        action: "DELETE",
+        action: "delete",
         name: instances[currentPathNode as number].name,
       });
     }

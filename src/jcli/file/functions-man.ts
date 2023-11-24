@@ -4,17 +4,18 @@ import { chunk } from "@/utility/async-iterable.ts";
 
 import { api, DBClass } from "@/api/mod.ts";
 import {
-  buildFileChange,
   FileChange,
   FileEntry,
   listFilesRec,
+  zipFiles,
 } from "@/jcli/file/files-man.ts";
 import { PreparedQuery } from "sqlite";
 
 const BASE_PATH = "./functions";
 
-interface WithServerPath {
+interface FunctionFileEntryBase {
   serverPath: string;
+  setDigest(digest: string): void;
 }
 
 /**
@@ -25,12 +26,16 @@ interface WithServerPath {
  *   users/index.ts
  */
 function FunctionFileEntry(functionName: string) {
-  return class extends FileEntry implements WithServerPath {
+  return class extends FileEntry implements FunctionFileEntryBase {
     readonly serverPath: string;
 
     constructor(relativePath: string) {
       super(join(BASE_PATH, functionName, relativePath));
       this.serverPath = join("/", relativePath);
+    }
+
+    setDigest(digest: string) {
+      this._digest = digest;
     }
   };
 }
@@ -84,37 +89,50 @@ function buildFunctionFileRelativePath(
   return path.slice(basePathLength + 1);
 }
 
-async function* diffFunctionFiles<T extends FileEntry & WithServerPath>(
+async function* listFunctionFileEntries<T extends FileEntry>(
+  functionName: string,
+  FileEntryConstructor: new (path: string) => T,
+): AsyncIterable<[path: string, entry: T]> {
+  const functionPath = join(BASE_PATH, functionName);
+
+  for await (const path of listFilesRec(functionPath)) {
+    yield [join(functionPath, path), new FileEntryConstructor(path)];
+  }
+}
+
+async function* diffFunctionFiles<
+  T extends FileEntry & FunctionFileEntryBase,
+>(
   functionName: string,
   listFunctionFileHashesQuery: () => ReadonlyArray<
     [path: string, hash: string]
   >,
   FileEntryConstructor: new (path: string) => T,
 ): AsyncIterable<FileChange<T>> {
-  const functionPath = join(BASE_PATH, functionName);
+  const functionFilesWas = new Map<string, T>(
+    listFunctionFileHashesQuery().map((
+      [path, hash],
+    ) => {
+      const entry = new FileEntryConstructor(
+        buildFunctionFileRelativePath(path, functionName),
+      );
+      entry.setDigest(hash);
+      return [path, entry];
+    }),
+  );
 
-  const existingFunctionHashes = new Map(listFunctionFileHashesQuery());
-  const newFunctionPaths = new Set<string>();
-
-  for await (const relativePath of listFilesRec(functionPath)) {
-    const path = join(BASE_PATH, functionName, relativePath);
-    newFunctionPaths.add(path);
-
-    const fileChange = await buildFileChange(
-      relativePath,
-      existingFunctionHashes,
-      FileEntryConstructor,
-    );
-
-    if (fileChange) {
-      yield fileChange;
-    }
-  }
-
-  for (const path of existingFunctionHashes.keys()) {
-    if (!newFunctionPaths.has(path)) {
-      const relativePath = buildFunctionFileRelativePath(path, functionName);
-      yield { type: "DELETED", entry: new FileEntryConstructor(relativePath) };
+  for await (
+    const [entryWas, entry] of zipFiles(
+      functionFilesWas,
+      listFunctionFileEntries(functionName, FileEntryConstructor),
+    )
+  ) {
+    if (!entryWas) {
+      yield { type: "CREATED", entry: entry! };
+    } else if (!entry) {
+      yield { type: "DELETED", entry: entryWas };
+    } else if (await entry.digest() !== await entryWas.digest()) {
+      yield { type: "UPDATED", entry };
     }
   }
 }
@@ -211,7 +229,7 @@ export interface PushFunctionsOptions {
   concurrency?: number;
 }
 
-async function pushFunctionFile<T extends FileEntry & WithServerPath>(
+async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
   fileChange: FileChange<T>,
   queries: PushFunctionQueries,
   projectUuid: string,

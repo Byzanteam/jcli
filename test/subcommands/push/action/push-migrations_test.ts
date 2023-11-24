@@ -52,8 +52,11 @@ describe("migrations", () => {
       assertEquals(migrations.size, 3);
 
       assertEquals(migrations.get(202301010000)?.content, "0");
+      assertEquals(migrations.get(202301010000)?.name, "a");
       assertEquals(migrations.get(202301010001)?.content, "1");
+      assertEquals(migrations.get(202301010001)?.name, "b");
       assertEquals(migrations.get(202301010002)?.content, "2");
+      assertEquals(migrations.get(202301010002)?.name, "c");
     });
 
     it("updates db", async () => {
@@ -84,29 +87,58 @@ describe("migrations", () => {
       await api.fs.writeTextFile("migrations/202301010001_b.sql", "1", {
         createNew: true,
       });
+      await api.fs.writeTextFile("migrations/202301010002.sql", "2", {
+        createNew: true,
+      });
       await action(options);
 
       await api.fs.writeTextFile("migrations/202301010000_a.sql", "2");
+      await api.fs.writeTextFile("migrations/202301010001.sql", "1", {
+        createNew: true,
+      });
+      await api.fs.remove("migrations/202301010001_b.sql");
+      await api.fs.writeTextFile("migrations/202301010002_c.sql", "2", {
+        createNew: true,
+      });
+      await api.fs.remove("migrations/202301010002.sql");
       await action(options);
     });
 
     it("pushes to jet", () => {
       const migrations = api.jet.getMigrations(projectUuid)!;
 
-      assertEquals(migrations.size, 2);
+      assertEquals(migrations.size, 3);
       assertEquals(migrations.get(202301010000)?.content, "2");
+      assertEquals(migrations.get(202301010000)?.name, "a");
+      assertEquals(migrations.get(202301010001)?.content, "1");
+      assertEquals(migrations.get(202301010001)?.name, null);
+      assertEquals(migrations.get(202301010002)?.content, "2");
+      assertEquals(migrations.get(202301010002)?.name, "c");
     });
 
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ hash: string }>(
-        "SELECT hash FROM objects WHERE path = :path",
-        { path: "migrations/202301010000_a.sql" },
+
+      const entries = db.queryEntries<{ path: string; hash: string }>(
+        "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION' ORDER BY path",
       );
 
-      assertEquals(entries.length, 1);
+      assertEquals(entries.length, 3);
+      assertEquals(entries[0].path, "migrations/202301010000_a.sql");
       assertEquals(
         entries[0].hash,
+        await digest(new TextEncoder().encode("2")),
+      );
+
+      assertEquals(entries[1].path, "migrations/202301010001.sql");
+      assertEquals(
+        entries[1].hash,
+        await digest(new TextEncoder().encode("1")),
+      );
+
+      assertEquals(entries[2].path, "migrations/202301010002_c.sql");
+      assertEquals(
+        entries[2].hash,
         await digest(new TextEncoder().encode("2")),
       );
 
