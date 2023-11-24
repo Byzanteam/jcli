@@ -1,9 +1,9 @@
 export const updateConfigurationMutation = `
-  mutation updateDraftConfiguration(
-    $projectUuid: UUID!,
-    $commands: CamelizedObjectJSON!
+  mutation updateConfiguration(
+    $projectId: UUID!,
+    $command: UpdateDraftConfigurationCommandInput!
   ) {
-    updateDraftConfiguration(input: { projectUuid: $projectUuid, commands: $commands }) {
+    updateConfiguration(input: { projectId: $projectId, command: $command }) {
       project {
         uuid
       }

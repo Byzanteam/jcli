@@ -1,11 +1,9 @@
 export const migrateDBMutation = `
-  mutation migrateDatabase(
+  mutation migrate(
     $projectUuid: UUID!,
   ) {
-    migrateDatabase(input: { projectUuid: $projectUuid }) {
-      project {
-        uuid
-      }
+    migrate(input: { projectUuid: $projectUuid }) {
+      lastMigratedVersion
     }
   }
 `;
