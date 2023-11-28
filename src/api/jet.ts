@@ -61,7 +61,7 @@ export interface DeleteFunctionFileArgs {
 }
 
 export interface DeployDraftFunctionsArgs {
-  projectUuid: string;
+  projectId: string;
 }
 
 export interface DeleteFunctionArgs {

@@ -150,14 +150,14 @@ export function makeJet(): JetTest {
       return Promise.resolve();
     },
 
-    deployDraftFunctions({ projectUuid }): Promise<void> {
+    deployDraftFunctions({ projectId }): Promise<void> {
       return new Promise((resolve, reject) => {
-        const count = deployDraftFunctionsRequests.get(projectUuid);
+        const count = deployDraftFunctionsRequests.get(projectId);
 
         if (undefined === count) {
           reject(new Error("Project not found"));
         } else {
-          deployDraftFunctionsRequests.set(projectUuid, count + 1);
+          deployDraftFunctionsRequests.set(projectId, count + 1);
           resolve();
         }
       });

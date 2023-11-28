@@ -1,8 +1,8 @@
 export const deployDraftFunctionsMutation = `
-  mutation projectLambdaDeployDraftFunctions(
+  mutation projectDeployDraftFunctions(
     $projectId: UUID!
   ) {
-    projectLambdaDeployDraftFunctions(input: {
+    projectDeployDraftFunctions(input: {
       projectId: $projectId
     }) {
       project {
