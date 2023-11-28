@@ -16,6 +16,7 @@ import {
   DeleteFunctionFileArgs,
   DeleteMigrationArgs,
   DeployArgs,
+  DeployDraftFunctionsArgs,
   ListMigrationsArgs,
   MigrateDBArgs,
   RollbackDBArgs,
@@ -36,6 +37,7 @@ import { updateConfigurationMutation } from "@/api/jet/queries/update-configurat
 
 import { createFunctionMutation } from "@/api/jet/queries/create-function.ts";
 import { deleteFunctionMutation } from "@/api/jet/queries/delete-function.ts";
+import { deployDraftFunctionsMutation } from "@/api/jet/queries/deploy-draft-functions.ts";
 import { createFunctionFileMutation } from "@/api/jet/queries/create-funciton-file.ts";
 import { updateFunctionFileMutation } from "@/api/jet/queries/update-function-file.ts";
 import { deleteFunctionFileMutation } from "@/api/jet/queries/delete-function-file.ts";
@@ -164,6 +166,13 @@ export async function deleteFunctionFile(
   config: JcliConfigDotJSON,
 ): Promise<void> {
   await query(deleteFunctionFileMutation, args, config);
+}
+
+export async function deployDraftFunctions(
+  args: DeployDraftFunctionsArgs,
+  config: JcliConfigDotJSON,
+): Promise<void> {
+  await query(deployDraftFunctionsMutation, args, config);
 }
 
 export async function createMigration(

@@ -46,6 +46,7 @@ export interface JetTest extends Jet {
   getConfigurationPatches(projectUuid: string): Array<ProjectPatch> | undefined;
   getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined;
   getMigrations(projectUuid: string): Map<number, MigrationObject> | undefined;
+  getDeployDraftFunctionsRequests(projectUuid: string): number | undefined;
   getCommitRequests(
     projectUuid: string,
   ): ReadonlyArray<CommitRequest> | undefined;
@@ -61,6 +62,8 @@ export function makeJet(): JetTest {
   const projectConfigurationPatches: Array<ProjectPatch> = [];
 
   const projectFunctions = new Map<string, Map<string, FunctionObject>>();
+
+  const deployDraftFunctionsRequests = new Map<string, number>();
 
   const projectMigrations = new Map<
     string,
@@ -102,6 +105,7 @@ export function makeJet(): JetTest {
           projectMigrations.set(id, new Map());
           projectExecutedMigrations.set(id, []);
           projectFunctions.set(id, new Map());
+          deployDraftFunctionsRequests.set(id, 0);
           commitRequests.set(id, []);
           deployRequests.set(id, []);
           resolve({ id, name, title, capabilities: [], instances: [] });
@@ -144,6 +148,19 @@ export function makeJet(): JetTest {
       }
 
       return Promise.resolve();
+    },
+
+    deployDraftFunctions({ projectUuid }): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const count = deployDraftFunctionsRequests.get(projectUuid);
+
+        if (undefined === count) {
+          reject(new Error("Project not found"));
+        } else {
+          deployDraftFunctionsRequests.set(projectUuid, count + 1);
+          resolve();
+        }
+      });
     },
 
     async createFunctionFile({ projectUuid, functionName, path, code }) {
@@ -363,6 +380,10 @@ export function makeJet(): JetTest {
       projectUuid: string,
     ): Map<number, MigrationObject> | undefined {
       return projectMigrations.get(projectUuid);
+    },
+
+    getDeployDraftFunctionsRequests(projectUuid) {
+      return deployDraftFunctionsRequests.get(projectUuid);
     },
 
     getCommitRequests(projectUuid: string): Array<CommitRequest> | undefined {
