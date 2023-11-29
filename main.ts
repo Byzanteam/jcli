@@ -7,7 +7,7 @@ import { action as globalOptionAction } from "@/args.ts";
 
 import projectsCommand from "@/subcommands/projects/mod.ts";
 import migrationsCommand from "@/subcommands/migrations/mod.ts";
-import functionsCommand from "@/subcommands/functions/mod.ts";
+import functionCommand from "@/subcommands/function/mod.ts";
 import adminCommand from "@/subcommands/admin/mod.ts";
 import pushCommand from "@/subcommands/push/mod.ts";
 import dbCommand from "@/subcommands/db/mod.ts";
@@ -27,7 +27,7 @@ await new Command()
   .command("admin", adminCommand)
   .command("projects", projectsCommand)
   .command("migrations", migrationsCommand)
-  .command("functions", functionsCommand)
+  .command("function", functionCommand)
   .command("push", pushCommand)
   .command("db", dbCommand)
   .command("commit", commitCommand)

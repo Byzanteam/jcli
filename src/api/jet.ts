@@ -10,6 +10,7 @@ import {
   deleteFunctionFile as doDeleteFunctionFile,
   deleteMigration as doDeleteMigration,
   deploy as doDeploy,
+  deployDraftFunctions as doDeployDraftFunctions,
   listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
   rollbackDB as doRollbackDB,
@@ -57,6 +58,10 @@ export interface DeleteFunctionFileArgs {
   projectUuid: string;
   functionName: string;
   path: string;
+}
+
+export interface DeployDraftFunctionsArgs {
+  projectId: string;
 }
 
 export interface DeleteFunctionArgs {
@@ -111,6 +116,7 @@ export interface Jet {
   updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
   createFunction(args: CreateFunctionArgs): Promise<void>;
   deleteFunction(args: DeleteFunctionArgs): Promise<void>;
+  deployDraftFunctions(args: DeployDraftFunctionsArgs): Promise<void>;
   createFunctionFile(args: CreateFunctionFileArgs): Promise<void>;
   updateFunctionFile(args: UpdateFunctionFileArgs): Promise<void>;
   deleteFunctionFile(args: DeleteFunctionFileArgs): Promise<void>;
@@ -168,6 +174,10 @@ export const jet: Jet = {
   deleteFunctionFile: logDebugMetricsWrapper(
     doDeleteFunctionFile,
     "delete function file",
+  ),
+  deployDraftFunctions: logDebugMetricsWrapper(
+    doDeployDraftFunctions,
+    "deploy draft functions",
   ),
   createMigration: logDebugMetricsWrapper(
     doCreateMigration,
