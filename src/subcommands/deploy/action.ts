@@ -8,7 +8,7 @@ export default async function (_options: GlobalOptions, commit?: string) {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
     await api.jet.deploy({
-      projectUuid: projectId,
+      projectId,
       commitId: commit,
     });
   } finally {
