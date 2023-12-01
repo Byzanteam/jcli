@@ -101,13 +101,13 @@ export interface ListMigrationsArgs {
 }
 
 export interface CommitArgs {
-  projectUuid: string;
+  projectId: string;
   message?: string;
-  expectedProjectHash: string;
+  hash: string;
 }
 
 export interface DeployArgs {
-  projectUuid: string;
+  projectId: string;
   commitId?: string;
 }
 

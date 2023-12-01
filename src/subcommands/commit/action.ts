@@ -9,9 +9,9 @@ export default async function (options: CommitOptions) {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
     await api.jet.commit({
-      projectUuid: projectId,
+      projectId,
       message: options.message,
-      expectedProjectHash: await digestProject(db),
+      hash: await digestProject(db),
     });
   } finally {
     db.close();

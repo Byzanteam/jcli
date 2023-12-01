@@ -33,7 +33,7 @@ export interface MigrationObject {
 
 export interface CommitRequest {
   message?: string;
-  expectedProjectHash: string;
+  hash: string;
 }
 
 export interface DeployRequest {
@@ -318,22 +318,22 @@ export function makeJet(): JetTest {
       });
     },
 
-    commit({ projectUuid, message, expectedProjectHash }): Promise<void> {
+    commit({ projectId, message, hash }): Promise<void> {
       return new Promise((resolve, reject) => {
-        const requests = commitRequests.get(projectUuid);
+        const requests = commitRequests.get(projectId);
 
         if (undefined === requests) {
           reject(new Error("Project not found"));
         } else {
-          requests.push({ message, expectedProjectHash });
+          requests.push({ message, hash });
           resolve();
         }
       });
     },
 
-    deploy({ projectUuid, commitId }): Promise<void> {
+    deploy({ projectId, commitId }): Promise<void> {
       return new Promise((resolve, reject) => {
-        const requests = deployRequests.get(projectUuid);
+        const requests = deployRequests.get(projectId);
 
         if (undefined === requests) {
           reject(new Error("Project not found"));

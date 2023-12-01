@@ -1,10 +1,12 @@
 export const deployMutation = `
-  mutation deploy(
-    $projectUuid: UUID!,
-    $commitId: String
+  mutation projectsCheckout(
+    $projectId: UUID!,
+    $commitId: UUID
   ) {
-    deployment(input: { projectUuid: $projectUuid, commitId: $commitId }) {
-      uuid
+    projectsCheckout(input: { projectId: $projectId, commitId: $commitId }) {
+      project {
+        uuid
+      }
     }
   }
 `;
