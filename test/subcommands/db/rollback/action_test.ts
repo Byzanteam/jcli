@@ -17,7 +17,7 @@ import action from "@/subcommands/db/rollback/action.ts";
 
 describe("functions", () => {
   let api: APIClientTest;
-  let projectUuid: string;
+  let projectId: string;
 
   const options = {};
 
@@ -27,7 +27,7 @@ describe("functions", () => {
 
     await createProject({}, "my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
+    projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
 
     api.chdir("my_proj");
 
@@ -45,14 +45,14 @@ describe("functions", () => {
   });
 
   it("Call Jet to rollback database", async () => {
-    let executedMigrations = await api.jet.listMigrations({ projectUuid });
+    let executedMigrations = await api.jet.listMigrations({ projectId });
 
     assertEquals(executedMigrations.length, 1);
     assertEquals(executedMigrations[0], 202000000000);
 
     await action(options);
 
-    executedMigrations = await api.jet.listMigrations({ projectUuid });
+    executedMigrations = await api.jet.listMigrations({ projectId });
 
     assertEquals(executedMigrations.length, 0);
   });

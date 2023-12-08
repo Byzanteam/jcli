@@ -1,8 +1,8 @@
 export const rollbackDBMutation = `
-  mutation rollback(
-    $projectUuid: UUID!,
+  mutation databaseRollback(
+    $projectId: UUID!,
   ) {
-    rollback(input: { projectUuid: $projectUuid }) {
+    databaseRollback(input: { projectId: $projectId }) {
       lastMigratedVersion
     }
   }

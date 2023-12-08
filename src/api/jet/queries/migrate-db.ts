@@ -1,8 +1,8 @@
 export const migrateDBMutation = `
-  mutation migrate(
-    $projectUuid: UUID!,
+  mutation databaseMigrate(
+    $projectId: UUID!,
   ) {
-    migrate(input: { projectUuid: $projectUuid }) {
+    databaseMigrate(input: { projectId: $projectId }) {
       lastMigratedVersion
     }
   }

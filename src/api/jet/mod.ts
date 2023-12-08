@@ -61,7 +61,7 @@ export async function createProject(
   args: CreateProjectArgs,
   config: JcliConfigDotJSON,
 ): Promise<Project> {
-  const { createProject: { project: { uuid, name, title } } } = await query<
+  const { projectsCreateProject: { project: { id, name, title } } } = await query<
     CreateProjectMutationResponse
   >(
     createProjectMutation,
@@ -70,7 +70,7 @@ export async function createProject(
   );
 
   return {
-    id: uuid,
+    id: id,
     name,
     title,
     capabilities: [],
@@ -90,7 +90,7 @@ export async function updateConfiguration(
   config: JcliConfigDotJSON,
 ): Promise<void> {
   const args = {
-    projectId: rawArgs.projectUuid,
+    projectId: rawArgs.projectId,
     command: buildCommandArgument(rawArgs.command),
   };
 
@@ -218,7 +218,7 @@ export async function listMigrations(
     { first, after }: { first: number; after?: string },
   ) {
     return query<ListMigrationsQueryResponse>(listMigrationsQuery, {
-      projectId: buildNodeId(NodeType.project, args.projectUuid),
+      projectNodeId: buildNodeId(NodeType.project, args.projectId),
       first,
       after,
     }, config);

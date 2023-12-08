@@ -18,14 +18,14 @@ export interface ProjectObject {
 }
 
 export interface FunctionObject {
-  projectUuid: string;
+  projectId: string;
   name: string;
   title: string;
   files: FSTest;
 }
 
 export interface MigrationObject {
-  projectUuid: string;
+  projectId: string;
   version: number;
   name: string | null;
   content: string;
@@ -43,15 +43,15 @@ export interface DeployRequest {
 export interface JetTest extends Jet {
   hasProject(query: ProjectQuery): boolean;
   getProject(query: ProjectQuery): ProjectObject | undefined;
-  getConfigurationPatches(projectUuid: string): Array<ProjectPatch> | undefined;
-  getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined;
-  getMigrations(projectUuid: string): Map<number, MigrationObject> | undefined;
-  getDeployDraftFunctionsRequests(projectUuid: string): number | undefined;
+  getConfigurationPatches(projectId: string): Array<ProjectPatch> | undefined;
+  getFunctions(projectId: string): Map<string, FunctionObject> | undefined;
+  getMigrations(projectId: string): Map<number, MigrationObject> | undefined;
+  getDeployDraftFunctionsRequests(projectId: string): number | undefined;
   getCommitRequests(
-    projectUuid: string,
+    projectId: string,
   ): ReadonlyArray<CommitRequest> | undefined;
   getDeployRequests(
-    projectUuid: string,
+    projectId: string,
   ): ReadonlyArray<DeployRequest> | undefined;
 }
 
@@ -115,9 +115,9 @@ export function makeJet(): JetTest {
       });
     },
 
-    updateConfiguration({ projectUuid, command }): Promise<void> {
+    updateConfiguration({ projectId, command }): Promise<void> {
       return new Promise((resolve, reject) => {
-        if (projects.has(projectUuid)) {
+        if (projects.has(projectId)) {
           projectConfigurationPatches.push(command);
           resolve();
         } else {
@@ -126,12 +126,12 @@ export function makeJet(): JetTest {
       });
     },
 
-    createFunction({ projectUuid, name, title }): Promise<void> {
+    createFunction({ projectId, name, title }): Promise<void> {
       return new Promise((resolve, reject) => {
-        const functions = projectFunctions.get(projectUuid);
+        const functions = projectFunctions.get(projectId);
 
         if (functions && !functions.has(name)) {
-          functions.set(name, { projectUuid, name, title, files: makeFS() });
+          functions.set(name, { projectId, name, title, files: makeFS() });
           resolve();
         }
 
@@ -139,11 +139,11 @@ export function makeJet(): JetTest {
       });
     },
 
-    deleteFunction({ projectUuid, functionName }): Promise<void> {
-      const func = projectFunctions.get(projectUuid)?.get(functionName);
+    deleteFunction({ projectId, functionName }): Promise<void> {
+      const func = projectFunctions.get(projectId)?.get(functionName);
 
       if (func) {
-        const functions = projectFunctions.get(projectUuid);
+        const functions = projectFunctions.get(projectId);
         functions!.delete(functionName);
       }
 
@@ -163,8 +163,8 @@ export function makeJet(): JetTest {
       });
     },
 
-    async createFunctionFile({ projectUuid, functionName, path, code }) {
-      const func = projectFunctions.get(projectUuid)?.get(functionName);
+    async createFunctionFile({ projectId, functionName, path, code }) {
+      const func = projectFunctions.get(projectId)?.get(functionName);
 
       if (func) {
         if (func.files.hasFile(path)) {
@@ -187,9 +187,9 @@ export function makeJet(): JetTest {
     },
 
     async updateFunctionFile(
-      { projectUuid, functionName, path, code },
+      { projectId, functionName, path, code },
     ): Promise<void> {
-      const func = projectFunctions.get(projectUuid)?.get(functionName);
+      const func = projectFunctions.get(projectId)?.get(functionName);
 
       if (func) {
         if (!func.files.hasFile(path)) {
@@ -203,21 +203,21 @@ export function makeJet(): JetTest {
     },
 
     async deleteFunctionFile(
-      { projectUuid, functionName, path },
+      { projectId, functionName, path },
     ): Promise<void> {
-      const func = projectFunctions.get(projectUuid)?.get(functionName);
+      const func = projectFunctions.get(projectId)?.get(functionName);
 
       if (func?.files.hasFile(path)) {
         await func.files.remove(path);
       }
     },
 
-    createMigration({ projectUuid, version, name, content }): Promise<void> {
+    createMigration({ projectId, version, name, content }): Promise<void> {
       return new Promise((resolve, reject) => {
-        const migrations = projectMigrations.get(projectUuid);
+        const migrations = projectMigrations.get(projectId);
 
         if (migrations && !migrations.has(version)) {
-          migrations.set(version, { projectUuid, version, name, content });
+          migrations.set(version, { projectId, version, name, content });
           resolve();
         }
 
@@ -226,10 +226,10 @@ export function makeJet(): JetTest {
     },
 
     updateMigration(args): Promise<void> {
-      const { projectUuid, migrationVersion } = args;
+      const { projectId, migrationVersion } = args;
 
       return new Promise((resolve, reject) => {
-        const migration = projectMigrations.get(projectUuid)?.get(
+        const migration = projectMigrations.get(projectId)?.get(
           migrationVersion,
         );
 
@@ -249,27 +249,27 @@ export function makeJet(): JetTest {
       });
     },
 
-    deleteMigration({ projectUuid, migrationVersion }): Promise<void> {
-      const migration = projectMigrations.get(projectUuid)?.get(
+    deleteMigration({ projectId, migrationVersion }): Promise<void> {
+      const migration = projectMigrations.get(projectId)?.get(
         migrationVersion,
       );
 
       if (migration) {
-        const migrations = projectMigrations.get(projectUuid);
+        const migrations = projectMigrations.get(projectId);
         migrations!.delete(migrationVersion);
       }
 
       return Promise.resolve();
     },
 
-    migrateDB({ projectUuid }): Promise<void> {
+    migrateDB({ projectId }): Promise<void> {
       return new Promise((resolve, reject) => {
-        const migrations = projectMigrations.get(projectUuid);
+        const migrations = projectMigrations.get(projectId);
 
         if (!migrations) reject(new Error("Project not found"));
 
         const executedMigrations = projectExecutedMigrations.get(
-          projectUuid,
+          projectId,
         )!;
 
         let migrationsToExecute: Array<number>;
@@ -293,9 +293,9 @@ export function makeJet(): JetTest {
       });
     },
 
-    rollbackDB({ projectUuid }): Promise<void> {
+    rollbackDB({ projectId }): Promise<void> {
       return new Promise((resolve, reject) => {
-        const executedMigrations = projectExecutedMigrations.get(projectUuid);
+        const executedMigrations = projectExecutedMigrations.get(projectId);
 
         if (undefined === executedMigrations) {
           reject(new Error("Project not found"));
@@ -306,9 +306,9 @@ export function makeJet(): JetTest {
       });
     },
 
-    listMigrations({ projectUuid }): Promise<Array<number>> {
+    listMigrations({ projectId }): Promise<Array<number>> {
       return new Promise((resolve, reject) => {
-        const executedMigrations = projectExecutedMigrations.get(projectUuid);
+        const executedMigrations = projectExecutedMigrations.get(projectId);
 
         if (undefined === executedMigrations) {
           reject(new Error("Project not found"));
@@ -365,33 +365,33 @@ export function makeJet(): JetTest {
     },
 
     getConfigurationPatches(
-      projectUuid: string,
+      projectId: string,
     ): Array<ProjectPatch> | undefined {
-      if (projects.has(projectUuid)) {
+      if (projects.has(projectId)) {
         return projectConfigurationPatches;
       }
     },
 
-    getFunctions(projectUuid: string): Map<string, FunctionObject> | undefined {
-      return projectFunctions.get(projectUuid);
+    getFunctions(projectId: string): Map<string, FunctionObject> | undefined {
+      return projectFunctions.get(projectId);
     },
 
     getMigrations(
-      projectUuid: string,
+      projectId: string,
     ): Map<number, MigrationObject> | undefined {
-      return projectMigrations.get(projectUuid);
+      return projectMigrations.get(projectId);
     },
 
-    getDeployDraftFunctionsRequests(projectUuid) {
-      return deployDraftFunctionsRequests.get(projectUuid);
+    getDeployDraftFunctionsRequests(projectId) {
+      return deployDraftFunctionsRequests.get(projectId);
     },
 
-    getCommitRequests(projectUuid: string): Array<CommitRequest> | undefined {
-      return commitRequests.get(projectUuid);
+    getCommitRequests(projectId: string): Array<CommitRequest> | undefined {
+      return commitRequests.get(projectId);
     },
 
-    getDeployRequests(projectUuid: string): Array<DeployRequest> | undefined {
-      return deployRequests.get(projectUuid);
+    getDeployRequests(projectId: string): Array<DeployRequest> | undefined {
+      return deployRequests.get(projectId);
     },
   };
 }

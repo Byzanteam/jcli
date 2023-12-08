@@ -7,7 +7,7 @@ export default async function (_options: GlobalOptions) {
   try {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
-    await api.jet.migrateDB({ projectUuid: projectId });
+    await api.jet.migrateDB({ projectId });
   } finally {
     db.close();
   }

@@ -1,11 +1,11 @@
 export const createFunctionFileMutation = `
-  mutation createDraftFile(
-    $projectUuid: UUID!,
+  mutation lambdaCreateDraftFile(
+    $projectId: UUID!,
     $functionName: String!,
     $path: String!,
     $code: String!
   ) {
-    createDraftFile(input: { projectUuid: $projectUuid, functionName: $functionName, path: $path, code: $code }) {
+    lambdaCreateDraftFile(input: { projectId: $projectId, functionName: $functionName, path: $path, code: $code }) {
       draftFile {
         path
       }

@@ -232,7 +232,7 @@ export interface PushFunctionsOptions {
 async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
   fileChange: FileChange<T>,
   queries: PushFunctionQueries,
-  projectUuid: string,
+  projectId: string,
   functionName: string,
 ): Promise<void> {
   const {
@@ -244,7 +244,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
   switch (fileChange.type) {
     case "CREATED":
       await api.jet.createFunctionFile({
-        projectUuid,
+        projectId,
         functionName,
         path: fileChange.entry.serverPath,
         code: await fileChange.entry.content(),
@@ -259,7 +259,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
 
     case "UPDATED":
       await api.jet.updateFunctionFile({
-        projectUuid,
+        projectId,
         functionName,
         path: fileChange.entry.serverPath,
         code: await fileChange.entry.content(),
@@ -274,7 +274,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
 
     case "DELETED":
       await api.jet.deleteFunctionFile({
-        projectUuid,
+        projectId,
         functionName,
         path: fileChange.entry.serverPath,
       });
@@ -287,7 +287,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
 
 async function pushFunctionFiles(
   queries: PushFunctionQueries,
-  projectUuid: string,
+  projectId: string,
   functionName: string,
   options?: PushFunctionsOptions,
 ): Promise<void> {
@@ -303,7 +303,7 @@ async function pushFunctionFiles(
   ) {
     await Promise.allSettled(
       fileChanges.map((fileChange) =>
-        pushFunctionFile(fileChange, queries, projectUuid, functionName)
+        pushFunctionFile(fileChange, queries, projectId, functionName)
       ),
     );
   }
@@ -312,7 +312,7 @@ async function pushFunctionFiles(
 async function pushFunction(
   change: FunctionChange,
   queries: PushFunctionQueries,
-  projectUuid: string,
+  projectId: string,
   options?: PushFunctionsOptions,
 ): Promise<void> {
   const {
@@ -323,7 +323,7 @@ async function pushFunction(
   switch (change.type) {
     case "CREATED":
       await api.jet.createFunction({
-        projectUuid,
+        projectId,
         name: change.name,
         title: change.name,
       });
@@ -334,7 +334,7 @@ async function pushFunction(
 
     case "DELETED":
       await api.jet.deleteFunction({
-        projectUuid,
+        projectId,
         functionName: change.name,
       });
 
@@ -347,13 +347,13 @@ async function pushFunction(
   }
 
   if (change.type !== "DELETED") {
-    await pushFunctionFiles(queries, projectUuid, change.name, options);
+    await pushFunctionFiles(queries, projectId, change.name, options);
   }
 }
 
 export async function pushFunctions(
   queries: PushFunctionQueries,
-  projectUuid: string,
+  projectId: string,
   options?: PushFunctionsOptions,
 ): Promise<void> {
   for await (
@@ -364,7 +364,7 @@ export async function pushFunctions(
   ) {
     await Promise.allSettled(
       changes.map((change) =>
-        pushFunction(change, queries, projectUuid, options)
+        pushFunction(change, queries, projectId, options)
       ),
     );
   }

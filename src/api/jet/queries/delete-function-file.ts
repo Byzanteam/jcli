@@ -1,10 +1,10 @@
 export const deleteFunctionFileMutation = `
-  mutation deleteDraftFile(
-    $projectUuid: UUID!,
+  mutation lambdaDeleteDraftFile(
+    $projectId: UUID!,
     $functionName: String!,
     $path: String!
   ) {
-    deleteDraftFile(input: { projectUuid: $projectUuid, functionName: $functionName, path: $path }) {
+    lambdaDeleteDraftFile(input: { projectId: $projectId, functionName: $functionName, path: $path }) {
       draftFile {
         path
       }

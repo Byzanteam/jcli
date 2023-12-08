@@ -6,7 +6,7 @@ export const deployDraftFunctionsMutation = `
       projectId: $projectId
     }) {
       project {
-        uuid
+        id
       }
     }
   }

@@ -6,7 +6,7 @@ export const commitMutation = `
   ) {
     projectsCommit(input: { projectId: $projectId, message: $message, hash: $hash }) {
       commit {
-        uuid
+        id
       }
     }
   }

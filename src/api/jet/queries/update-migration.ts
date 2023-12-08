@@ -1,6 +1,6 @@
 export const updateMigrationMutation = `
-  mutation updateDraftMigration($input: UpdateDraftMigrationInput!) {
-    updateDraftMigration(input: $input) {
+  mutation databaseUpdateDraftMigration($input: DatabaseUpdateDraftMigrationInput!) {
+    databaseUpdateDraftMigration(input: $input) {
       draftMigration {
         version
       }

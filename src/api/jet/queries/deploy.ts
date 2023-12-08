@@ -5,7 +5,7 @@ export const deployMutation = `
   ) {
     projectsCheckout(input: { projectId: $projectId, commitId: $commitId }) {
       project {
-        uuid
+        id
       }
     }
   }
