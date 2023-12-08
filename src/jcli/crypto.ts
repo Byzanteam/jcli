@@ -10,5 +10,5 @@ export async function digest(
     await crypto.subtle.digest(digestAlgorithms, data),
   );
 
-  return base16.encode(hash);
+  return base16.encode(hash).toLowerCase();
 }

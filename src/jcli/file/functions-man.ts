@@ -25,7 +25,7 @@ interface FunctionFileEntryBase {
  * But push function files to Jet with scoped paths like:
  *   users/index.ts
  */
-function FunctionFileEntry(functionName: string) {
+export function FunctionFileEntry(functionName: string) {
   return class extends FileEntry implements FunctionFileEntryBase {
     readonly serverPath: string;
 

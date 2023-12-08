@@ -6,6 +6,8 @@ import { Project } from "@/jet/project.ts";
 import { FSTest, makeFS } from "@test/api/mod.ts";
 import { ProjectPatch } from "@/jcli/config/project-json.ts";
 
+import { digest } from "@/jcli/file/project.ts";
+
 interface ProjectQuery {
   projectName?: string;
   projectId?: string;
@@ -316,6 +318,10 @@ export function makeJet(): JetTest {
           resolve(executedMigrations);
         }
       });
+    },
+
+    configurationHash({ configuration }): Promise<string> {
+      return digest(configuration);
     },
 
     commit({ projectId, message, hash }): Promise<void> {

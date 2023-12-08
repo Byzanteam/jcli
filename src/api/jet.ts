@@ -2,6 +2,7 @@ import { getConfig } from "@/api/mod.ts";
 
 import {
   commit as doCommit,
+  configurationHash as doConfigurationHash,
   createFunction as doCreateFunction,
   createFunctionFile as doCreateFunctionFile,
   createMigration as doCreateMigration,
@@ -100,6 +101,10 @@ export interface ListMigrationsArgs {
   projectId: string;
 }
 
+export interface ConfigurationHashArgs {
+  configuration: string;
+}
+
 export interface CommitArgs {
   projectId: string;
   message?: string;
@@ -126,6 +131,7 @@ export interface Jet {
   migrateDB(args: MigrateDBArgs): Promise<void>;
   rollbackDB(args: RollbackDBArgs): Promise<void>;
   listMigrations(args: ListMigrationsArgs): Promise<Array<number>>;
+  configurationHash(args: ConfigurationHashArgs): Promise<string>;
   commit(args: CommitArgs): Promise<void>;
   deploy(args: DeployArgs): Promise<void>;
 }
@@ -200,6 +206,10 @@ export const jet: Jet = {
   deleteMigration: logDebugMetricsWrapper(
     doDeleteMigration,
     "delete migration",
+  ),
+  configurationHash: logDebugMetricsWrapper(
+    doConfigurationHash,
+    "retrieve configuration hash",
   ),
   commit: logDebugMetricsWrapper(doCommit, "commit"),
   deploy: logDebugMetricsWrapper(doDeploy, "deploy"),

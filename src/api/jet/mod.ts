@@ -8,6 +8,7 @@ import {
 import { Project } from "@/jet/project.ts";
 import {
   CommitArgs,
+  ConfigurationHashArgs,
   CreateFunctionArgs,
   CreateFunctionFileArgs,
   CreateMigrationArgs,
@@ -53,6 +54,11 @@ import {
   ListMigrationsQueryResponse,
 } from "@/api/jet/queries/list-migrations.ts";
 
+import {
+  configurationHashQuery,
+  ConfigurationHashQueryResponse,
+} from "./queries/configuration-hash.ts";
+
 import { commitMutation } from "@/api/jet/queries/commit.ts";
 
 import { deployMutation } from "@/api/jet/queries/deploy.ts";
@@ -61,13 +67,14 @@ export async function createProject(
   args: CreateProjectArgs,
   config: JcliConfigDotJSON,
 ): Promise<Project> {
-  const { projectsCreateProject: { project: { id, name, title } } } = await query<
-    CreateProjectMutationResponse
-  >(
-    createProjectMutation,
-    args,
-    config,
-  );
+  const { projectsCreateProject: { project: { id, name, title } } } =
+    await query<
+      CreateProjectMutationResponse
+    >(
+      createProjectMutation,
+      args,
+      config,
+    );
 
   return {
     id: id,
@@ -244,6 +251,19 @@ export async function listMigrations(
   }
 
   return versions;
+}
+
+export async function configurationHash(
+  args: ConfigurationHashArgs,
+  config: JcliConfigDotJSON,
+): Promise<string> {
+  const response = await query<ConfigurationHashQueryResponse>(
+    configurationHashQuery,
+    args,
+    config,
+  );
+
+  return response.projectsConfigurationHash;
 }
 
 export async function commit(args: CommitArgs, config: JcliConfigDotJSON) {
