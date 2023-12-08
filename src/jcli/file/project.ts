@@ -1,13 +1,14 @@
-import { DBClass } from "@/api/db.ts";
+import { api, DBClass } from "@/api/mod.ts";
 
 import { MigrationFileEntry } from "./migrations-man.ts";
+import { FunctionFileEntry } from "./functions-man.ts";
 import { digest as doDigest } from "@/jcli/crypto.ts";
 
 import { join } from "path";
 
 const encoder = new TextEncoder();
 
-function digest(data: string): Promise<string> {
+export function digest(data: string): Promise<string> {
   return doDigest(encoder.encode(data));
 }
 
@@ -23,8 +24,10 @@ async function digestMigrations(db: DBClass): Promise<string> {
   const digests: Array<string> = [];
 
   for (const e of entries) {
-    const version = new MigrationFileEntry(e.path).version;
-    digests.push(await digest(`${version}${e.hash}`));
+    const entry = new MigrationFileEntry(e.path);
+    const content = await entry.content();
+
+    digests.push(await digest(`${entry.version}${entry.name}${content}`));
   }
 
   return composeDigests(digests);
@@ -39,37 +42,49 @@ async function digestFunctions(db: DBClass): Promise<string> {
 
   for (const e of entries) {
     const [, functionName, ...relativePath] = e.path.split("/");
+    const FileEntryConstructor = FunctionFileEntry(functionName);
 
     if (!functionFileHashes.has(functionName)) {
       functionFileHashes.set(functionName, []);
     }
 
+    const entry = new FileEntryConstructor(join(...relativePath));
+
     functionFileHashes.get(functionName)!.push(
-      await digestFunction(relativePath, e.hash),
+      await digestFunctionFile(relativePath, await entry.content()),
     );
   }
 
   const functionHashes: Array<string> = [];
 
-  for (const [functionName, hashes] of functionFileHashes) {
-    functionHashes.push(
-      await digest(`${functionName}${composeDigests(hashes)}`),
-    );
+  for (const hashes of functionFileHashes.values()) {
+    functionHashes.push(await composeDigests(hashes));
   }
 
   return composeDigests(functionHashes);
 }
 
-function digestFunction(
+function digestFunctionFile(
   relativePath: ReadonlyArray<string>,
-  hash: string,
+  content: string,
 ): Promise<string> {
-  return digest(`${join("/", ...relativePath)}${hash}`);
+  return digest(`${join("/", ...relativePath)}${content}`);
+}
+
+function getConfiguration(db: DBClass): string {
+  const [{ data: configuration }] = db.queryEntries<{ data: string }>(
+    "SELECT data FROM configuration",
+  );
+
+  return configuration;
 }
 
 export async function digestProject(db: DBClass): Promise<string> {
+  const configurationHash = await api.jet.configurationHash({
+    configuration: getConfiguration(db),
+  });
   const migrationsHash = await digestMigrations(db);
   const functionsHash = await digestFunctions(db);
 
-  return digest(`${migrationsHash}${functionsHash}`);
+  return composeDigests([configurationHash, migrationsHash, functionsHash]);
 }
