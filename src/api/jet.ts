@@ -30,32 +30,32 @@ export interface CreateProjectArgs {
 }
 
 export interface UpdateConfigurationArgs {
-  projectUuid: string;
+  projectId: string;
   command: ProjectPatch;
 }
 
 export interface CreateFunctionArgs {
-  projectUuid: string;
+  projectId: string;
   name: string;
   title: string;
 }
 
 export interface CreateFunctionFileArgs {
-  projectUuid: string;
+  projectId: string;
   functionName: string;
   path: string;
   code: string;
 }
 
 export interface UpdateFunctionFileArgs {
-  projectUuid: string;
+  projectId: string;
   functionName: string;
   path: string;
   code: string;
 }
 
 export interface DeleteFunctionFileArgs {
-  projectUuid: string;
+  projectId: string;
   functionName: string;
   path: string;
 }
@@ -65,39 +65,39 @@ export interface DeployDraftFunctionsArgs {
 }
 
 export interface DeleteFunctionArgs {
-  projectUuid: string;
+  projectId: string;
   functionName: string;
 }
 
 export interface CreateMigrationArgs {
-  projectUuid: string;
+  projectId: string;
   version: number;
   name: string | null;
   content: string;
 }
 
 export interface UpdateMigrationArgs {
-  projectUuid: string;
+  projectId: string;
   migrationVersion: number;
   name?: string | null;
   content?: string;
 }
 
 export interface DeleteMigrationArgs {
-  projectUuid: string;
+  projectId: string;
   migrationVersion: number;
 }
 
 export interface MigrateDBArgs {
-  projectUuid: string;
+  projectId: string;
 }
 
 export interface RollbackDBArgs {
-  projectUuid: string;
+  projectId: string;
 }
 
 export interface ListMigrationsArgs {
-  projectUuid: string;
+  projectId: string;
 }
 
 export interface CommitArgs {

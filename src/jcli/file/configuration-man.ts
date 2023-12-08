@@ -44,14 +44,14 @@ export function prepareQueries(db: DBClass): PushConfigurationQueries {
 
 export async function pushConfiguration(
   queries: PushConfigurationQueries,
-  projectUuid: string,
+  projectId: string,
 ): Promise<void> {
   const configWas = getConfigurationFromDB(queries);
   const config = await getConfigurationFromFile();
   const command = configWas.diff(config);
 
   if (!isPatchEmpty(command)) {
-    await api.jet.updateConfiguration({ projectUuid, command });
+    await api.jet.updateConfiguration({ projectId, command });
     queries.updateConfigurationQuery.execute({ data: JSON.stringify(config) });
   }
 }

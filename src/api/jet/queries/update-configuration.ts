@@ -1,11 +1,11 @@
 export const updateConfigurationMutation = `
-  mutation updateConfiguration(
+  mutation projectsUpdateConfiguration(
     $projectId: UUID!,
-    $command: UpdateDraftConfigurationCommandInput!
+    $command: ProjectsUpdateDraftConfigurationCommandInput!
   ) {
-    updateConfiguration(input: { projectId: $projectId, command: $command }) {
+    projectsUpdateConfiguration(input: { projectId: $projectId, command: $command }) {
       project {
-        uuid
+        id
       }
     }
   }

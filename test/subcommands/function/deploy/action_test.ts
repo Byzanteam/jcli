@@ -15,7 +15,7 @@ import action from "@/subcommands/function/deploy/action.ts";
 
 describe("deploy", () => {
   let api: APIClientTest;
-  let projectUuid: string;
+  let projectId: string;
   const options = {};
 
   beforeEach(async () => {
@@ -24,7 +24,7 @@ describe("deploy", () => {
 
     await createProject({}, "my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
+    projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
 
     api.chdir("my_proj");
   });
@@ -37,7 +37,7 @@ describe("deploy", () => {
     await action(options);
 
     const deployRequests = api.jet.getDeployDraftFunctionsRequests(
-      projectUuid,
+      projectId,
     )!;
 
     assertEquals(deployRequests, 1);

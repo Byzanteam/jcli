@@ -16,7 +16,7 @@ import action from "@/subcommands/push/action.ts";
 
 describe("configuration", () => {
   let api: APIClientTest;
-  let projectUuid: string;
+  let projectId: string;
 
   const options = { onlyConfiguration: true };
 
@@ -28,7 +28,7 @@ describe("configuration", () => {
 
     api.chdir("my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
+    projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
   });
 
   afterEach(() => {
@@ -66,7 +66,7 @@ describe("configuration", () => {
     });
 
     it("pushes to jet", () => {
-      const patches = api.jet.getConfigurationPatches(projectUuid);
+      const patches = api.jet.getConfigurationPatches(projectId);
 
       assertNotEquals(patches, undefined);
       assertEquals(patches!.length, 1);
@@ -142,7 +142,7 @@ describe("configuration", () => {
         await action(options);
       }, "Invalid configuration");
 
-      const patches = api.jet.getConfigurationPatches(projectUuid);
+      const patches = api.jet.getConfigurationPatches(projectId);
 
       assertEquals(patches!.length, 0);
 

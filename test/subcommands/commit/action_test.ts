@@ -16,7 +16,7 @@ import action from "@/subcommands/commit/action.ts";
 
 describe("commit", () => {
   let api: APIClientTest;
-  let projectUuid: string;
+  let projectId: string;
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -24,7 +24,7 @@ describe("commit", () => {
 
     await createProject({}, "my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
+    projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
 
     api.chdir("my_proj");
 
@@ -44,7 +44,7 @@ describe("commit", () => {
   it("commit without message", async () => {
     await action({});
 
-    const commitRequests = api.jet.getCommitRequests(projectUuid)!;
+    const commitRequests = api.jet.getCommitRequests(projectId)!;
 
     assertEquals(commitRequests.length, 1);
     assertEquals(commitRequests[0].message, undefined);
@@ -53,7 +53,7 @@ describe("commit", () => {
   it("commit with message", async () => {
     await action({ message: "commit message" });
 
-    const commitRequests = api.jet.getCommitRequests(projectUuid)!;
+    const commitRequests = api.jet.getCommitRequests(projectId)!;
 
     assertEquals(commitRequests.length, 1);
     assertEquals(commitRequests[0].message, "commit message");

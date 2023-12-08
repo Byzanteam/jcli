@@ -1,10 +1,10 @@
 export const createFunctionMutation = `
-  mutation createDraftFunction(
-    $projectUuid: UUID!,
+  mutation lambdaCreateDraftFunction(
+    $projectId: UUID!,
     $name: String!,
     $title: String!,
   ) {
-    createDraftFunction(input: { projectUuid: $projectUuid, name: $name, title: $title}) {
+    lambdaCreateDraftFunction(input: { projectId: $projectId, name: $name, title: $title}) {
       draftFunction {
         name
       }

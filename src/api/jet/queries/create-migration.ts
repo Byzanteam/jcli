@@ -1,11 +1,11 @@
 export const createMigrationMutation = `
-  mutation createDraftMigration(
-    $projectUuid: UUID!,
+  mutation databaseCreateDraftMigration(
+    $projectId: UUID!,
     $version: Int!,
     $name: String,
     $content: String!,
   ) {
-    createDraftMigration(input: { projectUuid: $projectUuid, version: $version, name: $name, content: $content}) {
+    databaseCreateDraftMigration(input: { projectId: $projectId, version: $version, name: $name, content: $content}) {
       draftMigration {
         version
       }

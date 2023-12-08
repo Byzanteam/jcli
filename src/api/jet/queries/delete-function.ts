@@ -1,9 +1,9 @@
 export const deleteFunctionMutation = `
-  mutation deleteDraftFunction(
-    $projectUuid: UUID!,
+  mutation lambdaDeleteDraftFunction(
+    $projectId: UUID!,
     $functionName: String!,
   ) {
-    deleteDraftFunction(input: { projectUuid: $projectUuid, functionName: $FunctionName}) {
+    lambdaDeleteDraftFunction(input: { projectId: $projectId, functionName: $FunctionName}) {
       draftFunction {
         name
       }

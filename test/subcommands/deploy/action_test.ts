@@ -17,7 +17,7 @@ import action from "@/subcommands/deploy/action.ts";
 
 describe("commit", () => {
   let api: APIClientTest;
-  let projectUuid: string;
+  let projectId: string;
   const options = {};
 
   beforeEach(async () => {
@@ -26,7 +26,7 @@ describe("commit", () => {
 
     await createProject({}, "my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
+    projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
 
     api.chdir("my_proj");
 
@@ -48,7 +48,7 @@ describe("commit", () => {
   it("deploy latest version", async () => {
     await action(options);
 
-    const deployRequests = api.jet.getDeployRequests(projectUuid)!;
+    const deployRequests = api.jet.getDeployRequests(projectId)!;
 
     assertEquals(deployRequests.length, 1);
     assertEquals(deployRequests[0].commitId, undefined);
@@ -58,7 +58,7 @@ describe("commit", () => {
     const commitId = crypto.randomUUID();
     await action(options, commitId);
 
-    const deployRequests = api.jet.getDeployRequests(projectUuid)!;
+    const deployRequests = api.jet.getDeployRequests(projectId)!;
 
     assertEquals(deployRequests.length, 1);
     assertEquals(deployRequests[0].commitId, commitId);

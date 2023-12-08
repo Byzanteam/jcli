@@ -1,9 +1,9 @@
 export const deleteMigrationMutation = `
-  mutation deleteDraftMigration(
-    $projectUuid: UUID!,
+  mutation databaseDeleteDraftMigration(
+    $projectId: UUID!,
     $migrationVersion: Int!,
   ) {
-    deleteDraftMigration(input: { projectUuid: $projectUuid, migrationVersion: $migrationVersion}) {
+    databaseDeleteDraftMigration(input: { projectId: $projectId, migrationVersion: $migrationVersion}) {
       draftMigration {
         version
       }

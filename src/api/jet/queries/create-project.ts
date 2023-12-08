@@ -1,11 +1,11 @@
 export const createProjectMutation = `
-  mutation createProjectMutation(
+  mutation projectsCreateProjectMutation(
     $name: String!,
     $title: String!
   ) {
-    createProject(input: { name: $name, title: $title }) {
+    projectsCreateProject(input: { name: $name, title: $title }) {
       project {
-        uuid
+        id
         name
         title
       }
@@ -14,9 +14,9 @@ export const createProjectMutation = `
 `;
 
 export interface CreateProjectMutationResponse {
-  createProject: {
+  projectsCreateProject: {
     project: {
-      uuid: string;
+      id: string;
       name: string;
       title: string;
     };

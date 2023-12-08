@@ -54,9 +54,7 @@ export default async function (_options: GlobalOptions): Promise<void> {
 
   try {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
-    const executedMigrations = await api.jet.listMigrations({
-      projectUuid: projectId,
-    });
+    const executedMigrations = await api.jet.listMigrations({ projectId });
 
     await renderMigrations(db, executedMigrations);
   } finally {

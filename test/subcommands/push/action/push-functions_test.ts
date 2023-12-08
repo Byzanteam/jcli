@@ -12,7 +12,7 @@ import { digest } from "@/jcli/crypto.ts";
 
 describe("functions", () => {
   let api: APIClientTest;
-  let projectUuid: string;
+  let projectId: string;
 
   const options = { onlyFunctions: true };
 
@@ -24,7 +24,7 @@ describe("functions", () => {
 
     api.chdir("my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
+    projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
   });
 
   afterEach(() => {
@@ -38,7 +38,7 @@ describe("functions", () => {
     });
 
     it("pushes to jet", () => {
-      const functions = api.jet.getFunctions(projectUuid)!;
+      const functions = api.jet.getFunctions(projectId)!;
 
       assertEquals(functions.size, 1);
 
@@ -72,7 +72,7 @@ describe("functions", () => {
     });
 
     it("pushes to jet", () => {
-      const functions = api.jet.getFunctions(projectUuid)!;
+      const functions = api.jet.getFunctions(projectId)!;
 
       assertEquals(functions.size, 1);
       assertEquals(functions.get("my_func1"), undefined);
@@ -121,7 +121,7 @@ describe("functions", () => {
       });
 
       it("pushes to jet", async () => {
-        const func = api.jet.getFunctions(projectUuid)!.get("my_func")!;
+        const func = api.jet.getFunctions(projectId)!.get("my_func")!;
 
         assert(func.files.hasFile(`index.ts`));
         assertEquals(
@@ -180,7 +180,7 @@ describe("functions", () => {
       });
 
       it("pushes to jet", async () => {
-        const func = api.jet.getFunctions(projectUuid)!.get("my_func")!;
+        const func = api.jet.getFunctions(projectId)!.get("my_func")!;
 
         assert(func.files.hasFile(`index.ts`));
         assertEquals(
@@ -237,7 +237,7 @@ describe("functions", () => {
       });
 
       it("pushes to jet", () => {
-        const func = api.jet.getFunctions(projectUuid)!.get("my_func")!;
+        const func = api.jet.getFunctions(projectId)!.get("my_func")!;
 
         assert(!func.files.hasFile(`${FUNC_PATH}/users/mod.ts`));
       });

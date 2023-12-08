@@ -1,10 +1,10 @@
 export const listMigrationsQuery = `
   query ListMigrations(
-    $projectId: ID!,
+    $projectNodeId: ID!,
     $first: Int!,
     $after: String
   ) {
-    node(id: $projectId) {
+    node(nodeId: $projectNodeId) {
       ... on ProjectsProject {
         migrations(first: $first, after: $after) {
           nodes {

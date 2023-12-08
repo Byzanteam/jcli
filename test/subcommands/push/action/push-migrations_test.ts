@@ -12,7 +12,7 @@ import { digest } from "@/jcli/crypto.ts";
 
 describe("migrations", () => {
   let api: APIClientTest;
-  let projectUuid: string;
+  let projectId: string;
 
   const options = { onlyMigrations: true };
 
@@ -24,7 +24,7 @@ describe("migrations", () => {
 
     api.chdir("my_proj");
 
-    projectUuid = api.jet.getProject({ projectName: "my_proj" })!.id;
+    projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
   });
 
   afterEach(() => {
@@ -47,7 +47,7 @@ describe("migrations", () => {
     });
 
     it("pushes to jet", () => {
-      const migrations = api.jet.getMigrations(projectUuid)!;
+      const migrations = api.jet.getMigrations(projectId)!;
 
       assertEquals(migrations.size, 3);
 
@@ -105,7 +105,7 @@ describe("migrations", () => {
     });
 
     it("pushes to jet", () => {
-      const migrations = api.jet.getMigrations(projectUuid)!;
+      const migrations = api.jet.getMigrations(projectId)!;
 
       assertEquals(migrations.size, 3);
       assertEquals(migrations.get(202301010000)?.content, "2");
@@ -161,7 +161,7 @@ describe("migrations", () => {
     });
 
     it("pushes to jet", () => {
-      const migrations = api.jet.getMigrations(projectUuid)!;
+      const migrations = api.jet.getMigrations(projectId)!;
 
       assertEquals(migrations.size, 1);
       assertEquals(migrations.get(202301010000), undefined);

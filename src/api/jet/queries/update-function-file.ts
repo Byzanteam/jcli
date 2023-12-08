@@ -1,11 +1,11 @@
 export const updateFunctionFileMutation = `
-  mutation updateDraftFile(
-    $projectUuid: UUID!,
+  mutation lambdaUpdateDraftFile(
+    $projectId: UUID!,
     $functionName: String!,
     $path: String!,
     $code: String!
   ) {
-    updateDraftFile(input: { projectUuid: $projectUuid, functionName: $functionName, path: $path, code: $code}) {
+    lambdaUpdateDraftFile(input: { projectId: $projectId, functionName: $functionName, path: $path, code: $code}) {
       draftFile {
         path
       }

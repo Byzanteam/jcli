@@ -206,7 +206,7 @@ export function prepareQueries(db: DBClass): PushMigrationQueries {
 async function pushMigrationsChange(
   change: FileStatus<MigrationFileEntry>,
   queries: PushMigrationQueries,
-  projectUuid: string,
+  projectId: string,
 ) {
   const {
     createMigrationQuery,
@@ -217,7 +217,7 @@ async function pushMigrationsChange(
   switch (change.type) {
     case "CREATED":
       await api.jet.createMigration({
-        projectUuid,
+        projectId,
         version: change.entry.version,
         name: change.entry.name,
         content: await change.entry.content(),
@@ -232,7 +232,7 @@ async function pushMigrationsChange(
 
     case "UPDATED":
       await api.jet.updateMigration({
-        projectUuid,
+        projectId,
         migrationVersion: change.entry.version,
         ...await change.entry.getDiff(),
       });
@@ -247,7 +247,7 @@ async function pushMigrationsChange(
 
     case "DELETED":
       await api.jet.deleteMigration({
-        projectUuid,
+        projectId,
         migrationVersion: change.entry.version,
       });
 
@@ -263,7 +263,7 @@ export interface PushMigrationsOptions {
 
 export async function pushMigrations(
   queries: PushMigrationQueries,
-  projectUuid: string,
+  projectId: string,
   options?: PushMigrationsOptions,
 ): Promise<void> {
   for await (
@@ -274,7 +274,7 @@ export async function pushMigrations(
   ) {
     await Promise.allSettled(
       fileChanges.map((change) =>
-        pushMigrationsChange(change, queries, projectUuid)
+        pushMigrationsChange(change, queries, projectId)
       ),
     );
   }
