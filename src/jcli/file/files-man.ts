@@ -10,7 +10,8 @@ export class FileEntry {
 
   async digest(): Promise<string> {
     if (undefined === this._digest) {
-      const bytes = await api.fs.readFile(this.path);
+      const path = await api.fs.realPath(this.path);
+      const bytes = await api.fs.readFile(path);
       this._digest = await digest(bytes);
       this.#content = new TextDecoder().decode(bytes);
     }
@@ -20,7 +21,8 @@ export class FileEntry {
 
   async content(): Promise<string> {
     if (undefined === this.#content) {
-      this.#content = await api.fs.readTextFile(this.path);
+      const path = await api.fs.realPath(this.path);
+      this.#content = await api.fs.readTextFile(path);
     }
 
     return this.#content;
@@ -49,7 +51,6 @@ function filterFileByExtension(
   entry: DirEntry,
   extension?: ReadonlyArray<string> | string,
 ): boolean {
-  if (!entry.isFile) return false;
   if (undefined === extension) return true;
   return hasExtension(entry.name, extension);
 }
@@ -118,7 +119,9 @@ export async function* listFiles(
   path: string,
   extension?: ReadonlyArray<string> | string,
 ): AsyncIterable<string> {
-  for await (const entry of api.fs.readDir(path)) {
+  const realPath = await api.fs.realPath(path);
+
+  for await (const entry of api.fs.readDir(realPath)) {
     if (filterFileByExtension(entry, extension)) {
       yield entry.name;
     }
@@ -155,8 +158,10 @@ export async function* listFilesRec(
   path: string,
   extension?: ReadonlyArray<string> | string,
 ): AsyncIterable<string> {
-  for await (const entry of api.fs.readDir(path)) {
-    if (entry.isDirectory) {
+  const realPath = await api.fs.realPath(path);
+
+  for await (const entry of api.fs.readDir(realPath)) {
+    if (await isDirectory(entry, path)) {
       for await (
         const subEntry of listFilesRec(join(path, entry.name), extension)
       ) {
@@ -166,4 +171,16 @@ export async function* listFilesRec(
       yield entry.name;
     }
   }
+}
+
+async function isDirectory(entry: DirEntry, prefix: string): Promise<boolean> {
+  if (entry.isDirectory) return true;
+
+  if (entry.isSymlink) {
+    const realPath = await api.fs.realPath(join(prefix, entry.name));
+    const info = await api.fs.lstat(realPath);
+    return info.isDirectory;
+  }
+
+  return false;
 }

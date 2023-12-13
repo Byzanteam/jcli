@@ -18,7 +18,8 @@ export class Config<T> {
 
   async get() {
     if (undefined === this.#data) {
-      const data = await api.fs.readTextFile(this.#path);
+      const path = await api.fs.realPath(this.#path);
+      const data = await api.fs.readTextFile(path);
       const deserializedData = await this.#serializer.deserialize(data);
       this.#data = deserializedData;
     }

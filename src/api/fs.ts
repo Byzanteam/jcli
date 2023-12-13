@@ -10,6 +10,8 @@ export interface FS {
     options?: WriteFileOptions,
   ): Promise<void>;
   readDir(path: string): AsyncIterable<DirEntry>;
+  lstat(path: string): Promise<FileInfo>;
+  realPath(path: string): Promise<string>;
 }
 
 export interface MkdirOptions {
@@ -24,6 +26,13 @@ export interface DirEntry {
   name: string;
   isFile: boolean;
   isDirectory: boolean;
+  isSymlink: boolean;
+}
+
+export interface FileInfo {
+  isFile: boolean;
+  isDirectory: boolean;
+  isSymlink: boolean;
 }
 
 export const fs: FS = {
@@ -42,4 +51,6 @@ export const fs: FS = {
   remove: Deno.remove,
   writeTextFile: Deno.writeTextFile,
   readDir: Deno.readDir,
+  lstat: Deno.lstat,
+  realPath: Deno.realPath,
 };
