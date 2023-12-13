@@ -62,7 +62,9 @@ async function* diffFunctions(
   const existingFunctionNames = listFunctionNamesQuery();
   const newFunctionNames = new Set<string>();
 
-  for await (const e of api.fs.readDir(BASE_PATH)) {
+  const basePath = await api.fs.realPath(BASE_PATH);
+
+  for await (const e of api.fs.readDir(basePath)) {
     if (e.isDirectory) {
       newFunctionNames.add(e.name);
 

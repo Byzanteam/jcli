@@ -1,4 +1,10 @@
-import { DirEntry, FS, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
+import {
+  DirEntry,
+  FileInfo,
+  FS,
+  MkdirOptions,
+  WriteFileOptions,
+} from "@/api/fs.ts";
 
 class File {
   content = "";
@@ -111,6 +117,7 @@ class Directory {
             name,
             isDirectory: directoryOrFile instanceof Directory,
             isFile: directoryOrFile instanceof File,
+            isSymlink: false,
           };
         }
       },
@@ -229,6 +236,26 @@ export function makeFS(): FSTest {
         cwd.remove(normalizedPath);
         resolve();
       });
+    },
+
+    lstat(path: string): Promise<FileInfo> {
+      return new Promise((resolve, reject) => {
+        const directoryOrFile = cwd.getChildRec(Directory.normalizePath(path));
+
+        if (directoryOrFile) {
+          resolve({
+            isDirectory: directoryOrFile instanceof Directory,
+            isFile: directoryOrFile instanceof File,
+            isSymlink: false,
+          });
+        } else {
+          reject(new Error(`No such file or directory: ${path}`));
+        }
+      });
+    },
+
+    realPath(path: string): Promise<string> {
+      return Promise.resolve(path);
     },
 
     chdir(path: string): void {
