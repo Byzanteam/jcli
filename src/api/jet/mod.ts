@@ -21,6 +21,8 @@ import {
   ListMigrationsArgs,
   MigrateDBArgs,
   RollbackDBArgs,
+  SetEnvironmentVariableArgs,
+  UnsetEnvironmentVariableArgs,
   UpdateConfigurationArgs,
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
@@ -62,6 +64,10 @@ import {
 import { commitMutation } from "@/api/jet/queries/commit.ts";
 
 import { deployMutation } from "@/api/jet/queries/deploy.ts";
+
+import { setEnvironmentVariableMutation } from "@/api/jet/queries/set-environment-variable.ts";
+
+import { unsetEnvironmentVariableMutation } from "@/api/jet/queries/unset-environment-variable.ts";
 
 export async function createProject(
   args: CreateProjectArgs,
@@ -272,4 +278,18 @@ export async function commit(args: CommitArgs, config: JcliConfigDotJSON) {
 
 export async function deploy(args: DeployArgs, config: JcliConfigDotJSON) {
   await query(deployMutation, args, config);
+}
+
+export async function setEnvironmentVariable(
+  args: SetEnvironmentVariableArgs,
+  config: JcliConfigDotJSON,
+) {
+  await query(setEnvironmentVariableMutation, args, config);
+}
+
+export async function unsetEnvironmentVariable(
+  args: UnsetEnvironmentVariableArgs,
+  config: JcliConfigDotJSON,
+) {
+  await query(unsetEnvironmentVariableMutation, args, config);
 }

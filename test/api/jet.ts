@@ -55,6 +55,10 @@ export interface JetTest extends Jet {
   getDeployRequests(
     projectId: string,
   ): ReadonlyArray<DeployRequest> | undefined;
+  getEnvironmentVariables(
+    projectId: string,
+    environmentName: "DEVELOPMENT" | "PRODUCTION",
+  ): Map<string, string> | undefined;
 }
 
 export function makeJet(): JetTest {
@@ -77,6 +81,11 @@ export function makeJet(): JetTest {
   const commitRequests = new Map<string, Array<CommitRequest>>();
 
   const deployRequests = new Map<string, Array<DeployRequest>>();
+
+  const environmentVariables = new Map<
+    string,
+    Map<"DEVELOPMENT" | "PRODUCTION", Map<string, string>>
+  >();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -110,6 +119,10 @@ export function makeJet(): JetTest {
           deployDraftFunctionsRequests.set(id, 0);
           commitRequests.set(id, []);
           deployRequests.set(id, []);
+          environmentVariables.set(
+            id,
+            new Map([["DEVELOPMENT", new Map()], ["PRODUCTION", new Map()]]),
+          );
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
           reject(new Error(`Project ${name} has already exist.`));
@@ -398,6 +411,46 @@ export function makeJet(): JetTest {
 
     getDeployRequests(projectId: string): Array<DeployRequest> | undefined {
       return deployRequests.get(projectId);
+    },
+
+    setEnvironmentVariable(
+      { projectId, environmentName, name, value },
+    ): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const variables = environmentVariables.get(projectId);
+
+        if (undefined === variables) {
+          reject(new Error("Project not found"));
+        } else {
+          variables.get(environmentName)!.set(name, value);
+          resolve();
+        }
+      });
+    },
+
+    unsetEnvironmentVariable(
+      { projectId, environmentName, name },
+    ): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const variables = environmentVariables.get(projectId);
+
+        if (undefined === variables) {
+          reject(new Error("Project not found"));
+        } else {
+          if (variables.get(environmentName)!.delete(name)) {
+            resolve();
+          } else {
+            reject(new Error("Variable not found"));
+          }
+        }
+      });
+    },
+
+    getEnvironmentVariables(
+      projectId,
+      environmentName,
+    ): Map<string, string> | undefined {
+      return environmentVariables.get(projectId)?.get(environmentName);
     },
   };
 }
