@@ -12,6 +12,7 @@ import {
   deleteMigration as doDeleteMigration,
   deploy as doDeploy,
   deployDraftFunctions as doDeployDraftFunctions,
+  listEnvironmentVariables as doListEnvironmentVariables,
   listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
   rollbackDB as doRollbackDB,
@@ -131,6 +132,11 @@ export interface UnsetEnvironmentVariableArgs {
   name: string;
 }
 
+export interface ListEnvironmentVariablesArgs {
+  projectId: string;
+  environmentName: "DEVELOPMENT" | "PRODUCTION";
+}
+
 export interface Jet {
   createProject(args: CreateProjectArgs): Promise<Project>;
   updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
@@ -151,6 +157,9 @@ export interface Jet {
   deploy(args: DeployArgs): Promise<void>;
   setEnvironmentVariable(args: SetEnvironmentVariableArgs): Promise<void>;
   unsetEnvironmentVariable(args: UnsetEnvironmentVariableArgs): Promise<void>;
+  listEnvironmentVariables(
+    args: ListEnvironmentVariablesArgs,
+  ): Promise<Array<{ name: string; value: string }>>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -237,5 +246,9 @@ export const jet: Jet = {
   unsetEnvironmentVariable: logDebugMetricsWrapper(
     doUnsetEnvironmentVariable,
     "unset environment variable",
+  ),
+  listEnvironmentVariables: logDebugMetricsWrapper(
+    doListEnvironmentVariables,
+    "list environment variables",
   ),
 };

@@ -446,6 +446,24 @@ export function makeJet(): JetTest {
       });
     },
 
+    listEnvironmentVariables(
+      { projectId, environmentName },
+    ): Promise<Array<{ name: string; value: string }>> {
+      return new Promise((resolve, reject) => {
+        const variables = environmentVariables.get(projectId);
+
+        if (undefined === variables) {
+          reject(new Error("Project not found"));
+        } else {
+          resolve(
+            Array.from(variables.get(environmentName)!).map(([name, value]) => {
+              return { name, value };
+            }),
+          );
+        }
+      });
+    },
+
     getEnvironmentVariables(
       projectId,
       environmentName,
