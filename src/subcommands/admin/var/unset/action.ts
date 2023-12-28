@@ -1,0 +1,18 @@
+import { GlobalOptions } from "@/args.ts";
+import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
+
+export default async function (_options: GlobalOptions, name: string) {
+  const db = await api.db.connect(PROJECT_DB_PATH);
+
+  try {
+    const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
+
+    await Promise.allSettled([api.jet.unsetEnvironmentVariable({
+      projectId,
+      environmentName: "DEVELOPMENT",
+      name,
+    })]);
+  } finally {
+    db.close();
+  }
+}

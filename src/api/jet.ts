@@ -12,9 +12,12 @@ import {
   deleteMigration as doDeleteMigration,
   deploy as doDeploy,
   deployDraftFunctions as doDeployDraftFunctions,
+  listEnvironmentVariables as doListEnvironmentVariables,
   listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
   rollbackDB as doRollbackDB,
+  setEnvironmentVariable as doSetEnvironmentVariable,
+  unsetEnvironmentVariable as doUnsetEnvironmentVariable,
   updateConfiguration as doUpdateConfiguration,
   updateFunctionFile as doUpdateFunctionFile,
   updateMigration as doUpdateMigration,
@@ -116,6 +119,24 @@ export interface DeployArgs {
   commitId?: string;
 }
 
+export interface SetEnvironmentVariableArgs {
+  projectId: string;
+  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  name: string;
+  value: string;
+}
+
+export interface UnsetEnvironmentVariableArgs {
+  projectId: string;
+  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  name: string;
+}
+
+export interface ListEnvironmentVariablesArgs {
+  projectId: string;
+  environmentName: "DEVELOPMENT" | "PRODUCTION";
+}
+
 export interface Jet {
   createProject(args: CreateProjectArgs): Promise<Project>;
   updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
@@ -134,6 +155,11 @@ export interface Jet {
   configurationHash(args: ConfigurationHashArgs): Promise<string>;
   commit(args: CommitArgs): Promise<void>;
   deploy(args: DeployArgs): Promise<void>;
+  setEnvironmentVariable(args: SetEnvironmentVariableArgs): Promise<void>;
+  unsetEnvironmentVariable(args: UnsetEnvironmentVariableArgs): Promise<void>;
+  listEnvironmentVariables(
+    args: ListEnvironmentVariablesArgs,
+  ): Promise<Array<{ name: string; value: string }>>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -213,4 +239,16 @@ export const jet: Jet = {
   ),
   commit: logDebugMetricsWrapper(doCommit, "commit"),
   deploy: logDebugMetricsWrapper(doDeploy, "deploy"),
+  setEnvironmentVariable: logDebugMetricsWrapper(
+    doSetEnvironmentVariable,
+    "set environment variable",
+  ),
+  unsetEnvironmentVariable: logDebugMetricsWrapper(
+    doUnsetEnvironmentVariable,
+    "unset environment variable",
+  ),
+  listEnvironmentVariables: logDebugMetricsWrapper(
+    doListEnvironmentVariables,
+    "list environment variables",
+  ),
 };

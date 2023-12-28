@@ -18,9 +18,12 @@ import {
   DeleteMigrationArgs,
   DeployArgs,
   DeployDraftFunctionsArgs,
+  ListEnvironmentVariablesArgs,
   ListMigrationsArgs,
   MigrateDBArgs,
   RollbackDBArgs,
+  SetEnvironmentVariableArgs,
+  UnsetEnvironmentVariableArgs,
   UpdateConfigurationArgs,
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
@@ -62,6 +65,13 @@ import {
 import { commitMutation } from "@/api/jet/queries/commit.ts";
 
 import { deployMutation } from "@/api/jet/queries/deploy.ts";
+
+import { setEnvironmentVariableMutation } from "@/api/jet/queries/set-environment-variable.ts";
+import { unsetEnvironmentVariableMutation } from "@/api/jet/queries/unset-environment-variable.ts";
+import {
+  listEnvironmentVariablesQuery,
+  ListEnvironmentVariablesQueryResponse,
+} from "@/api/jet/queries/list-environment-variables.ts";
 
 export async function createProject(
   args: CreateProjectArgs,
@@ -217,7 +227,7 @@ export async function rollbackDB(
   await query(rollbackDBMutation, args, config);
 }
 
-export async function listMigrations(
+export function listMigrations(
   args: ListMigrationsArgs,
   config: JcliConfigDotJSON,
 ): Promise<Array<number>> {
@@ -240,17 +250,9 @@ export async function listMigrations(
     };
   }
 
-  const versions: Array<number> = [];
-
-  for await (
-    const version of connectionIterator(queryListMigrations, callback, {
-      perPage: 1,
-    })
-  ) {
-    versions.push(version);
-  }
-
-  return versions;
+  return Array.fromAsync(
+    connectionIterator(queryListMigrations, callback),
+  );
 }
 
 export async function configurationHash(
@@ -272,4 +274,53 @@ export async function commit(args: CommitArgs, config: JcliConfigDotJSON) {
 
 export async function deploy(args: DeployArgs, config: JcliConfigDotJSON) {
   await query(deployMutation, args, config);
+}
+
+export async function setEnvironmentVariable(
+  args: SetEnvironmentVariableArgs,
+  config: JcliConfigDotJSON,
+) {
+  await query(setEnvironmentVariableMutation, args, config);
+}
+
+export async function unsetEnvironmentVariable(
+  args: UnsetEnvironmentVariableArgs,
+  config: JcliConfigDotJSON,
+) {
+  await query(unsetEnvironmentVariableMutation, args, config);
+}
+
+export function listEnvironmentVariables(
+  args: ListEnvironmentVariablesArgs,
+  config: JcliConfigDotJSON,
+): Promise<Array<{ name: string; value: string }>> {
+  function queryListEnvironmentVariables(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListEnvironmentVariablesQueryResponse>(
+      listEnvironmentVariablesQuery,
+      {
+        projectNodeId: buildNodeId(NodeType.project, args.projectId),
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function callback(response: ListEnvironmentVariablesQueryResponse) {
+    const { node: { environments: { nodes: environments } } } = response;
+    const { environmentVariables: { pageInfo, nodes } } = environments.find((
+      n,
+    ) => n.name === args.environmentName)!;
+
+    return {
+      pageInfo,
+      records: nodes,
+    };
+  }
+
+  return Array.fromAsync(
+    connectionIterator(queryListEnvironmentVariables, callback),
+  );
 }
