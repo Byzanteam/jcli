@@ -1,5 +1,6 @@
-import { GlobalOptions } from "@/args.ts";
+import { VarOptions } from "@/subcommands/admin/var/option.ts";
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
+import { buildEnvironmentName } from "@/subcommands/admin/var/utilities.ts";
 
 function renderEnvironmentVariables(
   variables: ReadonlyArray<{ name: string; value: string }>,
@@ -9,7 +10,7 @@ function renderEnvironmentVariables(
   }
 }
 
-export default async function (_options: GlobalOptions) {
+export default async function (options: VarOptions) {
   const db = await api.db.connect(PROJECT_DB_PATH);
 
   try {
@@ -17,7 +18,7 @@ export default async function (_options: GlobalOptions) {
 
     const vars = await api.jet.listEnvironmentVariables({
       projectId,
-      environmentName: "DEVELOPMENT",
+      environmentName: buildEnvironmentName(options),
     });
 
     renderEnvironmentVariables(vars);

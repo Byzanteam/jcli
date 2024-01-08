@@ -29,6 +29,10 @@ describe("set variable", () => {
     setVariable({}, "FOO1", "bar1");
     setVariable({}, "FOO2", "bar2");
     setVariable({}, "FOO3", "bar3");
+
+    setVariable({ prod: true }, "FOO1", "bara");
+    setVariable({ prod: true }, "FOO2", "barb");
+    setVariable({ prod: true }, "FOO3", "barc");
   });
 
   afterEach(() => {
@@ -47,5 +51,19 @@ describe("set variable", () => {
     assertEquals(logs[0], "FOO1=bar1");
     assertEquals(logs[1], "FOO2=bar2");
     assertEquals(logs[2], "FOO3=bar3");
+  });
+
+  it("works with --prod", async () => {
+    api.console.configure({ capture: true });
+
+    await action({ prod: true });
+
+    assertEquals(api.console.logs.length, 3);
+
+    const logs = api.console.logs.toSorted();
+
+    assertEquals(logs[0], "FOO1=bara");
+    assertEquals(logs[1], "FOO2=barb");
+    assertEquals(logs[2], "FOO3=barc");
   });
 });

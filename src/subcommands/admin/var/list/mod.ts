@@ -1,12 +1,16 @@
 import { Command } from "cliffy";
-import { GlobalOptions } from "@/args.ts";
+import { VarOptions } from "@/subcommands/admin/var/option.ts";
 import errorHandler from "@/error-handler.ts";
 
 import action from "./action.ts";
 
-const command = new Command<GlobalOptions>()
+const command = new Command<VarOptions>()
   .description(
-    "Set an environment variable in the current environment",
+    "List all environment variables in the current environment",
+  )
+  .option(
+    "--prod",
+    "List all environment variables in the production environment",
   )
   .error(errorHandler)
   .action(action);
