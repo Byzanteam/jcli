@@ -1,8 +1,9 @@
-import { GlobalOptions } from "@/args.ts";
+import { VarOptions } from "@/subcommands/admin/var/option.ts";
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
+import { buildEnvironmentName } from "@/subcommands/admin/var/utilities.ts";
 
 export default async function (
-  _options: GlobalOptions,
+  options: VarOptions,
   name: string,
   value: string,
 ) {
@@ -13,7 +14,7 @@ export default async function (
 
     await api.jet.setEnvironmentVariable({
       projectId,
-      environmentName: "DEVELOPMENT",
+      environmentName: buildEnvironmentName(options),
       name,
       value,
     });

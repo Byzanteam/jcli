@@ -38,7 +38,7 @@ describe("set variable", () => {
     await action(options, "FOO1", "bar1");
     await action(options, "FOO2", "bar2");
 
-    const environmentVariables = api.jet.getEnvironmentVariables(
+    let environmentVariables = api.jet.getEnvironmentVariables(
       projectId,
       "DEVELOPMENT",
     );
@@ -48,5 +48,33 @@ describe("set variable", () => {
     assertEquals(environmentVariables?.size, 2);
     assertEquals(environmentVariables?.get("FOO1"), "bar1");
     assertEquals(environmentVariables?.get("FOO2"), "bar2");
+
+    environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "PRODUCTION",
+    );
+
+    assertEquals(environmentVariables?.size, 0);
+  });
+
+  it("works with --prod", async () => {
+    await action({ prod: true }, "FOO1", "bar1");
+
+    let environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "PRODUCTION",
+    );
+
+    assertNotEquals(environmentVariables, undefined);
+
+    assertEquals(environmentVariables?.size, 1);
+    assertEquals(environmentVariables?.get("FOO1"), "bar1");
+
+    environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "DEVELOPMENT",
+    );
+
+    assertEquals(environmentVariables?.size, 0);
   });
 });

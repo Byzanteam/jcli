@@ -31,6 +31,7 @@ describe("set variable", () => {
     api.chdir("my_proj");
 
     setVariable({}, "FOO", "bar");
+    setVariable({ prod: true }, "FOO", "bar");
   });
 
   afterEach(() => {
@@ -69,5 +70,53 @@ describe("set variable", () => {
     assertNotEquals(environmentVariables, undefined);
 
     assertEquals(environmentVariables?.size, 0);
+
+    environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "PRODUCTION",
+    );
+
+    assertEquals(environmentVariables?.size, 1);
+  });
+
+  it("works with --prod", async () => {
+    let environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "PRODUCTION",
+    );
+
+    assertNotEquals(environmentVariables, undefined);
+
+    assertEquals(environmentVariables?.size, 1);
+    assertEquals(environmentVariables?.get("FOO"), "bar");
+
+    await action({ prod: true }, "FOO");
+
+    environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "PRODUCTION",
+    );
+
+    assertNotEquals(environmentVariables, undefined);
+
+    assertEquals(environmentVariables?.size, 0);
+
+    await action({ prod: true }, "FOO");
+
+    environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "PRODUCTION",
+    );
+
+    assertNotEquals(environmentVariables, undefined);
+
+    assertEquals(environmentVariables?.size, 0);
+
+    environmentVariables = api.jet.getEnvironmentVariables(
+      projectId,
+      "DEVELOPMENT",
+    );
+
+    assertEquals(environmentVariables?.size, 1);
   });
 });
