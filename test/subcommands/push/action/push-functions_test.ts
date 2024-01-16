@@ -152,11 +152,20 @@ describe("functions", () => {
 
         assertEquals(entries.length, 3);
         assertEquals(entries[0].path, `${FUNC_PATH}/index.ts`);
-        assertEquals(entries[0].hash, await digest(encoder.encode("index")));
+        assertEquals(
+          entries[0].hash,
+          await digest(encoder.encode("/index.tsindex")),
+        );
         assertEquals(entries[1].path, `${FUNC_PATH}/posts/entry.ts`);
-        assertEquals(entries[1].hash, await digest(encoder.encode("entry")));
+        assertEquals(
+          entries[1].hash,
+          await digest(encoder.encode("/posts/entry.tsentry")),
+        );
         assertEquals(entries[2].path, `${FUNC_PATH}/users/mod.ts`);
-        assertEquals(entries[2].hash, await digest(encoder.encode("mod")));
+        assertEquals(
+          entries[2].hash,
+          await digest(encoder.encode("/users/mod.tsmod")),
+        );
 
         db.close();
       });
@@ -211,11 +220,20 @@ describe("functions", () => {
 
         assertEquals(entries.length, 3);
         assertEquals(entries[0].path, `${FUNC_PATH}/index.ts`);
-        assertEquals(entries[0].hash, await digest(encoder.encode("xedni")));
+        assertEquals(
+          entries[0].hash,
+          await digest(encoder.encode("/index.tsxedni")),
+        );
         assertEquals(entries[1].path, `${FUNC_PATH}/posts/entry.ts`);
-        assertEquals(entries[1].hash, await digest(encoder.encode("yrtne")));
+        assertEquals(
+          entries[1].hash,
+          await digest(encoder.encode("/posts/entry.tsyrtne")),
+        );
         assertEquals(entries[2].path, `${FUNC_PATH}/users/mod.ts`);
-        assertEquals(entries[2].hash, await digest(encoder.encode("dom")));
+        assertEquals(
+          entries[2].hash,
+          await digest(encoder.encode("/users/mod.tsdom")),
+        );
 
         db.close();
       });

@@ -69,11 +69,20 @@ describe("migrations", () => {
 
       assertEquals(entries.length, 3);
       assertEquals(entries[0].path, "migrations/202301010000_a.sql");
-      assertEquals(entries[0].hash, await digest(encoder.encode("0")));
+      assertEquals(
+        entries[0].hash,
+        await digest(encoder.encode("202301010000a0")),
+      );
       assertEquals(entries[1].path, "migrations/202301010001_b.sql");
-      assertEquals(entries[1].hash, await digest(encoder.encode("1")));
+      assertEquals(
+        entries[1].hash,
+        await digest(encoder.encode("202301010001b1")),
+      );
       assertEquals(entries[2].path, "migrations/202301010002_c.sql");
-      assertEquals(entries[2].hash, await digest(encoder.encode("2")));
+      assertEquals(
+        entries[2].hash,
+        await digest(encoder.encode("202301010002c2")),
+      );
 
       db.close();
     });
@@ -127,19 +136,19 @@ describe("migrations", () => {
       assertEquals(entries[0].path, "migrations/202301010000_a.sql");
       assertEquals(
         entries[0].hash,
-        await digest(new TextEncoder().encode("2")),
+        await digest(new TextEncoder().encode("202301010000a2")),
       );
 
       assertEquals(entries[1].path, "migrations/202301010001.sql");
       assertEquals(
         entries[1].hash,
-        await digest(new TextEncoder().encode("1")),
+        await digest(new TextEncoder().encode("2023010100011")),
       );
 
       assertEquals(entries[2].path, "migrations/202301010002_c.sql");
       assertEquals(
         entries[2].hash,
-        await digest(new TextEncoder().encode("2")),
+        await digest(new TextEncoder().encode("202301010002c2")),
       );
 
       db.close();
