@@ -9,6 +9,8 @@ import {
   listFilesRec,
   zipFiles,
 } from "@/jcli/file/files-man.ts";
+import { digest } from "@/jcli/crypto.ts";
+
 import { PreparedQuery } from "sqlite";
 
 const BASE_PATH = "./functions";
@@ -32,6 +34,18 @@ export function FunctionFileEntry(functionName: string) {
     constructor(relativePath: string) {
       super(join(BASE_PATH, functionName, relativePath));
       this.serverPath = join("/", relativePath);
+    }
+
+    async digest() {
+      if (undefined === this._digest) {
+        const encoder = new TextEncoder();
+
+        this._digest = await digest(
+          encoder.encode(`${this.serverPath}${await this.content()}`),
+        );
+      }
+
+      return this._digest;
     }
 
     setDigest(digest: string) {

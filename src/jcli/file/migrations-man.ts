@@ -9,6 +9,8 @@ import {
   zipFiles,
 } from "@/jcli/file/files-man.ts";
 
+import { digest } from "@/jcli/crypto.ts";
+
 import { chunk } from "@/utility/async-iterable.ts";
 
 export const BASE_PATH = "./migrations";
@@ -30,6 +32,24 @@ export class MigrationFileEntry extends FileEntry {
 
   constructor(path: string) {
     super(path);
+  }
+
+  async digest(): Promise<string> {
+    if (undefined === this._digest) {
+      const encoder = new TextEncoder();
+
+      let subject: string;
+
+      if (this.name) {
+        subject = `${this.version}${this.name}${await this.content()}`;
+      } else {
+        subject = `${this.version}${await this.content()}`;
+      }
+
+      this._digest = await digest(encoder.encode(subject));
+    }
+
+    return this._digest;
   }
 
   async setDiff(entry: MigrationFileEntry): Promise<boolean> {
