@@ -112,15 +112,17 @@ async function* diffFunctionFiles<
   FileEntryConstructor: new (path: string) => T,
 ): AsyncIterable<FileChange<T>> {
   const functionFilesWas = new Map<string, T>(
-    listFunctionFileHashesQuery().map((
-      [path, hash],
-    ) => {
-      const entry = new FileEntryConstructor(
-        buildFunctionFileRelativePath(path, functionName),
-      );
-      entry.setDigest(hash);
-      return [path, entry];
-    }),
+    listFunctionFileHashesQuery()
+      .filter(([path]) => path.startsWith(`functions/${functionName}`))
+      .map((
+        [path, hash],
+      ) => {
+        const entry = new FileEntryConstructor(
+          buildFunctionFileRelativePath(path, functionName),
+        );
+        entry.setDigest(hash);
+        return [path, entry];
+      }),
   );
 
   for await (
