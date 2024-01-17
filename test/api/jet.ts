@@ -1,12 +1,13 @@
 import { parse } from "path";
 
-import { Jet } from "@/api/mod.ts";
+import { Jet, JetProject } from "@/api/mod.ts";
 import { Project } from "@/jet/project.ts";
 
 import { FSTest, makeFS } from "@test/api/mod.ts";
-import { ProjectPatch } from "@/jcli/config/project-json.ts";
+import { ProjectDotJSON, ProjectPatch } from "@/jcli/config/project-json.ts";
 
 import { digest } from "@/jcli/file/project.ts";
+import { listFilesRec } from "@/jcli/file/files-man.ts";
 
 interface ProjectQuery {
   projectName?: string;
@@ -461,6 +462,67 @@ export function makeJet(): JetTest {
             }),
           );
         }
+      });
+    },
+
+    cloneProject({ projectId }): Promise<JetProject> {
+      return new Promise((resolve, reject) => {
+        const project = projects.get(projectId);
+
+        if (!project) {
+          reject(new Error("Project not found"));
+        }
+
+        async function* buildFunctionFiles(
+          fs: FSTest,
+        ): AsyncIterable<{ path: string; hash: string; code: string }> {
+          for await (const path of listFilesRec("./", { fs })) {
+            yield {
+              path,
+              hash: path,
+              code: await fs.readTextFile(path),
+            };
+          }
+        }
+
+        async function* functions() {
+          for (const [name, f] of projectFunctions.get(projectId)!.entries()) {
+            yield {
+              name,
+              files: await Array.fromAsync(buildFunctionFiles(f.files)),
+            };
+          }
+        }
+
+        async function* migrations() {
+          for (
+            const { name, version, content } of projectMigrations.get(
+              projectId,
+            )!
+              .values()
+          ) {
+            yield {
+              version,
+              name,
+              hash: version.toString(),
+              content,
+            };
+          }
+        }
+
+        resolve({
+          name: project!.name,
+          configuration: ProjectDotJSON.fromJSON(
+            JSON.stringify({
+              name: project!.name,
+              title: project!.title,
+              instances: [],
+              capabilities: [],
+            }),
+          ),
+          migrations: migrations(),
+          functions: functions(),
+        });
       });
     },
 

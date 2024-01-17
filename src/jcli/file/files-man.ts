@@ -1,5 +1,5 @@
 import { extname, join } from "path";
-import { api, DirEntry } from "@/api/mod.ts";
+import { api, DirEntry, FS } from "@/api/mod.ts";
 import { digest } from "@/jcli/crypto.ts";
 
 export class FileEntry {
@@ -128,6 +128,11 @@ export async function* listFiles(
   }
 }
 
+export interface ListFilesRecOptions {
+  extension?: ReadonlyArray<string> | string;
+  fs?: FS;
+}
+
 /**
  * List all files with specific extensions in a directory recursively.
  * If no extension is given, all files would be yielded.
@@ -156,18 +161,20 @@ export async function* listFiles(
  */
 export async function* listFilesRec(
   path: string,
-  extension?: ReadonlyArray<string> | string,
+  options?: ListFilesRecOptions,
 ): AsyncIterable<string> {
-  const realPath = await api.fs.realPath(path);
+  const fs = options?.fs ?? api.fs;
 
-  for await (const entry of api.fs.readDir(realPath)) {
+  const realPath = await fs.realPath(path);
+
+  for await (const entry of fs.readDir(realPath)) {
     if (await isDirectory(entry, path)) {
       for await (
-        const subEntry of listFilesRec(join(path, entry.name), extension)
+        const subEntry of listFilesRec(join(path, entry.name), options)
       ) {
         yield join(entry.name, subEntry);
       }
-    } else if (filterFileByExtension(entry, extension)) {
+    } else if (filterFileByExtension(entry, options?.extension)) {
       yield entry.name;
     }
   }

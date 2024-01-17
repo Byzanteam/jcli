@@ -7,6 +7,7 @@ import {
 
 import { Project } from "@/jet/project.ts";
 import {
+  CloneProjectArgs,
   CommitArgs,
   ConfigurationHashArgs,
   CreateFunctionArgs,
@@ -28,6 +29,8 @@ import {
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
 } from "@/api/jet.ts";
+
+import { JetProject } from "@/api/jet.ts";
 
 import { ProjectPatch } from "@/jcli/config/project-json.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
@@ -72,6 +75,16 @@ import {
   listEnvironmentVariablesQuery,
   ListEnvironmentVariablesQueryResponse,
 } from "@/api/jet/queries/list-environment-variables.ts";
+
+import {
+  listDraftFunctionsQuery,
+  ListDraftFunctionsQueryResponse,
+  listDraftMigrationsQuery,
+  ListDraftMigrationsQueryResponse,
+  projectQuery,
+  ProjectQueryResponse,
+} from "@/api/jet/queries/clone.ts";
+import { ProjectDotJSON } from "@/jcli/config/project-json.ts";
 
 export async function createProject(
   args: CreateProjectArgs,
@@ -322,5 +335,115 @@ export function listEnvironmentVariables(
 
   return Array.fromAsync(
     connectionIterator(queryListEnvironmentVariables, callback),
+  );
+}
+
+export async function cloneProject(
+  args: CloneProjectArgs,
+  config: JcliConfigDotJSON,
+): Promise<JetProject> {
+  const projectNodeId = buildNodeId(NodeType.project, args.projectId);
+
+  const { node: { name, draftConfiguration } } = await query<
+    ProjectQueryResponse
+  >(
+    projectQuery,
+    { projectNodeId },
+    config,
+  );
+
+  return {
+    name,
+    configuration: ProjectDotJSON.fromJSON(draftConfiguration),
+    functions: cloneProjectFunctions(projectNodeId, config),
+    migrations: cloneProjectMigrations(projectNodeId, config),
+  };
+}
+
+function cloneProjectMigrations(
+  projectNodeId: string,
+  config: JcliConfigDotJSON,
+) {
+  function queryListDraftMigrations(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListDraftMigrationsQueryResponse>(
+      listDraftMigrationsQuery,
+      {
+        projectNodeId,
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function queryListDraftMigrationsCallback(
+    response: ListDraftMigrationsQueryResponse,
+  ) {
+    const { node: { draftMigrations: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map((n) => {
+        return {
+          version: n.version,
+          name: n.name,
+          hash: n.hash,
+          content: n.content,
+        };
+      }),
+    };
+  }
+
+  return connectionIterator(
+    queryListDraftMigrations,
+    queryListDraftMigrationsCallback,
+  );
+}
+
+function cloneProjectFunctions(
+  projectNodeId: string,
+  config: JcliConfigDotJSON,
+) {
+  function queryListDraftFunctions(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListDraftFunctionsQueryResponse>(
+      listDraftFunctionsQuery,
+      {
+        projectNodeId,
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function queryListDraftFunctionsCallback(
+    response: ListDraftFunctionsQueryResponse,
+  ) {
+    const { node: { draftFunctions: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map((n) => {
+        return {
+          name: n.name,
+          files: n.files.map((f) => {
+            return {
+              path: f.path,
+              hash: f.hash,
+              code: f.settings.code,
+            };
+          }),
+        };
+      }),
+    };
+  }
+
+  return connectionIterator(
+    queryListDraftFunctions,
+    queryListDraftFunctionsCallback,
   );
 }

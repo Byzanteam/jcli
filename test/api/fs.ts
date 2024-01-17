@@ -29,19 +29,25 @@ class Directory {
   ): Directory | undefined {
     if (undefined === name) return undefined;
 
-    if (0 === rest.length) return this.mkdir(name);
+    if (options.recursive) {
+      if (0 === rest.length) {
+        this.mkdir(name);
+        return this.#children.get(name) as Directory;
+      }
 
-    const child = this.#children.get(name);
-
-    if (!child && options.recursive) {
       this.mkdir(name);
       const dir = this.#children.get(name) as Directory;
-      return dir.mkdirRec(rest, options);
-    }
 
-    return child && (child instanceof Directory)
-      ? child.mkdirRec(rest, options)
-      : undefined;
+      return dir.mkdirRec(rest, options);
+    } else {
+      if (0 === rest.length) return this.mkdir(name);
+
+      const child = this.#children.get(name);
+
+      return child && (child instanceof Directory)
+        ? child.mkdirRec(rest, options)
+        : undefined;
+    }
   }
 
   mkdir(name: string): Directory | undefined {
