@@ -1,16 +1,7 @@
 import { GlobalOptions } from "@/args.ts";
-
-import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
-import { createMetadataQuery } from "@/api/db/queries/create-metadata.ts";
-import { createTableObjectsQuery } from "@/api/db/queries/create-table-objects.ts";
-import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
-import { createConfigurationQuery } from "@/api/db/queries/create-configuration.ts";
-
-import { Config } from "@/jcli/config/config.ts";
-import {
-  ProjectDotJSON,
-  projectDotJSONPath,
-} from "@/jcli/config/project-json.ts";
+import { api } from "@/api/mod.ts";
+import { ProjectDotJSON } from "@/jcli/config/project-json.ts";
+import { ProjectBuilder } from "@/jcli/project-builder.ts";
 
 const PROJECT_NAME_FORMAT = /^[a-z_][a-z0-9_]{0,39}$/;
 
@@ -42,32 +33,11 @@ export default async function (
     title: projectName,
   });
 
+  const builder = new ProjectBuilder(new ProjectDotJSON(project));
+
   api.console.log("Provisioning local files...");
-  await api.fs.mkdir(projectName);
-  await api.fs.mkdir(`${projectName}/migrations`);
-  await api.fs.mkdir(`${projectName}/functions`);
-  await api.fs.mkdir(`${projectName}/.jcli`);
+  await builder.provisionFiles();
 
-  const projectDotJSON = new Config<ProjectDotJSON>(
-    projectDotJSONPath(projectName),
-  );
-
-  await projectDotJSON.set(new ProjectDotJSON(project), { createNew: true });
-
-  const db = api.db.createDatabase(`${projectName}/${PROJECT_DB_PATH}`);
-
-  db.execute(createMetadataQuery);
-  db.query("INSERT INTO metadata (project_id) VALUES (:projectId)", {
-    projectId: project.id,
-  });
-
-  db.execute(createTableObjectsQuery);
-  db.execute(createFunctionsQuery);
-  db.execute(createConfigurationQuery);
-
-  db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {
-    data: JSON.stringify(await projectDotJSON.get()),
-  });
-
-  db.close();
+  builder.provisionDatabases();
+  await builder.buildMetadata(project.id);
 }

@@ -22,8 +22,8 @@ export function projectDotJSONPath(projectName?: string): string {
 }
 
 export class ProjectDotJSON {
-  #name: string;
-  #title: string;
+  readonly name: string;
+  readonly title: string;
   #capabilities: Array<ProjectCapability>;
   #instances: Array<ProjectPluginInstance>;
 
@@ -32,16 +32,16 @@ export class ProjectDotJSON {
   }
 
   constructor(project: Project) {
-    this.#name = project.name;
-    this.#title = project.title;
+    this.name = project.name;
+    this.title = project.title;
     this.#capabilities = project.capabilities;
     this.#instances = project.instances;
   }
 
   toJSON() {
     return {
-      name: this.#name,
-      title: this.#title,
+      name: this.name,
+      title: this.title,
       capabilities: this.#capabilities,
       instances: this.#instances,
     };

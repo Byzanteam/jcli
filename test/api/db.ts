@@ -36,7 +36,7 @@ export function makeDB(): DBTest {
     createDatabase(path: string): DBClass {
       const db = new TestDB();
       db.countConnection();
-      databases.set(path, db);
+      databases.set(join(cwd, path), db);
 
       return db;
     },

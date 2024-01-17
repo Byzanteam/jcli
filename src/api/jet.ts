@@ -1,6 +1,7 @@
 import { getConfig } from "@/api/mod.ts";
 
 import {
+  cloneProject as doCloneProject,
   commit as doCommit,
   configurationHash as doConfigurationHash,
   createFunction as doCreateFunction,
@@ -23,7 +24,7 @@ import {
   updateMigration as doUpdateMigration,
 } from "@/api/jet/mod.ts";
 
-import { ProjectPatch } from "@/jcli/config/project-json.ts";
+import { ProjectDotJSON, ProjectPatch } from "@/jcli/config/project-json.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
 import { getLogger } from "@/jcli/logger.ts";
 import { Project } from "@/jet/project.ts";
@@ -137,6 +138,25 @@ export interface ListEnvironmentVariablesArgs {
   environmentName: "DEVELOPMENT" | "PRODUCTION";
 }
 
+export interface CloneProjectArgs {
+  projectId: string;
+}
+
+export interface JetProject {
+  name: string;
+  configuration: ProjectDotJSON;
+  functions: AsyncIterable<{
+    name: string;
+    files: ReadonlyArray<{ path: string; hash: string; code: string }>;
+  }>;
+  migrations: AsyncIterable<{
+    version: number;
+    name: string | null;
+    hash: string;
+    content: string;
+  }>;
+}
+
 export interface Jet {
   createProject(args: CreateProjectArgs): Promise<Project>;
   updateConfiguration(args: UpdateConfigurationArgs): Promise<void>;
@@ -160,6 +180,7 @@ export interface Jet {
   listEnvironmentVariables(
     args: ListEnvironmentVariablesArgs,
   ): Promise<Array<{ name: string; value: string }>>;
+  cloneProject(args: CloneProjectArgs): Promise<JetProject>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -250,5 +271,9 @@ export const jet: Jet = {
   listEnvironmentVariables: logDebugMetricsWrapper(
     doListEnvironmentVariables,
     "list environment variables",
+  ),
+  cloneProject: logDebugMetricsWrapper(
+    doCloneProject,
+    "clone a Jet project",
   ),
 };
