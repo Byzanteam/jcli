@@ -6,7 +6,7 @@ import action from "./action.ts";
 
 const command = new Command<GlobalOptions>()
   .description("Clone a Jet project.")
-  .arguments("<projectId>")
+  .arguments("<projectId> [directory]")
   .error(errorHandler)
   .action(action);
 

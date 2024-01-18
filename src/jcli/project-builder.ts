@@ -12,18 +12,25 @@ import {
 import { dirname, join } from "path";
 
 class ProjectBuilder {
-  constructor(public configuration: ProjectDotJSON) {}
+  #directory: string;
+
+  constructor(
+    public configuration: ProjectDotJSON,
+    options?: { directory?: string },
+  ) {
+    this.#directory = options?.directory ?? configuration.name;
+  }
 
   async provisionFiles(): Promise<void> {
-    const projectName = this.configuration.name;
+    const directory = this.#directory;
 
-    await api.fs.mkdir(projectName);
-    await api.fs.mkdir(join(projectName, "migrations"));
-    await api.fs.mkdir(join(projectName, "functions"));
-    await api.fs.mkdir(join(projectName, ".jcli"));
+    await api.fs.mkdir(directory);
+    await api.fs.mkdir(join(directory, "migrations"));
+    await api.fs.mkdir(join(directory, "functions"));
+    await api.fs.mkdir(join(directory, ".jcli"));
 
     const projectDotJSON = new Config<ProjectDotJSON>(
-      projectDotJSONPath(projectName),
+      projectDotJSONPath(directory),
     );
 
     await projectDotJSON.set(this.configuration, { createNew: true });
@@ -31,7 +38,7 @@ class ProjectBuilder {
 
   provisionDatabases(): void {
     const db = api.db.createDatabase(
-      `${this.configuration.name}/${PROJECT_DB_PATH}`,
+      `${this.#directory}/${PROJECT_DB_PATH}`,
     );
 
     db.execute(createMetadataQuery);
@@ -79,7 +86,7 @@ class ProjectBuilder {
         ? join("migrations", `${version}_${name}.sql`)
         : join("migrations", `${version}.sql`);
 
-      await api.fs.writeTextFile(join(this.configuration.name, path), content, {
+      await api.fs.writeTextFile(join(this.#directory, path), content, {
         createNew: true,
       });
 
@@ -124,7 +131,7 @@ class ProjectBuilder {
       for (const { path, hash, code } of func.files) {
         const filePath = join("functions", func.name, path);
 
-        writeFunctionFile(join(this.configuration.name, filePath), code);
+        writeFunctionFile(join(this.#directory, filePath), code);
 
         createFunctionFileQuery.execute({
           path: filePath,
@@ -140,7 +147,7 @@ class ProjectBuilder {
 
   async #connectDB() {
     return await api.db.connect(
-      join(this.configuration.name, PROJECT_DB_PATH),
+      join(this.#directory, PROJECT_DB_PATH),
     );
   }
 }
