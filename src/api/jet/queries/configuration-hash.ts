@@ -1,5 +1,5 @@
 export const configurationHashQuery = `
-  query projectsConfigurationHash($configuration: String!) {
+  query projectsConfigurationHash($configuration: ObjectJSON!) {
     projectsConfigurationHash(configuration: $configuration)
   }
 `;
