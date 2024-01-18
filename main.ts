@@ -1,4 +1,4 @@
-import { Command } from "cliffy";
+import { Command, CompletionsCommand } from "cliffy";
 
 import { getConfig } from "@/api/mod.ts";
 import { setupLogger } from "@/jcli/logger.ts";
@@ -34,4 +34,5 @@ await new Command()
   .command("commit", commitCommand)
   .command("deploy", deployCommand)
   .command("clone", cloneCommand)
+  .command("completions", new CompletionsCommand())
   .parse(Deno.args);
