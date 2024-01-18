@@ -21,3 +21,4 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: jcli
+          generate_release_notes: true
