@@ -85,6 +85,17 @@ describe("clone", () => {
     assert(api.fs.hasDir("my_proj/.jcli"));
   });
 
+  it("creates project directory with specified directory", async () => {
+    assert(!api.fs.hasDir("specified"));
+
+    await action(options, projectId, "speicified");
+
+    assert(api.fs.hasDir("speicified"));
+    assert(api.fs.hasDir("speicified/migrations"));
+    assert(api.fs.hasDir("speicified/functions"));
+    assert(api.fs.hasDir("speicified/.jcli"));
+  });
+
   it("clones my_proj/project.json", async () => {
     await action(options, projectId);
 
