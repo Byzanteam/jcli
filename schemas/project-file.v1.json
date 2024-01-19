@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://cdn.jsdelivr.net/gh/Byzanteam/jcli/schemas/project-file.v1.json",
+  "title": "project.json",
+  "description": "项目资源的规范描述，包括项目本身的信息以及插件相关的内容",
+  "type": "object",
+  "properties": {
+    "title": {
+      "description": "项目标题",
+      "type": "string"
+    },
+    "name": {
+      "description": "项目名称",
+      "type": "string",
+      "pattern": "^[a-z_][a-z0-9_]{0,39}$"
+    },
+    "capabilities": {
+      "descriptions": "插件使用的各种能力",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/capability"
+      }
+    },
+    "instances": {
+      "description": "插件实例",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/instance"
+      }
+    }
+  },
+  "required": [
+    "title",
+    "name",
+    "capabilities",
+    "instances"
+  ],
+  "definitions": {
+    "capability": {
+      "description": "插件能力",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "能力名称",
+          "type": "string"
+        },
+        "payload": {
+          "oneOf": [
+            {
+              "description": "数据库能力",
+              "type": "object",
+              "properties": {
+                "__type__": {
+                  "const": "database"
+                },
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-z_][a-z0-9_]{0,62}$"
+                }
+              },
+              "required": [
+                "__type__",
+                "schema"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "payload"
+      ]
+    },
+    "instance": {
+      "description": "插件实例",
+      "type": "object",
+      "properties": {
+        "pluginName": {
+          "description": "插件名称",
+          "type": "string"
+        },
+        "name": {
+          "description": "实例名称",
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9]{0,15}$"
+        },
+        "description": {
+          "description": "实例描述",
+          "type": "string"
+        },
+        "config": {
+          "description": "实例配置信息",
+          "type": "object"
+        },
+        "capabilityNames": {
+          "description": "能力列表",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "pluginName",
+        "name",
+        "config"
+      ]
+    }
+  }
+}
