@@ -1,4 +1,5 @@
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
+import { getLogger } from "@/jcli/logger.ts";
 
 export async function query<T>(
   query: string,
@@ -14,6 +15,8 @@ export async function query<T>(
   });
 
   const body = await response.json();
+
+  logRequest(query, variables, body);
 
   return resolveResponse<T>(body);
 }
@@ -71,4 +74,17 @@ export async function* connectionIterator<T, U>(
       break;
     }
   } while (true);
+}
+
+function logRequest(query: string, variables: object, response: object) {
+  const logger = getLogger();
+  const message = `GraphQL request:
+query: ${query}
+
+variables: ${JSON.stringify(variables, null, 2)}
+
+response: ${JSON.stringify(response, null, 2)}
+`;
+
+  logger.debug(message);
 }
