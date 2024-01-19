@@ -2,6 +2,7 @@
   "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
   "imports": {
     "@/": "./src/",
+    "@schemas/": "./schemas/",
     "@test/": "./test/",
     "cliffy": "https://deno.land/x/cliffy@v1.0.0-rc.3/command/mod.ts",
     "log": "https://deno.land/std@0.204.0/log/mod.ts",
