@@ -13,6 +13,10 @@ import {
   ProjectJSON,
 } from "@/jcli/config/project-json-patch-builder.ts";
 
+import projectJSONSchema from "@schemas/project-file.v1.json" with {
+  type: "json",
+};
+
 export function projectDotJSONPath(projectName?: string): string {
   if (undefined === projectName) {
     return "./project.json";
@@ -40,6 +44,7 @@ export class ProjectDotJSON {
 
   toJSON() {
     return {
+      "$schema": projectJSONSchema.$id,
       name: this.name,
       title: this.title,
       capabilities: this.#capabilities,

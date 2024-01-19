@@ -12,7 +12,7 @@ import {
   projectDotJSONPath,
 } from "@/jcli/config/project-json.ts";
 
-import projectJSONSchema from "@/jcli/config/project-json-schema.json" with {
+import projectJSONSchema from "@schemas/project-file.v1.json" with {
   type: "json",
 };
 

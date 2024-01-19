@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://jet.work/schemas/projects/configuration.json",
-  "title": "project",
+  "$id": "https://cdn.jsdelivr.net/gh/Byzanteam/jcli/schemas/project-file.v1.json",
+  "title": "project.json",
   "description": "项目资源的规范描述，包括项目本身的信息以及插件相关的内容",
   "type": "object",
   "properties": {
