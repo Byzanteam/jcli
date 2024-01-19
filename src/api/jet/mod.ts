@@ -155,12 +155,22 @@ function buildCommandArgument(command: ProjectPatch) {
   const instances = command.instances.map((e) => {
     const { action, name, ...elem } = e;
 
-    return {
-      [action]: {
-        instanceName: name,
-        ...elem,
-      },
-    };
+    if ("config" in elem) {
+      return {
+        [action]: {
+          instanceName: name,
+          ...elem,
+          config: JSON.stringify(elem.config),
+        },
+      };
+    } else {
+      return {
+        [action]: {
+          instanceName: name,
+          ...elem,
+        },
+      };
+    }
   });
 
   return {
