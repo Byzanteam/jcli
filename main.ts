@@ -14,6 +14,7 @@ import dbCommand from "@/subcommands/db/mod.ts";
 import commitCommand from "@/subcommands/commit/mod.ts";
 import deployCommand from "@/subcommands/deploy/mod.ts";
 import cloneCommand from "@/subcommands/clone/mod.ts";
+import generateCommand from "@/subcommands/generate/mod.ts";
 
 const DEFAULT_LOG_LEVEL = "INFO";
 const { logLevel = DEFAULT_LOG_LEVEL } = await getConfig().get();
@@ -34,5 +35,6 @@ await new Command()
   .command("commit", commitCommand)
   .command("deploy", deployCommand)
   .command("clone", cloneCommand)
+  .command("generate", generateCommand)
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
