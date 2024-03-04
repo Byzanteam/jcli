@@ -17,6 +17,7 @@
   "tasks": {
     "dev": "deno run --watch main.ts",
     "check:types": "deno check **/*.ts",
-    "test": "deno test -A --parallel"
+    "test": "deno test -A --parallel",
+    "lockfile:update": "deno cache --reload --lock=deno.lock --lock-write main.ts && deno task check:types && deno task test"
   }
 }
