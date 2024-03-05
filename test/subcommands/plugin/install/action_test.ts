@@ -11,9 +11,9 @@ import { setupAPI } from "@/api/mod.ts";
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import createProject from "@/subcommands/admin/projects/create/action.ts";
-import enablePlugin from "@/subcommands/plugin/enable/action.ts";
+import installPlugin from "../../../../src/subcommands/plugin/install/action.ts";
 
-describe("enablePlugin", () => {
+describe("installPlugin", () => {
   let api: APIClientTest;
   let projectId: string;
 
@@ -31,17 +31,17 @@ describe("enablePlugin", () => {
     api.cleanup();
   });
 
-  it("enable plugins in the development environment for a given project", async () => {
+  it("install plugins in the development environment for a given project", async () => {
     const instanceName = "test_plugin";
 
-    await enablePlugin({ prod: false }, instanceName);
+    await installPlugin({ prod: false }, instanceName);
 
-    const pluginEnableRequests = api.jet.getPluginEnableRequests(projectId);
+    const pluginInstallRequests = api.jet.getPluginInstallRequests(projectId);
 
-    assertEquals(pluginEnableRequests?.length, 1);
-    assertEquals(pluginEnableRequests?.[0].instanceName, instanceName);
+    assertEquals(pluginInstallRequests?.length, 1);
+    assertEquals(pluginInstallRequests?.[0].instanceName, instanceName);
     assertEquals(
-      pluginEnableRequests?.[0].environmentName,
+      pluginInstallRequests?.[0].environmentName,
       "DEVELOPMENT",
     );
   });

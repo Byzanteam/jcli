@@ -1,6 +1,6 @@
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
 import { buildEnvironmentName } from "@/subcommands/admin/var/utilities.ts";
-import { VarOptions } from "@/subcommands/plugin/enable/options.ts";
+import { VarOptions } from "./options.ts";
 
 export default async function (options: VarOptions, instanceName: string) {
   const db = await api.db.connect(PROJECT_DB_PATH);
@@ -8,7 +8,7 @@ export default async function (options: VarOptions, instanceName: string) {
   try {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
-    await api.jet.pluginEnableInstance({
+    await api.jet.pluginInstallInstance({
       projectId,
       instanceName,
       environmentName: buildEnvironmentName(options),

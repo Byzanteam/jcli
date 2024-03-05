@@ -16,7 +16,7 @@ import {
   listEnvironmentVariables as doListEnvironmentVariables,
   listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
-  pluginEnableInstance as doPluginEnableInstance,
+  pluginInstallInstance as doPluginInstallInstance,
   rollbackDB as doRollbackDB,
   setEnvironmentVariable as doSetEnvironmentVariable,
   unsetEnvironmentVariable as doUnsetEnvironmentVariable,
@@ -143,7 +143,7 @@ export interface CloneProjectArgs {
   projectId: string;
 }
 
-export interface PluginEnableInstanceArgs {
+export interface PluginInstallInstanceArgs {
   projectId: string;
   instanceName: string;
   environmentName: "DEVELOPMENT" | "PRODUCTION";
@@ -188,7 +188,7 @@ export interface Jet {
     args: ListEnvironmentVariablesArgs,
   ): Promise<Array<{ name: string; value: string }>>;
   cloneProject(args: CloneProjectArgs): Promise<JetProject>;
-  pluginEnableInstance(args: PluginEnableInstanceArgs): Promise<void>;
+  pluginInstallInstance(args: PluginInstallInstanceArgs): Promise<void>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -284,8 +284,8 @@ export const jet: Jet = {
     doCloneProject,
     "clone a Jet project",
   ),
-  pluginEnableInstance: logDebugMetricsWrapper(
-    doPluginEnableInstance,
-    "plugin enable instance",
+  pluginInstallInstance: logDebugMetricsWrapper(
+    doPluginInstallInstance,
+    "plugin install instance",
   ),
 };
