@@ -1,10 +1,10 @@
-export const pluginEnableInstanceMutation = `
-  mutation enablePluginInstance(
+export const pluginInstallInstanceMutation = `
+  mutation installPluginInstance(
     $environmentName: String!,
     $instanceName: String!,
     $projectId: UUID!
   ) {
-    pluginEnableInstance(input: { 
+    pluginInstallInstance(input: { 
       environmentName: $environmentName, 
       instanceName: $instanceName, 
       projectId: $projectId 

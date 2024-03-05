@@ -43,7 +43,7 @@ export interface DeployRequest {
   commitId?: string;
 }
 
-export interface PluginEnableRequest {
+export interface PluginInstallRequest {
   projectId: string;
   instanceName: string;
   environmentName: string;
@@ -66,9 +66,9 @@ export interface JetTest extends Jet {
     projectId: string,
     environmentName: "DEVELOPMENT" | "PRODUCTION",
   ): Map<string, string> | undefined;
-  getPluginEnableRequests(
+  getPluginInstallRequests(
     projectId: string,
-  ): ReadonlyArray<PluginEnableRequest> | undefined;
+  ): ReadonlyArray<PluginInstallRequest> | undefined;
 }
 
 export function makeJet(): JetTest {
@@ -97,7 +97,7 @@ export function makeJet(): JetTest {
     Map<"DEVELOPMENT" | "PRODUCTION", Map<string, string>>
   >();
 
-  const pluginEnableRequests = new Map<string, Array<PluginEnableRequest>>();
+  const pluginInstallRequests = new Map<string, Array<PluginInstallRequest>>();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -544,24 +544,24 @@ export function makeJet(): JetTest {
       return environmentVariables.get(projectId)?.get(environmentName);
     },
 
-    pluginEnableInstance({
+    pluginInstallInstance({
       projectId,
       instanceName,
       environmentName,
     }): Promise<void> {
-      let requests = pluginEnableRequests.get(projectId);
+      let requests = pluginInstallRequests.get(projectId);
       if (!requests) {
         requests = [];
-        pluginEnableRequests.set(projectId, requests);
+        pluginInstallRequests.set(projectId, requests);
       }
       requests.push({ projectId, instanceName, environmentName });
       return Promise.resolve();
     },
 
-    getPluginEnableRequests(
+    getPluginInstallRequests(
       projectId: string,
-    ): ReadonlyArray<PluginEnableRequest> | undefined {
-      return pluginEnableRequests.get(projectId);
+    ): ReadonlyArray<PluginInstallRequest> | undefined {
+      return pluginInstallRequests.get(projectId);
     },
   };
 }
