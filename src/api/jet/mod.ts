@@ -22,6 +22,7 @@ import {
   ListEnvironmentVariablesArgs,
   ListMigrationsArgs,
   MigrateDBArgs,
+  PluginEnableInstanceArgs,
   RollbackDBArgs,
   SetEnvironmentVariableArgs,
   UnsetEnvironmentVariableArgs,
@@ -85,6 +86,7 @@ import {
   ProjectQueryResponse,
 } from "@/api/jet/queries/clone.ts";
 import { ProjectDotJSON } from "@/jcli/config/project-json.ts";
+import { pluginEnableInstanceMutation } from "@/api/jet/queries/plugin-enable-instance.ts";
 
 export async function createProject(
   args: CreateProjectArgs,
@@ -368,6 +370,13 @@ export async function cloneProject(
     functions: cloneProjectFunctions(projectNodeId, config),
     migrations: cloneProjectMigrations(projectNodeId, config),
   };
+}
+
+export async function pluginEnableInstance(
+  args: PluginEnableInstanceArgs,
+  config: JcliConfigDotJSON,
+) {
+  await query(pluginEnableInstanceMutation, args, config);
 }
 
 function cloneProjectMigrations(
