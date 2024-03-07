@@ -43,7 +43,7 @@ export interface DeployRequest {
   commitId?: string;
 }
 
-export interface PluginInstallRequest {
+export interface PluginInstanceRequest {
   projectId: string;
   instanceName: string;
   environmentName: string;
@@ -68,7 +68,7 @@ export interface JetTest extends Jet {
   ): Map<string, string> | undefined;
   getPluginInstallRequests(
     projectId: string,
-  ): ReadonlyArray<PluginInstallRequest> | undefined;
+  ): ReadonlyArray<PluginInstanceRequest> | undefined;
 }
 
 export function makeJet(): JetTest {
@@ -97,7 +97,7 @@ export function makeJet(): JetTest {
     Map<"DEVELOPMENT" | "PRODUCTION", Map<string, string>>
   >();
 
-  const pluginInstallRequests = new Map<string, Array<PluginInstallRequest>>();
+  const pluginInstances = new Map<string, Array<PluginInstanceRequest>>();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -549,19 +549,45 @@ export function makeJet(): JetTest {
       instanceName,
       environmentName,
     }): Promise<void> {
-      let requests = pluginInstallRequests.get(projectId);
+      let requests = pluginInstances.get(projectId);
       if (!requests) {
         requests = [];
-        pluginInstallRequests.set(projectId, requests);
+        pluginInstances.set(projectId, requests);
       }
       requests.push({ projectId, instanceName, environmentName });
       return Promise.resolve();
     },
 
+    pluginUninstallInstance({
+      projectId,
+      instanceName,
+      environmentName,
+    }): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const requests = pluginInstances.get(projectId);
+        if (!requests) {
+          reject(new Error("No plugin instances found for project"));
+          return;
+        }
+        const index = requests.findIndex((request) =>
+          request.instanceName === instanceName &&
+          request.environmentName === environmentName
+        );
+
+        if (index === -1) {
+          reject(new Error("Plugin instance not found"));
+          return;
+        }
+
+        requests.splice(index, 1);
+        resolve();
+      });
+    },
+
     getPluginInstallRequests(
       projectId: string,
-    ): ReadonlyArray<PluginInstallRequest> | undefined {
-      return pluginInstallRequests.get(projectId);
+    ): ReadonlyArray<PluginInstanceRequest> | undefined {
+      return pluginInstances.get(projectId);
     },
   };
 }

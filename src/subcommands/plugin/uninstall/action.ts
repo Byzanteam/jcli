@@ -8,7 +8,7 @@ export default async function (options: VarOptions, instanceName: string) {
   try {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
-    await api.jet.pluginInstallInstance({
+    await api.jet.pluginUninstallInstance({
       projectId,
       instanceName,
       environmentName: buildEnvironmentName(options),

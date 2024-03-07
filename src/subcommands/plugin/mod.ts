@@ -1,10 +1,12 @@
 import { Command } from "cliffy";
 import { GlobalOptions } from "@/args.ts";
 
-import installCommand from "./install/mod.ts";
+import installCommand from "@/subcommands/plugin/install/mod.ts";
+import uninstallCommand from "@/subcommands/plugin/uninstall/mod.ts";
 
 const command = new Command<GlobalOptions>()
   .description("Work with plugin functions.")
-  .command("install", installCommand);
+  .command("install", installCommand)
+  .command("uninstall", uninstallCommand);
 
 export default command;

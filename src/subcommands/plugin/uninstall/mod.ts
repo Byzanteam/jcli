@@ -5,9 +5,9 @@ import { VarOptions } from "@/subcommands/plugin/options.ts";
 import action from "./action.ts";
 
 const command = new Command<VarOptions>()
-  .description("Install a plugin instance")
+  .description("Uninstall a plugin instance")
   .arguments("<instanceName:string>")
-  .option("--prod", "Install a plugin instance in the production environment")
+  .option("--prod", "Uninstall a plugin instance in the production environment")
   .error(errorHandler)
   .action(action);
 
