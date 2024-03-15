@@ -37,7 +37,7 @@ describe("clone", () => {
 
     ["a", "b", "c"].forEach((name, i) => {
       api.fs.writeTextFile(
-        `migrations/20200000000${i}_${name}.sql`,
+        `migrations/00000000000${i}_${name}.sql`,
         name,
         {
           createNew: true,
@@ -193,19 +193,19 @@ describe("clone", () => {
   it("clones migrations", async () => {
     await action(options, projectId);
 
-    assert(api.fs.hasFile("my_proj/migrations/202000000000_a.sql"));
+    assert(api.fs.hasFile("my_proj/migrations/000000000000_a.sql"));
     assertEquals(
-      await api.fs.readTextFile("my_proj/migrations/202000000000_a.sql"),
+      await api.fs.readTextFile("my_proj/migrations/000000000000_a.sql"),
       "a",
     );
-    assert(api.fs.hasFile("my_proj/migrations/202000000001_b.sql"));
+    assert(api.fs.hasFile("my_proj/migrations/000000000001_b.sql"));
     assertEquals(
-      await api.fs.readTextFile("my_proj/migrations/202000000001_b.sql"),
+      await api.fs.readTextFile("my_proj/migrations/000000000001_b.sql"),
       "b",
     );
-    assert(api.fs.hasFile("my_proj/migrations/202000000002_c.sql"));
+    assert(api.fs.hasFile("my_proj/migrations/000000000002_c.sql"));
     assertEquals(
-      await api.fs.readTextFile("my_proj/migrations/202000000002_c.sql"),
+      await api.fs.readTextFile("my_proj/migrations/000000000002_c.sql"),
       "c",
     );
 
@@ -220,12 +220,12 @@ describe("clone", () => {
     );
 
     assertEquals(entries.length, 3);
-    assertEquals(entries[0].path, "migrations/202000000000_a.sql");
-    assertEquals(entries[0].hash, "202000000000");
-    assertEquals(entries[1].path, "migrations/202000000001_b.sql");
-    assertEquals(entries[1].hash, "202000000001");
-    assertEquals(entries[2].path, "migrations/202000000002_c.sql");
-    assertEquals(entries[2].hash, "202000000002");
+    assertEquals(entries[0].path, "migrations/000000000000_a.sql");
+    assertEquals(entries[0].hash, "0");
+    assertEquals(entries[1].path, "migrations/000000000001_b.sql");
+    assertEquals(entries[1].hash, "1");
+    assertEquals(entries[2].path, "migrations/000000000002_c.sql");
+    assertEquals(entries[2].hash, "2");
 
     db.close();
   });
