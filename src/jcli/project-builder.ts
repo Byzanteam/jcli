@@ -82,9 +82,11 @@ class ProjectBuilder {
     );
 
     for await (const { version, name, hash, content } of migrations) {
+      const versionStr = this.#buildVersionString(version);
+
       const path = name
-        ? join("migrations", `${version}_${name}.sql`)
-        : join("migrations", `${version}.sql`);
+        ? join("migrations", `${versionStr}_${name}.sql`)
+        : join("migrations", `${versionStr}.sql`);
 
       await api.fs.writeTextFile(join(this.#directory, path), content, {
         createNew: true,
@@ -95,6 +97,18 @@ class ProjectBuilder {
 
     createMigrationQuery.finalize();
     db.close();
+  }
+
+  #buildVersionString(version: number): string {
+    const versionStr = version.toString();
+
+    if (versionStr.length > 12) {
+      throw new Error(
+        "Version string is too long. Expected 12 digits, got: ${version}",
+      );
+    } else {
+      return versionStr.padStart(12, "0");
+    }
   }
 
   async buildFunctions(
