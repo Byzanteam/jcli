@@ -51,7 +51,9 @@ function getConfiguration(db: DBClass): string {
     "SELECT data FROM configuration",
   );
 
-  return configuration;
+  const { name, title, capabilities, instances } = JSON.parse(configuration);
+
+  return JSON.stringify({ name, title, capabilities, instances });
 }
 
 export async function digestProject(db: DBClass): Promise<string> {
