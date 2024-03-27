@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup jcli
-        uses: byzanteam/setup-jcli
+        uses: byzanteam/setup-jcli@main
         with:
           version: <%= jcli.version %>
           jet-endpoint: <%= jcli.jetEndpoint %>
