@@ -28,6 +28,7 @@ jobs:
           cd "<%= project.distDir %>"
           jcli clone "<%= project.id %>" .jcli-deploy-tmp
           mv .jcli-deploy-tmp/.jcli ./
+          cp .jcli-deploy-tmp/project.json ./
           jcli push
           jcli commit
           jcli deploy`,
