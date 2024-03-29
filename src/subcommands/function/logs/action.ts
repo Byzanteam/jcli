@@ -29,7 +29,7 @@ function formatLog(log: DeploymentLog): string {
   const { functionName, message, severity, stacktrace, timestamp } = log;
 
   const value = `${functionName} ${timestamp} ${severity} ${
-    message.replace(/\s+$/, "")
+    message.replace(/\n+$/, "")
   }`;
 
   return stacktrace ? `${value}\n${stacktrace}` : value;
