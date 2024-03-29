@@ -1,3 +1,5 @@
+import { ProjectEnvironmentName } from "@/api/mod.ts";
+
 export const listEnvironmentVariablesQuery = `
   query listEnvironmentVariables(
     $projectNodeId: ID!
@@ -35,7 +37,7 @@ export interface ListEnvironmentVariablesQueryResponse {
   node: {
     environments: {
       nodes: ReadonlyArray<{
-        name: "DEVELOPMENT" | "PRODUCTION";
+        name: ProjectEnvironmentName;
         environmentVariables: {
           pageInfo: {
             endCursor: string;

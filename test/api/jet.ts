@@ -1,6 +1,11 @@
 import { parse } from "path";
 
-import { Jet, JetProject } from "@/api/mod.ts";
+import {
+  DeploymentLog,
+  Jet,
+  JetProject,
+  ProjectEnvironmentName,
+} from "@/api/mod.ts";
 import { Project } from "@/jet/project.ts";
 
 import { FSTest, makeFS } from "@test/api/mod.ts";
@@ -46,7 +51,7 @@ export interface DeployRequest {
 export interface PluginInstanceRequest {
   projectId: string;
   instanceName: string;
-  environmentName: string;
+  environmentName: ProjectEnvironmentName;
 }
 
 export interface JetTest extends Jet {
@@ -64,11 +69,16 @@ export interface JetTest extends Jet {
   ): ReadonlyArray<DeployRequest> | undefined;
   getEnvironmentVariables(
     projectId: string,
-    environmentName: "DEVELOPMENT" | "PRODUCTION",
+    environmentName: ProjectEnvironmentName,
   ): Map<string, string> | undefined;
   getPluginInstallRequests(
     projectId: string,
   ): ReadonlyArray<PluginInstanceRequest> | undefined;
+  setDeploymentLogs(
+    projectId: string,
+    environmentName: ProjectEnvironmentName,
+    logs: ReadonlyArray<DeploymentLog>,
+  ): void;
 }
 
 export function makeJet(): JetTest {
@@ -94,10 +104,15 @@ export function makeJet(): JetTest {
 
   const environmentVariables = new Map<
     string,
-    Map<"DEVELOPMENT" | "PRODUCTION", Map<string, string>>
+    Map<ProjectEnvironmentName, Map<string, string>>
   >();
 
   const pluginInstances = new Map<string, Array<PluginInstanceRequest>>();
+
+  const deploymentLogs = new Map<
+    string,
+    Map<ProjectEnvironmentName, Array<DeploymentLog>>
+  >();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -135,6 +150,13 @@ export function makeJet(): JetTest {
             id,
             new Map([["DEVELOPMENT", new Map()], ["PRODUCTION", new Map()]]),
           );
+
+          const logs = new Map<ProjectEnvironmentName, Array<DeploymentLog>>();
+          logs.set("DEVELOPMENT", []);
+          logs.set("PRODUCTION", []);
+
+          deploymentLogs.set(id, logs);
+
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
           reject(new Error(`Project ${name} has already exist.`));
@@ -588,6 +610,38 @@ export function makeJet(): JetTest {
       projectId: string,
     ): ReadonlyArray<PluginInstanceRequest> | undefined {
       return pluginInstances.get(projectId);
+    },
+
+    listDeploymentLogs(
+      { projectId, environmentName, length, functionName },
+    ): Promise<Array<DeploymentLog>> {
+      return new Promise((resolve, reject) => {
+        const logs = deploymentLogs.get(projectId)?.get(environmentName);
+
+        if (!logs) {
+          reject(new Error("Project not found"));
+          return;
+        }
+
+        if (functionName) {
+          resolve(
+            logs.filter((log) => log.functionName === functionName).slice(
+              0,
+              length,
+            ),
+          );
+        } else {
+          resolve(logs.slice(0, length));
+        }
+      });
+    },
+
+    setDeploymentLogs(
+      projectId: string,
+      environmentName: ProjectEnvironmentName,
+      logs: Array<DeploymentLog>,
+    ): void {
+      deploymentLogs.get(projectId)?.set(environmentName, logs);
     },
   };
 }

@@ -1,7 +1,14 @@
 import { Console, consoleImpl } from "@/api/console.ts";
 import { DB, db, DBClass } from "@/api/db.ts";
 import { DirEntry, FS, fs, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
-import { Jet, jet, JetProject } from "@/api/jet.ts";
+import {
+  DeploymentLog,
+  DeploymentLogSeverity,
+  Jet,
+  jet,
+  JetProject,
+  ProjectEnvironmentName,
+} from "@/api/jet.ts";
 
 import { Config } from "@/jcli/config/config.ts";
 import {
@@ -25,11 +32,14 @@ export type {
   Console,
   DB,
   DBClass,
+  DeploymentLog,
+  DeploymentLogSeverity,
   DirEntry,
   FS,
   Jet,
   JetProject,
   MkdirOptions,
+  ProjectEnvironmentName,
   WriteFileOptions,
 };
 

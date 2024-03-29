@@ -13,6 +13,7 @@ import {
   deleteMigration as doDeleteMigration,
   deploy as doDeploy,
   deployDraftFunctions as doDeployDraftFunctions,
+  listDeploymentLogs as doListDeploymentLogs,
   listEnvironmentVariables as doListEnvironmentVariables,
   listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
@@ -122,22 +123,24 @@ export interface DeployArgs {
   commitId?: string;
 }
 
+export type ProjectEnvironmentName = "DEVELOPMENT" | "PRODUCTION";
+
 export interface SetEnvironmentVariableArgs {
   projectId: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
   name: string;
   value: string;
 }
 
 export interface UnsetEnvironmentVariableArgs {
   projectId: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
   name: string;
 }
 
 export interface ListEnvironmentVariablesArgs {
   projectId: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
 }
 
 export interface CloneProjectArgs {
@@ -147,7 +150,14 @@ export interface CloneProjectArgs {
 export interface PluginInstanceArgs {
   projectId: string;
   instanceName: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
+}
+
+export interface ListDeploymentLogsArgs {
+  projectId: string;
+  environmentName: ProjectEnvironmentName;
+  functionName?: string;
+  length: number;
 }
 
 export interface JetProject {
@@ -163,6 +173,16 @@ export interface JetProject {
     hash: string;
     content: string;
   }>;
+}
+
+export type DeploymentLogSeverity = "INFO" | "ERROR" | "DEBUG" | "WARN";
+
+export interface DeploymentLog {
+  functionName: string;
+  message: string;
+  severity: DeploymentLogSeverity;
+  timestamp: string;
+  stacktrace?: string;
 }
 
 export interface Jet {
@@ -191,6 +211,9 @@ export interface Jet {
   cloneProject(args: CloneProjectArgs): Promise<JetProject>;
   pluginInstallInstance(args: PluginInstanceArgs): Promise<void>;
   pluginUninstallInstance(args: PluginInstanceArgs): Promise<void>;
+  listDeploymentLogs(
+    args: ListDeploymentLogsArgs,
+  ): Promise<Array<DeploymentLog>>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -293,5 +316,9 @@ export const jet: Jet = {
   pluginUninstallInstance: logDebugMetricsWrapper(
     doPluginUninstallInstance,
     "plugin install instance",
+  ),
+  listDeploymentLogs: logDebugMetricsWrapper(
+    doListDeploymentLogs,
+    "list deployment logs",
   ),
 };

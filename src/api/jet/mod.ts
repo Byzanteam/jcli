@@ -1,6 +1,7 @@
 import {
   buildNodeId,
   connectionIterator,
+  fetchLength,
   NodeType,
   query,
 } from "./utilities.ts";
@@ -19,6 +20,7 @@ import {
   DeleteMigrationArgs,
   DeployArgs,
   DeployDraftFunctionsArgs,
+  ListDeploymentLogsArgs,
   ListEnvironmentVariablesArgs,
   ListMigrationsArgs,
   MigrateDBArgs,
@@ -88,6 +90,13 @@ import {
 import { ProjectDotJSON } from "@/jcli/config/project-json.ts";
 import { pluginInstallInstanceMutation } from "@/api/jet/queries/plugin-install-instance.ts";
 import { pluginUninstallInstanceMutation } from "@/api/jet/queries/plugin-uninstall-instance.ts";
+
+import {
+  listDeploymentLogsQuery,
+  ListDeploymentLogsQueryResponse,
+  listEnvironmentsQuery,
+  ListEnvironmentsQueryResponse,
+} from "@/api/jet/queries/list-deployment-logs.ts";
 
 export async function createProject(
   args: CreateProjectArgs,
@@ -473,4 +482,102 @@ function cloneProjectFunctions(
     queryListDraftFunctions,
     queryListDraftFunctionsCallback,
   );
+}
+
+export async function listDeploymentLogs(
+  args: ListDeploymentLogsArgs,
+  config: JcliConfigDotJSON,
+) {
+  const { projectId, functionName, environmentName, length } = args;
+
+  function queryListEnvironments(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListEnvironmentsQueryResponse>(
+      listEnvironmentsQuery,
+      {
+        projectNodeId: buildNodeId(NodeType.project, projectId),
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function queryListEnvironmentsCallback(
+    response: ListEnvironmentsQueryResponse,
+  ) {
+    const { node: { environments: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes,
+    };
+  }
+
+  const environments = await Array.fromAsync(connectionIterator(
+    queryListEnvironments,
+    queryListEnvironmentsCallback,
+  ));
+
+  const { nodeId: environmentNodeId } = environments.find((e) =>
+    e.name === environmentName
+  )!;
+
+  return doListDeploymentLogs({
+    environmentNodeId,
+    functionName,
+    length,
+  }, config);
+}
+
+function doListDeploymentLogs(
+  args: {
+    environmentNodeId: string;
+    functionName?: string;
+    length: number;
+  },
+  config: JcliConfigDotJSON,
+) {
+  const { environmentNodeId, functionName, length } = args;
+
+  function queryListDeploymentLogs(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListDeploymentLogsQueryResponse>(
+      listDeploymentLogsQuery,
+      {
+        environmentNodeId,
+        functionName,
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function queryListDeploymentLogsCallback(
+    response: ListDeploymentLogsQueryResponse,
+  ) {
+    const { node: { deploymentLogs: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map((n) => {
+        return {
+          functionName: n.functionName,
+          message: n.message,
+          severity: n.metadata.severity,
+          timestamp: n.timestamp,
+          stacktrace: n.metadata.stacktrace,
+        };
+      }),
+    };
+  }
+
+  return Array.fromAsync(fetchLength(
+    queryListDeploymentLogs,
+    queryListDeploymentLogsCallback,
+    length,
+  ));
 }
