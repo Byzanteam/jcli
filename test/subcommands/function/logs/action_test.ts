@@ -59,15 +59,15 @@ describe("logs", () => {
     await action({});
 
     assertEquals(api.console.logs.length, 3);
-    assertEquals(api.console.logs[0], "main timestamp1 INFO hello");
+    assertEquals(api.console.logs[0], "api timestamp3 INFO foo");
     assertEquals(api.console.logs[1], "main timestamp2 INFO world");
-    assertEquals(api.console.logs[2], "api timestamp3 INFO foo");
+    assertEquals(api.console.logs[2], "main timestamp1 INFO hello");
 
     await action({ length: 2 });
 
     assertEquals(api.console.logs.length, 5);
-    assertEquals(api.console.logs[3], "main timestamp1 INFO hello");
-    assertEquals(api.console.logs[4], "main timestamp2 INFO world");
+    assertEquals(api.console.logs[3], "main timestamp2 INFO world");
+    assertEquals(api.console.logs[4], "main timestamp1 INFO hello");
 
     await action({ length: 10 }, "api");
 

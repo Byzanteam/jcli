@@ -17,7 +17,7 @@ export default async function (options: LogsOptions, functionName?: string) {
       length: options.length ?? DEFAULT_LENGTH,
     });
 
-    for await (const log of logs) {
+    for (const log of logs.reverse()) {
       api.console.log(formatLog(log));
     }
   } finally {
