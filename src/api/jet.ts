@@ -123,22 +123,24 @@ export interface DeployArgs {
   commitId?: string;
 }
 
+export type ProjectEnvironmentName = "DEVELOPMENT" | "PRODUCTION";
+
 export interface SetEnvironmentVariableArgs {
   projectId: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
   name: string;
   value: string;
 }
 
 export interface UnsetEnvironmentVariableArgs {
   projectId: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
   name: string;
 }
 
 export interface ListEnvironmentVariablesArgs {
   projectId: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
 }
 
 export interface CloneProjectArgs {
@@ -148,12 +150,12 @@ export interface CloneProjectArgs {
 export interface PluginInstanceArgs {
   projectId: string;
   instanceName: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
 }
 
 export interface ListDeploymentLogsArgs {
   projectId: string;
-  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  environmentName: ProjectEnvironmentName;
   functionName?: string;
   length: number;
 }
@@ -173,10 +175,12 @@ export interface JetProject {
   }>;
 }
 
+export type DeploymentLogSeverity = "INFO" | "ERROR" | "DEBUG" | "WARN";
+
 export interface DeploymentLog {
   functionName: string;
   message: string;
-  severity: "INFO" | "ERROR" | "DEBUG" | "WARN";
+  severity: DeploymentLogSeverity;
   timestamp: string;
   stacktrace?: string;
 }

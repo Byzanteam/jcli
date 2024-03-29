@@ -1,3 +1,5 @@
+import { DeploymentLogSeverity, ProjectEnvironmentName } from "@/api/mod.ts";
+
 const listEnvironmentsQuery = `
   query ListEnvironmentVariables(
     $projectNodeId: ID!
@@ -33,7 +35,7 @@ interface ListEnvironmentsQueryResponse {
       };
 
       nodes: ReadonlyArray<{
-        name: "DEVELOPMENT" | "PRODUCTION";
+        name: ProjectEnvironmentName;
         nodeId: string;
       }>;
     };
@@ -85,7 +87,7 @@ interface ListDeploymentLogsQueryResponse {
         message: string;
         timestamp: string;
         metadata: {
-          severity: "INFO" | "ERROR" | "DEBUG" | "WARN";
+          severity: DeploymentLogSeverity;
           stacktrace: string;
         };
       }>;

@@ -1,6 +1,11 @@
 import { parse } from "path";
 
-import { DeploymentLog, Jet, JetProject } from "@/api/mod.ts";
+import {
+  DeploymentLog,
+  Jet,
+  JetProject,
+  ProjectEnvironmentName,
+} from "@/api/mod.ts";
 import { Project } from "@/jet/project.ts";
 
 import { FSTest, makeFS } from "@test/api/mod.ts";
@@ -46,7 +51,7 @@ export interface DeployRequest {
 export interface PluginInstanceRequest {
   projectId: string;
   instanceName: string;
-  environmentName: string;
+  environmentName: ProjectEnvironmentName;
 }
 
 export interface JetTest extends Jet {
@@ -64,14 +69,14 @@ export interface JetTest extends Jet {
   ): ReadonlyArray<DeployRequest> | undefined;
   getEnvironmentVariables(
     projectId: string,
-    environmentName: "DEVELOPMENT" | "PRODUCTION",
+    environmentName: ProjectEnvironmentName,
   ): Map<string, string> | undefined;
   getPluginInstallRequests(
     projectId: string,
   ): ReadonlyArray<PluginInstanceRequest> | undefined;
   setDeploymentLogs(
     projectId: string,
-    environmentName: "DEVELOPMENT" | "PRODUCTION",
+    environmentName: ProjectEnvironmentName,
     logs: ReadonlyArray<DeploymentLog>,
   ): void;
 }
@@ -99,14 +104,14 @@ export function makeJet(): JetTest {
 
   const environmentVariables = new Map<
     string,
-    Map<"DEVELOPMENT" | "PRODUCTION", Map<string, string>>
+    Map<ProjectEnvironmentName, Map<string, string>>
   >();
 
   const pluginInstances = new Map<string, Array<PluginInstanceRequest>>();
 
   const deploymentLogs = new Map<
     string,
-    Map<"PRODUCTION" | "DEVELOPMENT", Array<DeploymentLog>>
+    Map<ProjectEnvironmentName, Array<DeploymentLog>>
   >();
 
   const tryMkdirRecursively = async (
@@ -146,10 +151,7 @@ export function makeJet(): JetTest {
             new Map([["DEVELOPMENT", new Map()], ["PRODUCTION", new Map()]]),
           );
 
-          const logs = new Map<
-            "PRODUCTION" | "DEVELOPMENT",
-            Array<DeploymentLog>
-          >();
+          const logs = new Map<ProjectEnvironmentName, Array<DeploymentLog>>();
           logs.set("DEVELOPMENT", []);
           logs.set("PRODUCTION", []);
 
@@ -636,7 +638,7 @@ export function makeJet(): JetTest {
 
     setDeploymentLogs(
       projectId: string,
-      environmentName: "DEVELOPMENT" | "PRODUCTION",
+      environmentName: ProjectEnvironmentName,
       logs: Array<DeploymentLog>,
     ): void {
       deploymentLogs.get(projectId)?.set(environmentName, logs);
