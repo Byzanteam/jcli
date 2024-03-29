@@ -13,6 +13,7 @@ import {
   deleteMigration as doDeleteMigration,
   deploy as doDeploy,
   deployDraftFunctions as doDeployDraftFunctions,
+  listDeploymentLogs as doListDeploymentLogs,
   listEnvironmentVariables as doListEnvironmentVariables,
   listMigrations as doListMigrations,
   migrateDB as doMigrateDB,
@@ -150,6 +151,13 @@ export interface PluginInstanceArgs {
   environmentName: "DEVELOPMENT" | "PRODUCTION";
 }
 
+export interface ListDeploymentLogsArgs {
+  projectId: string;
+  environmentName: "DEVELOPMENT" | "PRODUCTION";
+  functionName?: string;
+  length: number;
+}
+
 export interface JetProject {
   name: string;
   configuration: ProjectDotJSON;
@@ -163,6 +171,14 @@ export interface JetProject {
     hash: string;
     content: string;
   }>;
+}
+
+export interface DeploymentLog {
+  functionName: string;
+  message: string;
+  severity: "INFO" | "ERROR" | "DEBUG" | "WARN";
+  timestamp: string;
+  stacktrace?: string;
 }
 
 export interface Jet {
@@ -191,6 +207,9 @@ export interface Jet {
   cloneProject(args: CloneProjectArgs): Promise<JetProject>;
   pluginInstallInstance(args: PluginInstanceArgs): Promise<void>;
   pluginUninstallInstance(args: PluginInstanceArgs): Promise<void>;
+  listDeploymentLogs(
+    args: ListDeploymentLogsArgs,
+  ): Promise<Array<DeploymentLog>>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -293,5 +312,9 @@ export const jet: Jet = {
   pluginUninstallInstance: logDebugMetricsWrapper(
     doPluginUninstallInstance,
     "plugin install instance",
+  ),
+  listDeploymentLogs: logDebugMetricsWrapper(
+    doListDeploymentLogs,
+    "list deployment logs",
   ),
 };

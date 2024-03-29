@@ -35,6 +35,7 @@ function resolveResponse<T>(
 
 export enum NodeType {
   "project" = "ProjectsProject",
+  "environment" = "ProjectsEnvironment",
 }
 
 export function buildNodeId(type: NodeType, id: string): string {
@@ -50,6 +51,7 @@ export interface ConnectionIteratorOptions {
   perPage?: number;
 }
 
+const MAXIMUM_PER_PAGE = 50;
 const DEFAULT_PER_PAGE = 50;
 
 export async function* connectionIterator<T, U>(
@@ -72,6 +74,40 @@ export async function* connectionIterator<T, U>(
       cursor = pageInfo.endCursor;
     } else {
       break;
+    }
+  } while (true);
+}
+
+export async function* fetchLength<T, U>(
+  query: (variables: { first: number; after?: string }) => Promise<T>,
+  callback: (response: T) => { pageInfo: PageInfo; records: ReadonlyArray<U> },
+  length: number,
+): AsyncIterable<U> {
+  const requiredPages = Math.ceil(length / MAXIMUM_PER_PAGE);
+
+  let cursor: string | undefined;
+  let fetchedPages = 0;
+
+  do {
+    const response = await query({
+      first: MAXIMUM_PER_PAGE,
+      after: cursor,
+    });
+    const { pageInfo, records } = callback(response);
+
+    fetchedPages++;
+
+    if (fetchedPages === requiredPages) {
+      yield* records.slice(0, length % MAXIMUM_PER_PAGE);
+      break;
+    } else {
+      yield* records;
+
+      if (pageInfo.hasNextPage) {
+        cursor = pageInfo.endCursor;
+      } else {
+        break;
+      }
     }
   } while (true);
 }

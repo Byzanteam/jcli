@@ -1,6 +1,6 @@
 import { parse } from "path";
 
-import { Jet, JetProject } from "@/api/mod.ts";
+import { DeploymentLog, Jet, JetProject } from "@/api/mod.ts";
 import { Project } from "@/jet/project.ts";
 
 import { FSTest, makeFS } from "@test/api/mod.ts";
@@ -69,6 +69,11 @@ export interface JetTest extends Jet {
   getPluginInstallRequests(
     projectId: string,
   ): ReadonlyArray<PluginInstanceRequest> | undefined;
+  setDeploymentLogs(
+    projectId: string,
+    environmentName: "DEVELOPMENT" | "PRODUCTION",
+    logs: ReadonlyArray<DeploymentLog>,
+  ): void;
 }
 
 export function makeJet(): JetTest {
@@ -98,6 +103,11 @@ export function makeJet(): JetTest {
   >();
 
   const pluginInstances = new Map<string, Array<PluginInstanceRequest>>();
+
+  const deploymentLogs = new Map<
+    string,
+    Map<"PRODUCTION" | "DEVELOPMENT", Array<DeploymentLog>>
+  >();
 
   const tryMkdirRecursively = async (
     path: string,
@@ -135,6 +145,16 @@ export function makeJet(): JetTest {
             id,
             new Map([["DEVELOPMENT", new Map()], ["PRODUCTION", new Map()]]),
           );
+
+          const logs = new Map<
+            "PRODUCTION" | "DEVELOPMENT",
+            Array<DeploymentLog>
+          >();
+          logs.set("DEVELOPMENT", []);
+          logs.set("PRODUCTION", []);
+
+          deploymentLogs.set(id, logs);
+
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
           reject(new Error(`Project ${name} has already exist.`));
@@ -588,6 +608,38 @@ export function makeJet(): JetTest {
       projectId: string,
     ): ReadonlyArray<PluginInstanceRequest> | undefined {
       return pluginInstances.get(projectId);
+    },
+
+    listDeploymentLogs(
+      { projectId, environmentName, length, functionName },
+    ): Promise<Array<DeploymentLog>> {
+      return new Promise((resolve, reject) => {
+        const logs = deploymentLogs.get(projectId)?.get(environmentName);
+
+        if (!logs) {
+          reject(new Error("Project not found"));
+          return;
+        }
+
+        if (functionName) {
+          resolve(
+            logs.filter((log) => log.functionName === functionName).slice(
+              0,
+              length,
+            ),
+          );
+        } else {
+          resolve(logs.slice(0, length));
+        }
+      });
+    },
+
+    setDeploymentLogs(
+      projectId: string,
+      environmentName: "DEVELOPMENT" | "PRODUCTION",
+      logs: Array<DeploymentLog>,
+    ): void {
+      deploymentLogs.get(projectId)?.set(environmentName, logs);
     },
   };
 }
