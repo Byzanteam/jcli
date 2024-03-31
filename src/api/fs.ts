@@ -3,7 +3,7 @@ export interface FS {
   mkdir(path: string, options?: MkdirOptions): Promise<void>;
   readFile(path: string): Promise<Uint8Array>;
   readTextFile(path: string): Promise<string>;
-  remove(path: string): Promise<void>;
+  remove(path: string, options?: RemoveOptions): Promise<void>;
   writeTextFile(
     path: string,
     data: string,
@@ -12,6 +12,7 @@ export interface FS {
   readDir(path: string): AsyncIterable<DirEntry>;
   lstat(path: string): Promise<FileInfo>;
   realPath(path: string): Promise<string>;
+  rename(oldPath: string, newPath: string): Promise<void>;
 }
 
 export interface MkdirOptions {
@@ -35,6 +36,10 @@ export interface FileInfo {
   isSymlink: boolean;
 }
 
+export interface RemoveOptions {
+  recursive: boolean;
+}
+
 export const fs: FS = {
   homePath(): string {
     const homePath = Deno.env.get("HOME");
@@ -53,4 +58,5 @@ export const fs: FS = {
   readDir: Deno.readDir,
   lstat: Deno.lstat,
   realPath: Deno.realPath,
+  rename: Deno.rename,
 };
