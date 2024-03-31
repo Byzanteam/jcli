@@ -99,6 +99,27 @@ class Directory {
     }
   }
 
+  rename(oldPath: string, newPath: string): void {
+    const oldDirectoryOrFile = this.getChildRec(
+      Directory.normalizePath(oldPath),
+    );
+    const newDirectory = this.getChildRec(
+      Directory.normalizePath(newPath.slice(0, -1)),
+    );
+
+    if (!(oldDirectoryOrFile instanceof File)) {
+      throw new Error(`No such file: "${oldPath}"`);
+    } else if (!(newDirectory instanceof Directory)) {
+      throw new Error(
+        `Cannot rename file to "${newPath}" because directory part of new path does not exist`,
+      );
+    } else {
+      const newFilename = newPath.split("/").pop()!;
+      newDirectory.#children.set(newFilename, oldDirectoryOrFile);
+      this.remove(Directory.normalizePath(oldPath));
+    }
+  }
+
   _remove(path: string): void {
     const directoryOrFile = this.#children.get(path);
 
@@ -241,6 +262,17 @@ export function makeFS(): FSTest {
         const normalizedPath = Directory.normalizePath(path);
         cwd.remove(normalizedPath);
         resolve();
+      });
+    },
+
+    rename(oldPath: string, newPath: string): Promise<void> {
+      return new Promise((resolve, reject) => {
+        try {
+          cwd.rename(oldPath, newPath);
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
       });
     },
 
