@@ -2,8 +2,10 @@ import { Console, consoleImpl } from "@/api/console.ts";
 import { DB, db, DBClass } from "@/api/db.ts";
 import { DirEntry, FS, fs, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
 import {
+  Deployment,
   DeploymentLog,
   DeploymentLogSeverity,
+  DeploymentState,
   Jet,
   jet,
   JetProject,
@@ -32,8 +34,10 @@ export type {
   Console,
   DB,
   DBClass,
+  Deployment,
   DeploymentLog,
   DeploymentLogSeverity,
+  DeploymentState,
   DirEntry,
   FS,
   Jet,

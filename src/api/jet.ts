@@ -13,6 +13,7 @@ import {
   deleteMigration as doDeleteMigration,
   deploy as doDeploy,
   deployDraftFunctions as doDeployDraftFunctions,
+  inspectFunction as doInspectFunction,
   listDeploymentLogs as doListDeploymentLogs,
   listEnvironmentVariables as doListEnvironmentVariables,
   listMigrations as doListMigrations,
@@ -160,6 +161,12 @@ export interface ListDeploymentLogsArgs {
   length: number;
 }
 
+export interface InspectFunctionArgs {
+  projectId: string;
+  environmentName: ProjectEnvironmentName;
+  functionName: string;
+}
+
 export interface JetProject {
   name: string;
   configuration: ProjectDotJSON;
@@ -183,6 +190,20 @@ export interface DeploymentLog {
   severity: DeploymentLogSeverity;
   timestamp: string;
   stacktrace?: string;
+}
+
+export type DeploymentState =
+  | "UNSPECIFIED"
+  | "BOOTING"
+  | "RUNNING"
+  | "BOOT_FAILED"
+  | "DESTROYED"
+  | "EARLY_EXITED"
+  | "UNCAUGHT_EXCEPTION"
+  | "MEMORY_LIMIT_EXCEEDED";
+
+export interface Deployment {
+  state: DeploymentState;
 }
 
 export interface Jet {
@@ -214,6 +235,7 @@ export interface Jet {
   listDeploymentLogs(
     args: ListDeploymentLogsArgs,
   ): Promise<Array<DeploymentLog>>;
+  inspectFunction(args: InspectFunctionArgs): Promise<Deployment | undefined>;
 }
 
 function logDebugMetricsWrapper<T, U>(
@@ -320,5 +342,9 @@ export const jet: Jet = {
   listDeploymentLogs: logDebugMetricsWrapper(
     doListDeploymentLogs,
     "list deployment logs",
+  ),
+  inspectFunction: logDebugMetricsWrapper(
+    doInspectFunction,
+    "inspect function",
   ),
 };

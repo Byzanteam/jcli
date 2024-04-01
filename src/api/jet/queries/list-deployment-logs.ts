@@ -1,48 +1,6 @@
-import { DeploymentLogSeverity, ProjectEnvironmentName } from "@/api/mod.ts";
+import { DeploymentLogSeverity } from "@/api/mod.ts";
 
-const listEnvironmentsQuery = `
-  query ListEnvironmentVariables(
-    $projectNodeId: ID!
-    $first: Int!
-    $after: String
-  ) {
-    node(nodeId: $projectNodeId) {
-      ... on ProjectsProject {
-        environments(first: $first, after: $after) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-
-          nodes {
-            ... on ProjectsEnvironment {
-              name
-              nodeId
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-interface ListEnvironmentsQueryResponse {
-  node: {
-    environments: {
-      pageInfo: {
-        endCursor: string;
-        hasNextPage: boolean;
-      };
-
-      nodes: ReadonlyArray<{
-        name: ProjectEnvironmentName;
-        nodeId: string;
-      }>;
-    };
-  };
-}
-
-const listDeploymentLogsQuery = `
+export const listDeploymentLogsQuery = `
 query ListDeploymentLogs(
   $environmentNodeId: ID!
   $functionName: String
@@ -74,7 +32,7 @@ query ListDeploymentLogs(
 }
 `;
 
-interface ListDeploymentLogsQueryResponse {
+export interface ListDeploymentLogsQueryResponse {
   node: {
     deploymentLogs: {
       pageInfo: {
@@ -94,6 +52,3 @@ interface ListDeploymentLogsQueryResponse {
     };
   };
 }
-
-export { listDeploymentLogsQuery, listEnvironmentsQuery };
-export type { ListDeploymentLogsQueryResponse, ListEnvironmentsQueryResponse };
