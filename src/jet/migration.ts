@@ -11,15 +11,18 @@ import { parse } from "path";
 const MIGRATION_FILENAME_FORMAT =
   /^(?<version>\d{12})(_(?<name>[a-z0-9_]{0,26}))?$/;
 
-export function buildVersion(path: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const { name } = parse(path);
-    const result = MIGRATION_FILENAME_FORMAT.exec(name);
+export function buildVersionAndName(
+  path: string,
+): { version: number; name: string | null } {
+  const { name } = parse(path);
+  const result = MIGRATION_FILENAME_FORMAT.exec(name);
 
-    if (result === null) {
-      reject(new Error(`Invalid migration filename ${name}`));
-    } else {
-      resolve(parseInt(result.groups!.version, 10));
-    }
-  });
+  if (result === null) {
+    throw new Error(`Invalid migration filename ${name}`);
+  } else {
+    return {
+      version: parseInt(result.groups!.version, 10),
+      name: result.groups!.name ?? null,
+    };
+  }
 }
