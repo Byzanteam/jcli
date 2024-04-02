@@ -1,6 +1,7 @@
 import { parse } from "path";
 
 import {
+  Deployment,
   DeploymentLog,
   Jet,
   JetProject,
@@ -79,6 +80,12 @@ export interface JetTest extends Jet {
     environmentName: ProjectEnvironmentName,
     logs: ReadonlyArray<DeploymentLog>,
   ): void;
+  setDeployment(
+    projectId: string,
+    environmentName: ProjectEnvironmentName,
+    functionName: string,
+    deployment: Deployment,
+  ): void;
 }
 
 export function makeJet(): JetTest {
@@ -112,6 +119,11 @@ export function makeJet(): JetTest {
   const deploymentLogs = new Map<
     string,
     Map<ProjectEnvironmentName, Array<DeploymentLog>>
+  >();
+
+  const deployments = new Map<
+    string,
+    Map<ProjectEnvironmentName, Map<string, Deployment>>
   >();
 
   const tryMkdirRecursively = async (
@@ -154,8 +166,15 @@ export function makeJet(): JetTest {
           const logs = new Map<ProjectEnvironmentName, Array<DeploymentLog>>();
           logs.set("DEVELOPMENT", []);
           logs.set("PRODUCTION", []);
-
           deploymentLogs.set(id, logs);
+
+          const projDeployments = new Map<
+            ProjectEnvironmentName,
+            Map<string, Deployment>
+          >();
+          projDeployments.set("DEVELOPMENT", new Map<string, Deployment>());
+          projDeployments.set("PRODUCTION", new Map<string, Deployment>());
+          deployments.set(id, projDeployments);
 
           resolve({ id, name, title, capabilities: [], instances: [] });
         } else {
@@ -620,18 +639,17 @@ export function makeJet(): JetTest {
 
         if (!logs) {
           reject(new Error("Project not found"));
-          return;
-        }
-
-        if (functionName) {
-          resolve(
-            logs.filter((log) => log.functionName === functionName).slice(
-              0,
-              length,
-            ),
-          );
         } else {
-          resolve(logs.slice(0, length));
+          if (functionName) {
+            resolve(
+              logs.filter((log) => log.functionName === functionName).slice(
+                0,
+                length,
+              ),
+            );
+          } else {
+            resolve(logs.slice(0, length));
+          }
         }
       });
     },
@@ -642,6 +660,31 @@ export function makeJet(): JetTest {
       logs: Array<DeploymentLog>,
     ): void {
       deploymentLogs.get(projectId)?.set(environmentName, logs);
+    },
+
+    inspectFunction({ projectId, environmentName, functionName }) {
+      return new Promise((resolve, reject) => {
+        const deployment = deployments.get(projectId)?.get(environmentName)
+          ?.get(functionName);
+
+        if (!deployment) {
+          reject(new Error("Deployment not found"));
+        } else {
+          resolve(deployment);
+        }
+      });
+    },
+
+    setDeployment(
+      projectId: string,
+      environmentName: ProjectEnvironmentName,
+      functionName: string,
+      deployment: Deployment,
+    ): void {
+      deployments.get(projectId)?.get(environmentName)?.set(
+        functionName,
+        deployment,
+      );
     },
   };
 }

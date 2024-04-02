@@ -20,6 +20,7 @@ import {
   DeleteMigrationArgs,
   DeployArgs,
   DeployDraftFunctionsArgs,
+  InspectFunctionArgs,
   ListDeploymentLogsArgs,
   ListEnvironmentVariablesArgs,
   ListMigrationsArgs,
@@ -80,8 +81,6 @@ import {
 } from "@/api/jet/queries/list-environment-variables.ts";
 
 import {
-  listDraftFunctionsQuery,
-  ListDraftFunctionsQueryResponse,
   listDraftMigrationsQuery,
   ListDraftMigrationsQueryResponse,
   projectQuery,
@@ -92,11 +91,31 @@ import { pluginInstallInstanceMutation } from "@/api/jet/queries/plugin-install-
 import { pluginUninstallInstanceMutation } from "@/api/jet/queries/plugin-uninstall-instance.ts";
 
 import {
-  listDeploymentLogsQuery,
-  ListDeploymentLogsQueryResponse,
   listEnvironmentsQuery,
-  ListEnvironmentsQueryResponse,
+  type ListEnvironmentsQueryResponse,
+} from "@/api/jet/queries/list-environments.ts";
+
+import {
+  listDraftFunctionsQuery,
+  type ListDraftFunctionsQueryResponse,
+} from "@/api/jet/queries/list-draft-functions.ts";
+
+import {
+  listFunctionsQuery,
+  type ListFunctionsQueryResponse,
+} from "@/api/jet/queries/list-functions.ts";
+
+import {
+  listDeploymentLogsQuery,
+  type ListDeploymentLogsQueryResponse,
 } from "@/api/jet/queries/list-deployment-logs.ts";
+
+import {
+  inspectFunctionQuery,
+  type InspectFunctionQueryResponse,
+} from "@/api/jet/queries/inspect-function-query.ts";
+
+import { ProjectEnvironmentName } from "@/api/mod.ts";
 
 export async function createProject(
   args: CreateProjectArgs,
@@ -451,6 +470,7 @@ function cloneProjectFunctions(
         projectNodeId,
         first,
         after,
+        includeFiles: true,
       },
       config,
     );
@@ -466,7 +486,7 @@ function cloneProjectFunctions(
       records: nodes.map((n) => {
         return {
           name: n.name,
-          files: n.files.map((f) => {
+          files: n.files!.map((f) => {
             return {
               path: f.path,
               hash: f.hash,
@@ -489,57 +509,11 @@ export async function listDeploymentLogs(
   config: JcliConfigDotJSON,
 ) {
   const { projectId, functionName, environmentName, length } = args;
-
-  function queryListEnvironments(
-    { first, after }: { first: number; after?: string },
-  ) {
-    return query<ListEnvironmentsQueryResponse>(
-      listEnvironmentsQuery,
-      {
-        projectNodeId: buildNodeId(NodeType.project, projectId),
-        first,
-        after,
-      },
-      config,
-    );
-  }
-
-  function queryListEnvironmentsCallback(
-    response: ListEnvironmentsQueryResponse,
-  ) {
-    const { node: { environments: { pageInfo, nodes } } } = response;
-
-    return {
-      pageInfo,
-      records: nodes,
-    };
-  }
-
-  const environments = await Array.fromAsync(connectionIterator(
-    queryListEnvironments,
-    queryListEnvironmentsCallback,
-  ));
-
-  const { nodeId: environmentNodeId } = environments.find((e) =>
-    e.name === environmentName
-  )!;
-
-  return doListDeploymentLogs({
-    environmentNodeId,
-    functionName,
-    length,
-  }, config);
-}
-
-function doListDeploymentLogs(
-  args: {
-    environmentNodeId: string;
-    functionName?: string;
-    length: number;
-  },
-  config: JcliConfigDotJSON,
-) {
-  const { environmentNodeId, functionName, length } = args;
+  const environmentNodeId = await fetchEnvironmentNodeId(
+    projectId,
+    environmentName,
+    config,
+  );
 
   function queryListDeploymentLogs(
     { first, after }: { first: number; after?: string },
@@ -580,4 +554,178 @@ function doListDeploymentLogs(
     queryListDeploymentLogsCallback,
     length,
   ));
+}
+
+export async function inspectFunction(
+  args: InspectFunctionArgs,
+  config: JcliConfigDotJSON,
+) {
+  const { environmentName, projectId, functionName } = args;
+
+  let functionNodeId: string | undefined = undefined;
+
+  switch (environmentName) {
+    case "DEVELOPMENT":
+      functionNodeId = await fetchDraftFunctionNodeId(
+        projectId,
+        functionName,
+        config,
+      );
+      break;
+
+    case "PRODUCTION":
+      functionNodeId = await fetchFunctionNodeId(
+        projectId,
+        functionName,
+        config,
+      );
+      break;
+  }
+
+  if (!functionNodeId) return;
+
+  const { node: { deployment } } = await query<
+    InspectFunctionQueryResponse
+  >(
+    inspectFunctionQuery,
+    {
+      functionNodeId,
+    },
+    config,
+  );
+
+  return deployment;
+}
+
+async function fetchEnvironmentNodeId(
+  projectId: string,
+  environmentName: ProjectEnvironmentName,
+  config: JcliConfigDotJSON,
+) {
+  function queryListEnvironments(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListEnvironmentsQueryResponse>(
+      listEnvironmentsQuery,
+      {
+        projectNodeId: buildNodeId(NodeType.project, projectId),
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function queryListEnvironmentsCallback(
+    response: ListEnvironmentsQueryResponse,
+  ) {
+    const { node: { environments: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes,
+    };
+  }
+
+  const environments = await Array.fromAsync(connectionIterator(
+    queryListEnvironments,
+    queryListEnvironmentsCallback,
+  ));
+
+  const { nodeId: environmentNodeId } = environments.find((e) =>
+    e.name === environmentName
+  )!;
+
+  return environmentNodeId;
+}
+
+async function fetchDraftFunctionNodeId(
+  projectId: string,
+  functionName: string,
+  config: JcliConfigDotJSON,
+) {
+  function queryListDraftFunctions(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListDraftFunctionsQueryResponse>(
+      listDraftFunctionsQuery,
+      {
+        projectNodeId: buildNodeId(NodeType.project, projectId),
+        first,
+        after,
+        includeFiles: false,
+      },
+      config,
+    );
+  }
+
+  function queryListDraftFunctionsCallback(
+    response: ListDraftFunctionsQueryResponse,
+  ) {
+    const { node: { draftFunctions: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map((n) => {
+        return {
+          name: n.name,
+          nodeId: n.nodeId,
+        };
+      }),
+    };
+  }
+
+  const draftFunctions = await Array.fromAsync(connectionIterator(
+    queryListDraftFunctions,
+    queryListDraftFunctionsCallback,
+  ));
+
+  const draftFunction = draftFunctions.find((f) => f.name === functionName);
+
+  return draftFunction?.nodeId;
+}
+
+async function fetchFunctionNodeId(
+  projectId: string,
+  functionName: string,
+  config: JcliConfigDotJSON,
+) {
+  function queryListFunctions(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListFunctionsQueryResponse>(
+      listFunctionsQuery,
+      {
+        projectNodeId: buildNodeId(NodeType.project, projectId),
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function queryListFunctionsCallback(
+    response: ListFunctionsQueryResponse,
+  ) {
+    const { node: { functions: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map((n) => {
+        return {
+          name: n.name,
+          nodeId: n.nodeId,
+        };
+      }),
+    };
+  }
+
+  const functions = await Array.fromAsync(connectionIterator(
+    queryListFunctions,
+    queryListFunctionsCallback,
+  ));
+
+  const fun = functions.find((f) => f.name === functionName);
+
+  return fun?.nodeId;
 }
