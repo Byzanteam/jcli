@@ -37,6 +37,7 @@ describe("inspect", () => {
 
     api.jet.setDeployment(projectId, "DEVELOPMENT", "main", {
       state: "RUNNING",
+      endpoint: "https://breeze.rt/main",
     });
 
     await action({}, "main");
@@ -44,7 +45,7 @@ describe("inspect", () => {
     assertEquals(api.console.logs.length, 1);
     assertEquals(
       api.console.logs[0],
-      "Environment\tDEVELOPMENT\nFunction\tmain\nDeployment State\tRUNNING",
+      "Environment         DEVELOPMENT           \nFunction Name       main                  \nDeployment State    RUNNING               \nDeployment Endpoint https://breeze.rt/main",
     );
 
     api.jet.setDeployment(projectId, "PRODUCTION", "main", {
@@ -56,7 +57,7 @@ describe("inspect", () => {
     assertEquals(api.console.logs.length, 2);
     assertEquals(
       api.console.logs[1],
-      "Environment\tPRODUCTION\nFunction\tmain\nDeployment State\tBOOTING",
+      "Environment         PRODUCTION\nFunction Name       main      \nDeployment State    BOOTING   \nDeployment Endpoint N/A       ",
     );
   });
 });
