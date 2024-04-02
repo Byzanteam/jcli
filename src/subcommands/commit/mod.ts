@@ -1,4 +1,4 @@
-import { Command } from "cliffy";
+import { Command } from "cliffy-command";
 import errorHandler from "@/error-handler.ts";
 
 import { CommitOptions } from "./option.ts";

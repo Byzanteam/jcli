@@ -1,4 +1,4 @@
-import { Command, CompletionsCommand } from "cliffy";
+import { Command, CompletionsCommand } from "cliffy-command";
 
 import { getConfig } from "@/api/mod.ts";
 import { setupLogger } from "@/jcli/logger.ts";
