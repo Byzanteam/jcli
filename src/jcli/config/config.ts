@@ -29,7 +29,7 @@ export class Config<T> {
 
   async set(data: T, options?: WriteFileOptions) {
     const serializedData = await this.#serializer.serialize(data);
-    await api.fs.writeTextFile(this.#path, serializedData, options);
+    await api.fs.writeTextFile(this.#path, `${serializedData}\n`, options);
     this.#data = data;
   }
 }
