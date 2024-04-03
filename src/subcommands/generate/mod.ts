@@ -1,4 +1,4 @@
-import { Command } from "cliffy";
+import { Command } from "cliffy-command";
 import { GlobalOptions } from "@/args.ts";
 
 import githubWorkflowCommand from "./github-workflow/mod.ts";

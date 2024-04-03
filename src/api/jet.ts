@@ -204,6 +204,7 @@ export type DeploymentState =
 
 export interface Deployment {
   state: DeploymentState;
+  endpoint?: string;
 }
 
 export interface Jet {

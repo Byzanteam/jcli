@@ -8,12 +8,14 @@ export const inspectFunctionQuery = `
       ... on LambdaDraftFunction {
         deployment {
           state
+          endpoint
         }
       }
 
       ... on LambdaFunction {
         deployment {
           state
+          endpoint
         }
       }
     }
@@ -23,5 +25,6 @@ export const inspectFunctionQuery = `
 export interface InspectFunctionQueryResponse {
   node: {
     deployment: Deployment;
+    endpoint?: string;
   };
 }
