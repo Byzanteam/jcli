@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://cdn.jsdelivr.net/gh/Byzanteam/jcli/schemas/jcli-config.json",
+  "title": "config.json",
+  "description": "JCLI 配置文件",
+  "type": "object",
+  "properties": {
+    "jetEndpoint": {
+      "description": "Jet Endpoint",
+      "type": "string",
+      "examples": [
+        "https://nightly.jet.apps.jet.work/project_man/graphql"
+      ]
+    },
+    "logLevel": {
+      "description": "日志级别",
+      "default": "INFO",
+      "type": "string",
+      "enum": [
+        "CRITICAL",
+        "DEBUG",
+        "ERROR",
+        "INFO",
+        "NOTSET",
+        "WARNING"
+      ]
+    }
+  },
+  "required": [
+    "jetEndpoint"
+  ]
+}
