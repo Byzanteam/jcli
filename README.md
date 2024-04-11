@@ -10,7 +10,7 @@
 
 ## Quick-Start - Install Script
 
-The install.sh script provides a convenient way to deploy jcli.
+The install.sh script provides a convenient way to install jcli.
 
 To install jcli, run:
 
