@@ -90,17 +90,22 @@ setup_verify_os() {
 
 # --- define needed environment variables ---
 setup_env() {
+	  # --- use sudo if we are not already root ---
+    SUDO=sudo
+    if [ $(id -u) -eq 0 ]; then
+        SUDO=
+    fi
+
     # --- use binary install directory if defined or create default ---
     if [ -n "${INSTALL_JCLI_BIN_DIR}" ]; then
         BIN_DIR=${INSTALL_JCLI_BIN_DIR}
     else
-        # --- use /usr/local/bin if root user, otherwise use $HOME/bin
-        if [ $(id -u) -eq 0 ]; then
-            BIN_DIR=/usr/local/bin
-        else
-            mkdir -p ${HOME}/bin
-            BIN_DIR="$HOME/bin"
-            echo "export PATH=$PATH:$HOME/bin" >> $HOME/.bashrc
+        # --- use /usr/local/bin if root can write to it, otherwise use /opt/bin if it exists
+        BIN_DIR=/usr/local/bin
+        if ! $SUDO sh -c "touch ${BIN_DIR}/jcli-ro-test && rm -rf ${BIN_DIR}/jcli-ro-test"; then
+            if [ -d /opt/bin ]; then
+                BIN_DIR=/opt/bin
+            fi
         fi
     fi
 
@@ -195,7 +200,7 @@ setup_binary() {
     chmod 755 ${TMP_BIN}
     info "Installing jcli to ${BIN_DIR}/jcli"
     chown $(id -u) ${TMP_BIN}
-    mv -f ${TMP_BIN} ${BIN_DIR}
+    $SUDO mv -f ${TMP_BIN} ${BIN_DIR}
 }
 
 # --- download and verify jcli ---
@@ -213,23 +218,21 @@ download_and_verify() {
 # --- create uninstall script ---
 create_uninstall() {
     info "Creating uninstall script ${UNINSTALL_JCLI_SH}"
-    tee ${UNINSTALL_JCLI_SH} >/dev/null << EOF
+    $SUDO tee ${UNINSTALL_JCLI_SH} >/dev/null << EOF
 #!/bin/sh
 set -x
 
 rm -rf ${FILE_JCLI_CONFIG_DIRECTORY}
 
 remove_uninstall() {
-    rm -f ${UNINSTALL_JCLI_SH}
+    $SUDO rm -f ${UNINSTALL_JCLI_SH}
 }
 trap remove_uninstall EXIT
 
-rm -f ${BIN_DIR}/jcli
-
-sed -i 's|^export PATH=$PATH:$HOME/bin$||' $HOME/.bashrc
+$SUDO rm -f ${BIN_DIR}/jcli
 EOF
-    chmod 755 ${UNINSTALL_JCLI_SH}
-    chown $(id -u) ${UNINSTALL_JCLI_SH}
+    $SUDO chmod 755 ${UNINSTALL_JCLI_SH}
+    $SUDO chown $(id -u) ${UNINSTALL_JCLI_SH}
 }
 
 # --- create jcli config file ---
@@ -250,16 +253,10 @@ EOF
     fi
 }
 
-# --- install successful ---
-success() {
-    info "The installation is successful. Use the following command to load the environment variables 'source ~/.bashrc'!"
-}
-
 # --- run the install process --
 {
     setup_env "$@"
     download_and_verify
     create_uninstall
     create_config_file
-		success
 }
