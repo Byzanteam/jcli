@@ -94,12 +94,13 @@ setup_env() {
     if [ -n "${INSTALL_JCLI_BIN_DIR}" ]; then
         BIN_DIR=${INSTALL_JCLI_BIN_DIR}
     else
-        # --- use /usr/local/bin if root can write to it, otherwise use /opt/bin if it exists
-        BIN_DIR=/usr/local/bin
-        if ! sh -c "touch ${BIN_DIR}/jcli-ro-test && rm -rf ${BIN_DIR}/jcli-ro-test"; then
-            if [ -d /opt/bin ]; then
-                BIN_DIR=/opt/bin
-            fi
+        # --- use /usr/local/bin if root user, otherwise use $HOME/bin
+        if [ $(id -u) -eq 0 ]; then
+            BIN_DIR=/usr/local/bin
+        else
+            mkdir -p ${HOME}/bin
+            BIN_DIR="$HOME/bin"
+            echo "export PATH=$PATH:$HOME/bin" >> $HOME/.bashrc
         fi
     fi
 
@@ -111,7 +112,7 @@ setup_env() {
     INSTALL_JCLI_CHANNEL=${INSTALL_JCLI_CHANNEL:-'latest'}
 
     # --- setup config file name
-		FILE_JCLI_CONFIG_DIRECTORY="$HOME/.config/jcli"
+    FILE_JCLI_CONFIG_DIRECTORY="$HOME/.config/jcli"
 
 }
 
@@ -128,7 +129,7 @@ verify_downloader() {
 # --- create temporary directory and cleanup when done ---
 setup_tmp() {
     TMP_DIR=$(mktemp -d -t jcli-install.XXXXXXXXXX)
-		TMP_BIN=$TMP_DIR/jcli
+    TMP_BIN=$TMP_DIR/jcli
     cleanup() {
         code=$?
         set +e
@@ -193,14 +194,14 @@ download_binary() {
 setup_binary() {
     chmod 755 ${TMP_BIN}
     info "Installing jcli to ${BIN_DIR}/jcli"
-		chown $(id -u) ${TMP_BIN}
+    chown $(id -u) ${TMP_BIN}
     mv -f ${TMP_BIN} ${BIN_DIR}
 }
 
 # --- download and verify jcli ---
 download_and_verify() {
     setup_verify_arch
-		setup_verify_os
+    setup_verify_os
     verify_downloader curl || verify_downloader wget || fatal 'Can not find curl or wget for downloading files'
     setup_tmp
     get_release_version
@@ -224,27 +225,34 @@ remove_uninstall() {
 trap remove_uninstall EXIT
 
 rm -f ${BIN_DIR}/jcli
+
+sed -i 's|^export PATH=$PATH:$HOME/bin$||' $HOME/.bashrc
 EOF
     chmod 755 ${UNINSTALL_JCLI_SH}
-		chown $(id -u) ${UNINSTALL_JCLI_SH}
+    chown $(id -u) ${UNINSTALL_JCLI_SH}
 }
 
 # --- create jcli config file ---
 create_config_file() {
-	  if [ -f $FILE_JCLI_CONFIG_DIRECTORY/config.json ]; then
-			  info "The jcli config file already exist!"
-		else
-        info "config: Creating config file ${FILE_JCLI_CONFIG_DIRECTORY}"
-        mkdir -p ${FILE_JCLI_CONFIG_DIRECTORY}
-        touch ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
-				tee ${FILE_JCLI_CONFIG_DIRECTORY}/config.json > /dev/null << EOF
+   if [ -f $FILE_JCLI_CONFIG_DIRECTORY/config.json ]; then
+       info "The jcli config file already exist!"
+   else
+       info "config: Creating config file ${FILE_JCLI_CONFIG_DIRECTORY}"
+       mkdir -p ${FILE_JCLI_CONFIG_DIRECTORY}
+       touch ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
+       tee ${FILE_JCLI_CONFIG_DIRECTORY}/config.json > /dev/null << EOF
 {
   "$schema": "https://cdn.jsdelivr.net/gh/Byzanteam/jcli/schemas/jcli-config.json"
 }
 EOF
         chmod 700 ${FILE_JCLI_CONFIG_DIRECTORY}
         chmod 600 ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
-		fi
+    fi
+}
+
+# --- install successful ---
+success() {
+    info "The installation is successful. Use the following command to load the environment variables 'source ~/.bashrc'!"
 }
 
 # --- run the install process --
@@ -253,4 +261,5 @@ EOF
     download_and_verify
     create_uninstall
     create_config_file
+		success
 }
