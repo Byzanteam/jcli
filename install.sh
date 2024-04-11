@@ -90,19 +90,13 @@ setup_verify_os() {
 
 # --- define needed environment variables ---
 setup_env() {
-    # --- use sudo if we are not already root ---
-    SUDO=sudo
-    if [ $(id -u) -eq 0 ]; then
-        SUDO=
-    fi
-
     # --- use binary install directory if defined or create default ---
     if [ -n "${INSTALL_JCLI_BIN_DIR}" ]; then
         BIN_DIR=${INSTALL_JCLI_BIN_DIR}
     else
         # --- use /usr/local/bin if root can write to it, otherwise use /opt/bin if it exists
         BIN_DIR=/usr/local/bin
-        if ! $SUDO sh -c "touch ${BIN_DIR}/jcli-ro-test && rm -rf ${BIN_DIR}/jcli-ro-test"; then
+        if ! sh -c "touch ${BIN_DIR}/jcli-ro-test && rm -rf ${BIN_DIR}/jcli-ro-test"; then
             if [ -d /opt/bin ]; then
                 BIN_DIR=/opt/bin
             fi
@@ -199,8 +193,8 @@ download_binary() {
 setup_binary() {
     chmod 755 ${TMP_BIN}
     info "Installing jcli to ${BIN_DIR}/jcli"
-		$SUDO chown $(id -u) ${TMP_BIN}
-    $SUDO mv -f ${TMP_BIN} ${BIN_DIR}
+		chown $(id -u) ${TMP_BIN}
+    mv -f ${TMP_BIN} ${BIN_DIR}
 }
 
 # --- download and verify jcli ---
@@ -218,7 +212,7 @@ download_and_verify() {
 # --- create uninstall script ---
 create_uninstall() {
     info "Creating uninstall script ${UNINSTALL_JCLI_SH}"
-    $SUDO tee ${UNINSTALL_JCLI_SH} >/dev/null << EOF
+    tee ${UNINSTALL_JCLI_SH} >/dev/null << EOF
 #!/bin/sh
 set -x
 
@@ -231,17 +225,26 @@ trap remove_uninstall EXIT
 
 rm -f ${BIN_DIR}/jcli
 EOF
-    $SUDO chmod 755 ${UNINSTALL_JCLI_SH}
-		$SUDO chown $(id -u) ${UNINSTALL_JCLI_SH}
+    chmod 755 ${UNINSTALL_JCLI_SH}
+		chown $(id -u) ${UNINSTALL_JCLI_SH}
 }
 
 # --- create jcli config file ---
 create_config_file() {
-    info "config: Creating config file ${FILE_JCLI_CONFIG_DIRECTORY}"
-    mkdir ${FILE_JCLI_CONFIG_DIRECTORY}
-    touch ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
-    chmod 0700 ${FILE_JCLI_CONFIG_DIRECTORY}
-    chmod 0600 ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
+	  if [ -f $FILE_JCLI_CONFIG_DIRECTORY/config.json ]; then
+			  info "The jcli config file already exist!"
+		else
+        info "config: Creating config file ${FILE_JCLI_CONFIG_DIRECTORY}"
+        mkdir -p ${FILE_JCLI_CONFIG_DIRECTORY}
+        touch ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
+				tee ${FILE_JCLI_CONFIG_DIRECTORY}/config.json > /dev/null << EOF
+{
+  "$schema": "https://cdn.jsdelivr.net/gh/Byzanteam/jcli/schemas/jcli-config.json"
+}
+EOF
+        chmod 700 ${FILE_JCLI_CONFIG_DIRECTORY}
+        chmod 600 ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
+		fi
 }
 
 # --- run the install process --
