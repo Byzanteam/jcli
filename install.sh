@@ -245,7 +245,7 @@ create_config_file() {
        touch ${FILE_JCLI_CONFIG_DIRECTORY}/config.json
        tee ${FILE_JCLI_CONFIG_DIRECTORY}/config.json > /dev/null << EOF
 {
-  "$schema": "https://cdn.jsdelivr.net/gh/Byzanteam/jcli/schemas/jcli-config.json"
+  "\$schema": "https://cdn.jsdelivr.net/gh/Byzanteam/jcli/schemas/jcli-config.json"
 }
 EOF
         chmod 700 ${FILE_JCLI_CONFIG_DIRECTORY}
