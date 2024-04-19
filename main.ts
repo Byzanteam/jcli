@@ -1,4 +1,5 @@
 import { Command, CompletionsCommand } from "cliffy-command";
+import { GithubProvider, UpgradeCommand } from "cliffy-upgrade";
 
 import { getConfig } from "@/api/mod.ts";
 import { setupLogger } from "@/jcli/logger.ts";
@@ -24,6 +25,7 @@ setupLogger(logLevel);
 
 await new Command()
   .name("jcli")
+  .version("v0.1.4")
   .description("Jet command-line tool")
   .globalOption("-d, --debug", "Enable debug output.", {
     action: globalOptionAction,
@@ -40,5 +42,14 @@ await new Command()
   .command("generate", generateCommand)
   .command("plugins", pluginCommand)
   .command("link", linkCommand)
+  .command(
+    "upgrade",
+    new UpgradeCommand({
+      main: "main.ts",
+      args: ["--allow-all"],
+      provider: new GithubProvider({ repository: "Byzanteam/jcli" }),
+      importMap: "deno.jsonc",
+    }),
+  )
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
