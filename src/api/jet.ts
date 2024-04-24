@@ -17,6 +17,7 @@ import {
   listDeploymentLogs as doListDeploymentLogs,
   listEnvironmentVariables as doListEnvironmentVariables,
   listMigrations as doListMigrations,
+  listProjects as doListProjects,
   migrateDB as doMigrateDB,
   pluginInstallInstance as doPluginInstallInstance,
   pluginUninstallInstance as doPluginUninstallInstance,
@@ -237,13 +238,14 @@ export interface Jet {
     args: ListDeploymentLogsArgs,
   ): Promise<Array<DeploymentLog>>;
   inspectFunction(args: InspectFunctionArgs): Promise<Deployment | undefined>;
+  listProjects(): Promise<Array<{ id: string; name: string }>>;
 }
 
-function logDebugMetricsWrapper<T, U>(
-  fn: (args: T, config: JcliConfigDotJSON) => Promise<U>,
+function logDebugMetricsWrapper<T extends Array<unknown>, U>(
+  fn: (config: JcliConfigDotJSON, ...args: T) => Promise<U>,
   description: string,
-): (args: T) => Promise<U> {
-  return async function (args: T) {
+): (...args: T) => Promise<U> {
+  return async function (...args: T) {
     const logger = getLogger();
 
     logger.debug(
@@ -253,7 +255,7 @@ function logDebugMetricsWrapper<T, U>(
     );
 
     const startInstant = performance.now();
-    const payload = await fn(args, await getConfig().get());
+    const payload = await fn(await getConfig().get(), ...args);
     const endInstant = performance.now();
 
     logger.debug(`Request finished in ${endInstant - startInstant}ms.`);
@@ -347,5 +349,9 @@ export const jet: Jet = {
   inspectFunction: logDebugMetricsWrapper(
     doInspectFunction,
     "inspect function",
+  ),
+  listProjects: logDebugMetricsWrapper(
+    doListProjects,
+    "list projects",
   ),
 };
