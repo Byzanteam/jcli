@@ -654,6 +654,21 @@ export function makeJet(): JetTest {
       });
     },
 
+    listProjects(): Promise<Array<{ id: string; name: string }>> {
+      return new Promise((resolve, reject) => {
+        if (projects.size > 0) {
+          resolve(
+            Array.from(projects.values()).map((project) => ({
+              id: project.id,
+              name: project.name,
+            })),
+          );
+        } else {
+          reject(new Error("No projects found."));
+        }
+      });
+    },
+
     setDeploymentLogs(
       projectId: string,
       environmentName: ProjectEnvironmentName,
