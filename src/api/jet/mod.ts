@@ -115,11 +115,16 @@ import {
   type InspectFunctionQueryResponse,
 } from "@/api/jet/queries/inspect-function-query.ts";
 
+import {
+  listProjectsQuery,
+  type ListProjectsQueryResponse,
+} from "@/api/jet/queries/list-projects.ts";
+
 import { ProjectEnvironmentName } from "@/api/mod.ts";
 
 export async function createProject(
-  args: CreateProjectArgs,
   config: JcliConfigDotJSON,
+  args: CreateProjectArgs,
 ): Promise<Project> {
   const { projectsCreateProject: { project: { id, name, title } } } =
     await query<
@@ -140,15 +145,15 @@ export async function createProject(
 }
 
 export async function createFunction(
-  args: CreateFunctionArgs,
   config: JcliConfigDotJSON,
+  args: CreateFunctionArgs,
 ): Promise<void> {
   await query(createFunctionMutation, args, config);
 }
 
 export async function updateConfiguration(
-  rawArgs: UpdateConfigurationArgs,
   config: JcliConfigDotJSON,
+  rawArgs: UpdateConfigurationArgs,
 ): Promise<void> {
   const args = {
     projectId: rawArgs.projectId,
@@ -212,78 +217,78 @@ function buildCommandArgument(command: ProjectPatch) {
 }
 
 export async function deleteFunction(
-  args: DeleteFunctionArgs,
   config: JcliConfigDotJSON,
+  args: DeleteFunctionArgs,
 ): Promise<void> {
   await query(deleteFunctionMutation, args, config);
 }
 
 export async function createFunctionFile(
-  args: CreateFunctionFileArgs,
   config: JcliConfigDotJSON,
+  args: CreateFunctionFileArgs,
 ): Promise<void> {
   await query(createFunctionFileMutation, args, config);
 }
 
 export async function updateFunctionFile(
-  args: UpdateFunctionFileArgs,
   config: JcliConfigDotJSON,
+  args: UpdateFunctionFileArgs,
 ): Promise<void> {
   await query(updateFunctionFileMutation, args, config);
 }
 
 export async function deleteFunctionFile(
-  args: DeleteFunctionFileArgs,
   config: JcliConfigDotJSON,
+  args: DeleteFunctionFileArgs,
 ): Promise<void> {
   await query(deleteFunctionFileMutation, args, config);
 }
 
 export async function deployDraftFunctions(
-  args: DeployDraftFunctionsArgs,
   config: JcliConfigDotJSON,
+  args: DeployDraftFunctionsArgs,
 ): Promise<void> {
   await query(deployDraftFunctionsMutation, args, config);
 }
 
 export async function createMigration(
-  args: CreateMigrationArgs,
   config: JcliConfigDotJSON,
+  args: CreateMigrationArgs,
 ): Promise<void> {
   await query(createMigrationMutation, args, config);
 }
 
 export async function updateMigration(
-  args: UpdateMigrationArgs,
   config: JcliConfigDotJSON,
+  args: UpdateMigrationArgs,
 ): Promise<void> {
   await query(updateMigrationMutation, { input: args }, config);
 }
 
 export async function deleteMigration(
-  args: DeleteMigrationArgs,
   config: JcliConfigDotJSON,
+  args: DeleteMigrationArgs,
 ): Promise<void> {
   await query(deleteMigrationMutation, args, config);
 }
 
 export async function migrateDB(
-  args: MigrateDBArgs,
   config: JcliConfigDotJSON,
+  args: MigrateDBArgs,
 ): Promise<void> {
   await query(migrateDBMutation, args, config);
 }
 
 export async function rollbackDB(
-  args: RollbackDBArgs,
   config: JcliConfigDotJSON,
+  args: RollbackDBArgs,
 ): Promise<void> {
   await query(rollbackDBMutation, args, config);
 }
 
 export function listMigrations(
-  args: ListMigrationsArgs,
   config: JcliConfigDotJSON,
+  args: ListMigrationsArgs,
 ): Promise<Array<number>> {
   function queryListMigrations(
     { first, after }: { first: number; after?: string },
@@ -310,8 +315,8 @@ export function listMigrations(
 }
 
 export async function configurationHash(
-  args: ConfigurationHashArgs,
   config: JcliConfigDotJSON,
+  args: ConfigurationHashArgs,
 ): Promise<string> {
   const response = await query<ConfigurationHashQueryResponse>(
     configurationHashQuery,
@@ -322,31 +327,31 @@ export async function configurationHash(
   return response.projectsConfigurationHash;
 }
 
-export async function commit(args: CommitArgs, config: JcliConfigDotJSON) {
+export async function commit(config: JcliConfigDotJSON, args: CommitArgs) {
   await query(commitMutation, args, config);
 }
 
-export async function deploy(args: DeployArgs, config: JcliConfigDotJSON) {
+export async function deploy(config: JcliConfigDotJSON, args: DeployArgs) {
   await query(deployMutation, args, config);
 }
 
 export async function setEnvironmentVariable(
-  args: SetEnvironmentVariableArgs,
   config: JcliConfigDotJSON,
+  args: SetEnvironmentVariableArgs,
 ) {
   await query(setEnvironmentVariableMutation, args, config);
 }
 
 export async function unsetEnvironmentVariable(
-  args: UnsetEnvironmentVariableArgs,
   config: JcliConfigDotJSON,
+  args: UnsetEnvironmentVariableArgs,
 ) {
   await query(unsetEnvironmentVariableMutation, args, config);
 }
 
 export function listEnvironmentVariables(
-  args: ListEnvironmentVariablesArgs,
   config: JcliConfigDotJSON,
+  args: ListEnvironmentVariablesArgs,
 ): Promise<Array<{ name: string; value: string }>> {
   function queryListEnvironmentVariables(
     { first, after }: { first: number; after?: string },
@@ -380,8 +385,8 @@ export function listEnvironmentVariables(
 }
 
 export async function cloneProject(
-  args: CloneProjectArgs,
   config: JcliConfigDotJSON,
+  args: CloneProjectArgs,
 ): Promise<JetProject> {
   const projectNodeId = buildNodeId(NodeType.project, args.projectId);
 
@@ -402,15 +407,15 @@ export async function cloneProject(
 }
 
 export async function pluginInstallInstance(
-  args: PluginInstanceArgs,
   config: JcliConfigDotJSON,
+  args: PluginInstanceArgs,
 ) {
   await query(pluginInstallInstanceMutation, args, config);
 }
 
 export async function pluginUninstallInstance(
-  args: PluginInstanceArgs,
   config: JcliConfigDotJSON,
+  args: PluginInstanceArgs,
 ) {
   await query(pluginUninstallInstanceMutation, args, config);
 }
@@ -505,8 +510,8 @@ function cloneProjectFunctions(
 }
 
 export async function listDeploymentLogs(
-  args: ListDeploymentLogsArgs,
   config: JcliConfigDotJSON,
+  args: ListDeploymentLogsArgs,
 ) {
   const { projectId, functionName, environmentName, length } = args;
   const environmentNodeId = await fetchEnvironmentNodeId(
@@ -557,8 +562,8 @@ export async function listDeploymentLogs(
 }
 
 export async function inspectFunction(
-  args: InspectFunctionArgs,
   config: JcliConfigDotJSON,
+  args: InspectFunctionArgs,
 ) {
   const { environmentName, projectId, functionName } = args;
 
@@ -595,6 +600,39 @@ export async function inspectFunction(
   );
 
   return deployment;
+}
+
+export function listProjects(
+  config: JcliConfigDotJSON,
+): Promise<
+  Array<{
+    id: string;
+    name: string;
+  }>
+> {
+  function queryListProjects(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListProjectsQueryResponse>(
+      listProjectsQuery,
+      {
+        first,
+        after,
+      },
+      config,
+    );
+  }
+  function callback(response: ListProjectsQueryResponse) {
+    const { projects: { nodes, pageInfo } } = response;
+    return {
+      pageInfo,
+      records: nodes,
+    };
+  }
+
+  return Array.fromAsync(
+    connectionIterator(queryListProjects, callback),
+  );
 }
 
 async function fetchEnvironmentNodeId(
