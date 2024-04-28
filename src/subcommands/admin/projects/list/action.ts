@@ -8,6 +8,11 @@ export default async function action(
   const tableData = [["Name", "Id"]];
   const projects = await api.jet.listProjects();
 
+  if (!projects.length) {
+    api.console.log("No projects found.");
+    return;
+  }
+
   projects.forEach(({ id, name }) => {
     tableData.push([name, id]);
   });
