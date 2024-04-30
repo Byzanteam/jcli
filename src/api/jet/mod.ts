@@ -19,7 +19,7 @@ import {
   DeleteFunctionFileArgs,
   DeleteMigrationArgs,
   DeployArgs,
-  DeployDraftFunctionsArgs,
+  DeployFunctionsArgs,
   InspectFunctionArgs,
   ListDeploymentLogsArgs,
   ListEnvironmentVariablesArgs,
@@ -121,6 +121,7 @@ import {
 } from "@/api/jet/queries/list-projects.ts";
 
 import { ProjectEnvironmentName } from "@/api/mod.ts";
+import { deployFunctionsMutation } from "@/api/jet/queries/deploy-functions.ts";
 
 export async function createProject(
   config: JcliConfigDotJSON,
@@ -244,11 +245,17 @@ export async function deleteFunctionFile(
   await query(deleteFunctionFileMutation, args, config);
 }
 
-export async function deployDraftFunctions(
+export async function deployFunctions(
   config: JcliConfigDotJSON,
-  args: DeployDraftFunctionsArgs,
+  { environmentName, ...args }: DeployFunctionsArgs,
 ): Promise<void> {
-  await query(deployDraftFunctionsMutation, args, config);
+  await query(
+    environmentName === "DEVELOPMENT"
+      ? deployDraftFunctionsMutation
+      : deployFunctionsMutation,
+    args,
+    config,
+  );
 }
 
 export async function createMigration(
