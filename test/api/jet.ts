@@ -218,7 +218,7 @@ export function makeJet(): JetTest {
       return Promise.resolve();
     },
 
-    deployDraftFunctions({ projectId }): Promise<void> {
+    deployFunctions({ projectId }): Promise<void> {
       return new Promise((resolve, reject) => {
         const count = deployDraftFunctionsRequests.get(projectId);
 
