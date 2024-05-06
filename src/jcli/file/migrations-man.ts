@@ -1,4 +1,4 @@
-import { join, parse } from "path";
+import { join, parse } from "@std/path";
 import { PreparedQuery } from "sqlite";
 
 import { api, DBClass } from "@/api/mod.ts";

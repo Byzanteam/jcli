@@ -1,4 +1,4 @@
-import { parse } from "path";
+import { parse } from "@std/path";
 
 /**
  * A migration filename looks like:

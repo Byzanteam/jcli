@@ -1,5 +1,5 @@
 import { GlobalOptions } from "@/args.ts";
-import { Table } from "cliffy-table";
+import { Table } from "@cliffy/table";
 import { api } from "@/api/mod.ts";
 
 export default async function action(

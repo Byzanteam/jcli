@@ -1,4 +1,4 @@
-import { Command, CompletionsCommand } from "cliffy-command";
+import { Command, CompletionsCommand } from "@cliffy/command";
 
 import { version } from "./deno.json" with { type: "json" };
 

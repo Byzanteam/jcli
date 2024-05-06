@@ -1,4 +1,4 @@
-import { LevelName } from "log";
+import { LevelName } from "@std/log";
 import { api } from "@/api/mod.ts";
 
 export function jcliConfigDotJSONPath(): string {

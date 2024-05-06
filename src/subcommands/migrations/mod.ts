@@ -1,4 +1,4 @@
-import { Command } from "cliffy-command";
+import { Command } from "@cliffy/command";
 import { GlobalOptions } from "@/args.ts";
 
 const command = new Command<GlobalOptions>()

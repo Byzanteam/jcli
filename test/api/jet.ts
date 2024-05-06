@@ -1,4 +1,4 @@
-import { parse } from "path";
+import { parse } from "@std/path";
 
 import {
   Deployment,

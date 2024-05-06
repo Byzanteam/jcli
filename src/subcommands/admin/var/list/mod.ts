@@ -1,4 +1,4 @@
-import { Command } from "cliffy-command";
+import { Command } from "@cliffy/command";
 import { VarOptions } from "@/subcommands/admin/var/option.ts";
 import errorHandler from "@/error-handler.ts";
 
