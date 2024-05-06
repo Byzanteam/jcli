@@ -1,5 +1,7 @@
 import { Command, CompletionsCommand } from "cliffy-command";
 
+import { version } from "./deno.json" with { type: "json" };
+
 import { getConfig } from "@/api/mod.ts";
 import { setupLogger } from "@/jcli/logger.ts";
 
@@ -17,13 +19,17 @@ import cloneCommand from "@/subcommands/clone/mod.ts";
 import generateCommand from "@/subcommands/generate/mod.ts";
 import pluginCommand from "@/subcommands/plugin/mod.ts";
 import linkCommand from "@/subcommands/link/mod.ts";
+import createUpgradeCommand from "@/subcommands/upgrade/mod.ts";
 
 const DEFAULT_LOG_LEVEL = "INFO";
 const { logLevel = DEFAULT_LOG_LEVEL } = await getConfig().get();
 setupLogger(logLevel);
 
+const upgradeCommand = await createUpgradeCommand();
+
 await new Command()
   .name("jcli")
+  .version(version)
   .description("Jet command-line tool")
   .globalOption("-d, --debug", "Enable debug output.", {
     action: globalOptionAction,
@@ -40,5 +46,6 @@ await new Command()
   .command("generate", generateCommand)
   .command("plugins", pluginCommand)
   .command("link", linkCommand)
+  .command("upgrade", upgradeCommand as unknown as Command)
   .command("completions", new CompletionsCommand())
   .parse(Deno.args);
