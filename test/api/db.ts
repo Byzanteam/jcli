@@ -14,7 +14,7 @@ class TestDB extends DBClass {
     this.#connectionCount++;
   }
 
-  close(_force: boolean) {
+  close() {
     this.#connectionCount--;
   }
 
@@ -22,7 +22,7 @@ class TestDB extends DBClass {
     if (this.#connectionCount > 0) {
       throw new Error("Database is not closed.");
     } else {
-      super.close(force);
+      super.close();
     }
   }
 }
@@ -34,7 +34,7 @@ export function makeDB(): DBTest {
 
   return {
     createDatabase(path: string): DBClass {
-      const db = new TestDB();
+      const db = new TestDB(path);
       db.countConnection();
       databases.set(join(cwd, path), db);
 

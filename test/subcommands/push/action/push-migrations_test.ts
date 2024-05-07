@@ -61,9 +61,9 @@ describe("migrations", () => {
 
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ path: string; hash: string }>(
+      const entries = db.prepare(
         "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION' ORDER BY path",
-      );
+      ).all();
 
       const encoder = new TextEncoder();
 
@@ -128,9 +128,9 @@ describe("migrations", () => {
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
 
-      const entries = db.queryEntries<{ path: string; hash: string }>(
+      const entries = db.prepare(
         "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION' ORDER BY path",
-      );
+      ).all();
 
       assertEquals(entries.length, 3);
       assertEquals(entries[0].path, "migrations/202301010000_a.sql");
@@ -178,9 +178,9 @@ describe("migrations", () => {
 
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ path: string; hash: string }>(
+      const entries = db.prepare(
         "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION' ORDER BY path",
-      );
+      ).all();
 
       assertEquals(entries.length, 1);
       assertNotEquals(entries[0].path, "migrations/202301010000_a.sql");

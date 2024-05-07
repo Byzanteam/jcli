@@ -74,14 +74,12 @@ class DatabaseBuilder extends BaseBuilder {
   provisionDatabases(): void {
     const db = api.db.createDatabase(`${this.directory}/${PROJECT_DB_PATH}`);
 
-    db.execute(createMetadataQuery);
-    db.execute(createTableObjectsQuery);
-    db.execute(createFunctionsQuery);
-    db.execute(createConfigurationQuery);
+    db.prepare(createMetadataQuery);
+    db.prepare(createTableObjectsQuery);
+    db.prepare(createFunctionsQuery);
+    db.prepare(createConfigurationQuery);
 
-    db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {
-      data: JSON.stringify(this.configuration.toJSON()),
-    });
+    db.prepare("INSERT INTO configuration (data) VALUES (:data);").get(JSON.stringify(this.configuration.toJSON()));
 
     db.close();
   }
@@ -89,9 +87,7 @@ class DatabaseBuilder extends BaseBuilder {
   async buildMetadata(projectId: string) {
     const db = await this.connectDB();
 
-    db.query("INSERT INTO metadata (project_id) VALUES (:projectId)", {
-      projectId,
-    });
+    db.prepare("INSERT INTO metadata (project_id) VALUES (:projectId)").get(projectId);
 
     db.close();
   }
@@ -106,11 +102,7 @@ class DatabaseBuilder extends BaseBuilder {
   ) {
     const db = await this.connectDB();
 
-    const createMigrationQuery = db.prepareQuery<
-      never,
-      never,
-      { path: string; hash: string }
-    >(
+    const createMigrationQuery = db.prepare(
       "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
     );
 
@@ -121,7 +113,7 @@ class DatabaseBuilder extends BaseBuilder {
         ? join("migrations", `${versionStr}_${name}.sql`)
         : join("migrations", `${versionStr}.sql`);
 
-      createMigrationQuery.execute({ path, hash });
+      createMigrationQuery.all({ path, hash });
     }
 
     createMigrationQuery.finalize();
@@ -140,29 +132,21 @@ class DatabaseBuilder extends BaseBuilder {
   ) {
     const db = await this.connectDB();
 
-    const createFunctionQuery = db.prepareQuery<
-      never,
-      never,
-      { name: string }
-    >(
+    const createFunctionQuery = db.prepare(
       "INSERT INTO functions (name) VALUES (:name)",
     );
 
-    const createFunctionFileQuery = db.prepareQuery<
-      never,
-      never,
-      { path: string; hash: string }
-    >(
+    const createFunctionFileQuery = db.prepare(
       "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'FUNCTION')",
     );
 
     for await (const func of functions) {
-      createFunctionQuery.execute({ name: func.name });
+      createFunctionQuery.all({ name: func.name });
 
       for (const { path, hash } of func.files) {
         const filePath = join("functions", func.name, path);
 
-        createFunctionFileQuery.execute({
+        createFunctionFileQuery.all({
           path: filePath,
           hash,
         });
@@ -198,14 +182,12 @@ class FileBuilder extends BaseBuilder {
   provisionDatabases(): void {
     const db = api.db.createDatabase(`${this.directory}/${PROJECT_DB_PATH}`);
 
-    db.execute(createMetadataQuery);
-    db.execute(createTableObjectsQuery);
-    db.execute(createFunctionsQuery);
-    db.execute(createConfigurationQuery);
+    db.prepare(createMetadataQuery);
+    db.prepare(createTableObjectsQuery);
+    db.prepare(createFunctionsQuery);
+    db.prepare(createConfigurationQuery);
 
-    db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {
-      data: JSON.stringify(this.configuration.toJSON()),
-    });
+    db.prepare("INSERT INTO configuration (data) VALUES (:data);").get(JSON.stringify(this.configuration.toJSON()));
 
     db.close();
   }
@@ -213,9 +195,7 @@ class FileBuilder extends BaseBuilder {
   async buildMetadata(projectId: string) {
     const db = await this.connectDB();
 
-    db.query("INSERT INTO metadata (project_id) VALUES (:projectId)", {
-      projectId,
-    });
+    db.prepare("INSERT INTO metadata (project_id) VALUES (:projectId)").get(projectId);
 
     db.close();
   }
@@ -230,11 +210,7 @@ class FileBuilder extends BaseBuilder {
   ) {
     const db = await this.connectDB();
 
-    const createMigrationQuery = db.prepareQuery<
-      never,
-      never,
-      { path: string; hash: string }
-    >(
+    const createMigrationQuery = db.prepare(
       "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
     );
 
@@ -249,7 +225,7 @@ class FileBuilder extends BaseBuilder {
         createNew: true,
       });
 
-      createMigrationQuery.execute({ path, hash });
+      createMigrationQuery.all({ path, hash });
     }
 
     createMigrationQuery.finalize();
@@ -268,31 +244,23 @@ class FileBuilder extends BaseBuilder {
   ) {
     const db = await this.connectDB();
 
-    const createFunctionQuery = db.prepareQuery<
-      never,
-      never,
-      { name: string }
-    >(
+    const createFunctionQuery = db.prepare(
       "INSERT INTO functions (name) VALUES (:name)",
     );
 
-    const createFunctionFileQuery = db.prepareQuery<
-      never,
-      never,
-      { path: string; hash: string }
-    >(
+    const createFunctionFileQuery = db.prepare(
       "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'FUNCTION')",
     );
 
     for await (const func of functions) {
-      createFunctionQuery.execute({ name: func.name });
+      createFunctionQuery.all({ name: func.name });
 
       for (const { path, hash, code } of func.files) {
         const filePath = join("functions", func.name, path);
 
         writeFunctionFile(join(this.directory, filePath), code);
 
-        createFunctionFileQuery.execute({
+        createFunctionFileQuery.all({
           path: filePath,
           hash,
         });

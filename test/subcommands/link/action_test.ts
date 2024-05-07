@@ -94,12 +94,9 @@ describe("link", () => {
 
     const database = await api.db.connect(expectedDatabase);
 
-    const columns = database.queryEntries<
-      { name: string; type: string; notnull: number; pk: number }
-    >(
-      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
-      { tableName: "metadata" },
-    );
+    const columns = database.prepare(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`
+    ).all("metadata");
 
     assertEquals(columns.length, 1);
 
@@ -110,9 +107,9 @@ describe("link", () => {
       pk: 0,
     });
 
-    const metadata = database.query<[string]>(
+    const metadata = database.prepare(
       "SELECT project_id FROM metadata",
-    );
+    ).all();
 
     assertEquals(metadata.length, 1);
 
@@ -134,12 +131,9 @@ describe("link", () => {
 
     const database = await api.db.connect(expectedDatabase);
 
-    const columns = database.queryEntries<
-      { name: string; type: string; notnull: number; pk: number }
-    >(
-      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
-      { tableName: "configuration" },
-    );
+    const columns = database.prepare(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`
+    ).all("configuration");
 
     assertEquals(columns.length, 1);
 
@@ -150,7 +144,7 @@ describe("link", () => {
       pk: 0,
     });
 
-    const data = database.query<[string]>("SELECT data FROM configuration");
+    const data = database.prepare("SELECT data FROM configuration").all();
 
     assertEquals(data.length, 1);
 
@@ -173,9 +167,9 @@ describe("link", () => {
 
     const db = await api.db.connect(expectedDatabase);
 
-    const entries = db.queryEntries<{ path: string; hash: string }>(
+    const entries = db.prepare(
       "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION' ORDER BY path",
-    );
+    ).all();
 
     assertEquals(entries.length, 3);
     assertEquals(entries[0].path, "migrations/000000000000_a.sql");
@@ -197,12 +191,9 @@ describe("link", () => {
 
     const db = await api.db.connect(expectedDatabase);
 
-    const columns = db.queryEntries<
-      { name: string; type: string; notnull: number; pk: number }
-    >(
-      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
-      { tableName: "functions" },
-    );
+    const columns = db.prepare(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`
+    ).all("functions");
 
     assertEquals(columns.length, 1);
 
@@ -213,16 +204,16 @@ describe("link", () => {
       pk: 1,
     });
 
-    const funcEntries = db.queryEntries<{ name: string }>(
+    const funcEntries = db.prepare(
       "SELECT name FROM functions",
-    );
+    ).all();
 
     assertEquals(funcEntries.length, 1);
     assertObjectMatch(funcEntries[0], { name: "my_func" });
 
-    const fileEntries = db.queryEntries<{ path: string; hash: string }>(
+    const fileEntries = db.prepare(
       "SELECT path, hash FROM objects WHERE filetype = 'FUNCTION' ORDER BY path",
-    );
+    ).all();
 
     assertEquals(fileEntries.length, 3);
     assertEquals(fileEntries[0].path, `${FUNC_PATH}/index.ts`);

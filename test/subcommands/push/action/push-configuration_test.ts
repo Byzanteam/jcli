@@ -96,9 +96,9 @@ describe("configuration", () => {
 
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ data: string }>(
+      const entries = db.prepare(
         "SELECT data FROM configuration",
-      );
+      ).all();
 
       assertEquals(entries.length, 1);
 
@@ -147,9 +147,9 @@ describe("configuration", () => {
       assertEquals(patches!.length, 0);
 
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ data: string }>(
+      const entries = db.prepare(
         "SELECT data FROM configuration",
-      );
+      ).all();
 
       const config = JSON.parse(entries[0].data);
 

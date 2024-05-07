@@ -13,15 +13,15 @@ function composeDigests(digests: ReadonlyArray<string>): Promise<string> {
 }
 
 function digestMigrations(db: DBClass): Promise<string> {
-  const entries = db.queryEntries<{ hash: string }>(
+  const entries = db.prepare(
     "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
-  );
+  ).all();
 
   return composeDigests(entries.map((e) => e.hash));
 }
 
 async function digestFunctions(db: DBClass): Promise<string> {
-  const entries = db.queryEntries<{ path: string; hash: string }>(
+  const entries = db.prepare(
     "SELECT path, hash FROM objects WHERE filetype = 'FUNCTION'",
   );
 
@@ -47,7 +47,7 @@ async function digestFunctions(db: DBClass): Promise<string> {
 }
 
 function getConfiguration(db: DBClass): string {
-  const [{ data: configuration }] = db.queryEntries<{ data: string }>(
+  const [{ data: configuration }] = db.prepare(
     "SELECT data FROM configuration",
   );
 

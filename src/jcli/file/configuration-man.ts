@@ -1,5 +1,6 @@
 import { Validator } from "jsonschema";
 import { PreparedQuery } from "sqlite";
+import { Statement } from "jsr:@db/sqlite@0.11";
 
 import { Project } from "@/jet/project.ts";
 
@@ -18,22 +19,20 @@ import projectJSONSchema from "@schemas/project-file.v1.json" with {
 
 export interface PushConfigurationQueries {
   getConfigurationQuery(): ReadonlyArray<{ data: string }>;
-  updateConfigurationQuery: PreparedQuery<never, never, { data: string }>;
+  updateConfigurationQuery: Statement;
   finalize(): void;
 }
 
 export function prepareQueries(db: DBClass): PushConfigurationQueries {
-  const updateConfigurationQuery = db.prepareQuery<
-    never,
-    never,
-    { data: string }
-  >("UPDATE configuration SET data = :data");
+  const updateConfigurationQuery = db.prepare(
+    "UPDATE configuration SET data = :data",
+  );
 
   return {
     getConfigurationQuery() {
-      return db.queryEntries<{ data: string }>(
+      return db.prepare(
         "SELECT data FROM configuration",
-      );
+      ).all();
     },
     updateConfigurationQuery,
     finalize() {
@@ -52,7 +51,7 @@ export async function pushConfiguration(
 
   if (!isPatchEmpty(command)) {
     await api.jet.updateConfiguration({ projectId, command });
-    queries.updateConfigurationQuery.execute({ data: JSON.stringify(config) });
+    queries.updateConfigurationQuery.get({ data: JSON.stringify(config) });
   }
 }
 

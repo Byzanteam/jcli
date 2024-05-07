@@ -75,12 +75,9 @@ describe("works", () => {
 
     const database = await api.db.connect(expectedDatabase);
 
-    const columns = database.queryEntries<
-      { name: string; type: string; notnull: number; pk: number }
-    >(
-      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
-      { tableName: "metadata" },
-    );
+    const columns = database.prepare(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`
+    ).all("metadata");
 
     assertEquals(columns.length, 1);
 
@@ -91,9 +88,9 @@ describe("works", () => {
       pk: 0,
     });
 
-    const metadata = database.query<[string]>(
+    const metadata = database.prepare(
       "SELECT project_id FROM metadata",
-    );
+    ).all();
 
     assertEquals(metadata.length, 1);
 
@@ -115,12 +112,9 @@ describe("works", () => {
 
     const database = await api.db.connect(expectedDatabase);
 
-    const columns = database.queryEntries<
-      { name: string; type: string; notnull: number; pk: number }
-    >(
+    const columns = database.prepare(
       `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
-      { tableName: "objects" },
-    );
+    ).all("objects");
 
     assertEquals(columns.length, 3);
 
@@ -157,12 +151,9 @@ describe("works", () => {
 
     const database = await api.db.connect(expectedDatabase);
 
-    const columns = database.queryEntries<
-      { name: string; type: string; notnull: number; pk: number }
-    >(
-      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
-      { tableName: "functions" },
-    );
+    const columns = database.prepare(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`
+    ).all("functions");
 
     assertEquals(columns.length, 1);
 
@@ -185,12 +176,9 @@ describe("works", () => {
 
     const database = await api.db.connect(expectedDatabase);
 
-    const columns = database.queryEntries<
-      { name: string; type: string; notnull: number; pk: number }
-    >(
-      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`,
-      { tableName: "configuration" },
-    );
+    const columns = database.prepare(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName) ORDER BY name`
+    ).all("configuration");
 
     assertEquals(columns.length, 1);
 
@@ -201,7 +189,7 @@ describe("works", () => {
       pk: 0,
     });
 
-    const data = database.query<[string]>("SELECT data FROM configuration");
+    const data = database.prepare("SELECT data FROM configuration").all();
 
     assertEquals(data.length, 1);
 
