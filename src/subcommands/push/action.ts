@@ -68,7 +68,7 @@ export default async function (options: PushOptions) {
     : undefined;
 
   try {
-    const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
+    const [[projectId]] = db.prepare("SELECT project_id FROM metadata");
 
     if (flags.pushConfiguration) {
       api.console.log("Pushing configuration...");

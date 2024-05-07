@@ -48,9 +48,9 @@ describe("functions", () => {
 
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ name: string }>(
+      const entries = db.prepare(
         "SELECT name FROM functions",
-      );
+      ).all();
 
       assertEquals(entries.length, 1);
       assertObjectMatch(entries[0], { name: "my_func" });
@@ -80,9 +80,9 @@ describe("functions", () => {
 
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ name: string }>(
+      const entries = db.prepare(
         "SELECT name FROM functions",
-      );
+      ).all();
 
       assertEquals(entries.length, 1);
       assertObjectMatch(entries[0], { name: "my_func2" });
@@ -144,9 +144,9 @@ describe("functions", () => {
 
       it("updates db", async () => {
         const db = await api.db.connect(PROJECT_DB_PATH);
-        const entries = db.queryEntries<{ path: string; hash: string }>(
+        const entries = db.prepare(
           "SELECT path, hash FROM objects WHERE filetype = 'FUNCTION' ORDER BY path",
-        );
+        ).all();
 
         const encoder = new TextEncoder();
 
@@ -212,9 +212,9 @@ describe("functions", () => {
 
       it("updates db", async () => {
         const db = await api.db.connect(PROJECT_DB_PATH);
-        const entries = db.queryEntries<{ path: string; hash: string }>(
+        const entries = db.prepare(
           "SELECT path, hash FROM objects WHERE filetype = 'FUNCTION' ORDER BY path",
-        );
+        ).all();
 
         const encoder = new TextEncoder();
 
@@ -262,9 +262,9 @@ describe("functions", () => {
 
       it("updates db", async () => {
         const db = await api.db.connect(PROJECT_DB_PATH);
-        const entries = db.queryEntries<{ path: string; hash: string }>(
+        const entries = db.prepare(
           "SELECT path, hash FROM objects WHERE filetype = 'FUNCTION' ORDER BY path",
-        );
+        ).all();
 
         assertEquals(entries.length, 2);
         assert(entries.every((e) => e.path !== `${FUNC_PATH}/users/mod.ts`));

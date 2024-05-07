@@ -12,6 +12,7 @@ import {
 import { digest } from "@/jcli/crypto.ts";
 
 import { PreparedQuery } from "sqlite";
+import { Statement } from "jsr:@db/sqlite@0.11";
 
 const BASE_PATH = "./functions";
 
@@ -160,72 +161,57 @@ export interface PushFunctionQueries {
 
   listFunctionFileHashesQuery(): ReadonlyArray<[path: string, hash: string]>;
 
-  createFunctionQuery: PreparedQuery<never, never, { name: string }>;
-  deleteFunctionQuery: PreparedQuery<never, never, { name: string }>;
+  createFunctionQuery: Statement;
+  deleteFunctionQuery: Statement;
 
-  createFunctionFileQuery: PreparedQuery<
-    never,
-    never,
-    { path: string; hash: string }
-  >;
+  createFunctionFileQuery: Statement;
 
-  updateFunctionFileQuery: PreparedQuery<
-    never,
-    never,
-    { path: string; hash: string }
-  >;
+  updateFunctionFileQuery: Statement;
 
-  deleteFunctionFileQuery: PreparedQuery<never, never, { path: string }>;
+  deleteFunctionFileQuery: Statement;
 
   finalize(): void;
 }
 
-export function prepareQueries(db: DBClass): PushFunctionQueries {
-  const createFunctionQuery = db.prepareQuery<
-    never,
-    never,
-    { name: string }
-  >(
+export function prepareQueries(db: DBClass): {
+  listFunctionNamesQuery():  ReadonlyArray<string>;
+  listFunctionFileHashesQuery(): ReadonlyArray<[path: string, hash: string]>;
+  createFunctionQuery: Statement;
+  deleteFunctionQuery: Statement;
+  createFunctionFileQuery: Statement;
+  updateFunctionFileQuery: Statement;
+  deleteFunctionFileQuery: Statement;
+  finalize(): void;
+} {
+  const createFunctionQuery = db.prepare(
     "INSERT INTO functions (name) VALUES (:name)",
   );
 
-  const deleteFunctionQuery = db.prepareQuery<never, never, { name: string }>(
+  const deleteFunctionQuery = db.prepare(
     "DELETE FROM functions WHERE name = :name",
   );
 
-  const createFunctionFileQuery = db.prepareQuery<
-    never,
-    never,
-    { path: string; hash: string }
-  >(
+  const createFunctionFileQuery = db.prepare(
     "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'FUNCTION')",
   );
 
-  const updateFunctionFileQuery = db.prepareQuery<
-    never,
-    never,
-    { path: string; hash: string }
-  >(
+  const updateFunctionFileQuery = db.prepare(
     "UPDATE objects SET hash = :hash WHERE path = :path",
   );
 
-  const deleteFunctionFileQuery = db.prepareQuery<
-    never,
-    never,
-    { path: string }
-  >(
+  const deleteFunctionFileQuery = db.prepare(
     "DELETE FROM objects WHERE path = :path",
   );
 
   return {
     listFunctionNamesQuery() {
-      return db.query<[string]>("SELECT name FROM functions").flat();
+      return db.prepare("SELECT name FROM functions").all() as unknown as ReadonlyArray<string>;
     },
 
     listFunctionFileHashesQuery() {
-      return db.query<[string, string]>(
+      return db.prepare(
         "SELECT path, hash FROM objects WHERE filetype = 'FUNCTION'",
-      );
+      ).all() as unknown as ReadonlyArray<[path: string, hash: string]>;
     },
 
     createFunctionQuery,
@@ -268,7 +254,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
         code: await fileChange.entry.content(),
       });
 
-      createFunctionFileQuery.execute({
+      createFunctionFileQuery.all({
         path: fileChange.entry.path,
         hash: await fileChange.entry.digest(),
       });
@@ -283,7 +269,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
         code: await fileChange.entry.content(),
       });
 
-      updateFunctionFileQuery.execute({
+      updateFunctionFileQuery.all({
         path: fileChange.entry.path,
         hash: await fileChange.entry.digest(),
       });
@@ -297,7 +283,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
         path: fileChange.entry.serverPath,
       });
 
-      deleteFunctionFileQuery.execute({ path: fileChange.entry.path });
+      deleteFunctionFileQuery.all({ path: fileChange.entry.path });
 
       break;
   }
@@ -346,7 +332,7 @@ async function pushFunction(
         title: change.name,
       });
 
-      createFunctionQuery.execute({ name: change.name });
+      createFunctionQuery.all({ name: change.name });
 
       break;
 
@@ -356,7 +342,7 @@ async function pushFunction(
         functionName: change.name,
       });
 
-      deleteFunctionQuery.execute({ name: change.name });
+      deleteFunctionQuery.all({ name: change.name });
 
       break;
 

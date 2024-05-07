@@ -1,4 +1,6 @@
-import { DB as DBClass } from "sqlite";
+// import { DB as DBClass } from "sqlite";
+
+import { Database as DBClass } from "jsr:@db/sqlite@0.11";
 
 export { DBClass };
 
@@ -14,7 +16,7 @@ export const db: DB = {
 
   connect(path: string) {
     return new Promise((resolve) => {
-      const db = new DBClass(path, { mode: "write" });
+      const db = new DBClass(path);
       resolve(db);
     });
   },

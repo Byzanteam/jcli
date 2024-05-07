@@ -1,5 +1,6 @@
 import { join, parse } from "@std/path";
 import { PreparedQuery } from "sqlite";
+import { Statement} from "jsr:@db/sqlite@0.11";
 
 import { api, DBClass } from "@/api/mod.ts";
 import {
@@ -143,51 +144,31 @@ export async function* getMigrationsStatus(
 export interface PushMigrationQueries {
   listMigrationHashesQuery(): ReadonlyArray<[path: string, hash: string]>;
 
-  createMigrationQuery: PreparedQuery<
-    never,
-    never,
-    { path: string; hash: string }
-  >;
+  createMigrationQuery: Statement;
 
-  updateMigrationQuery: PreparedQuery<
-    never,
-    never,
-    { pathWas: string; path: string; hash: string }
-  >;
+  updateMigrationQuery: Statement;
 
-  deleteMigrationQuery: PreparedQuery<
-    never,
-    never,
-    { path: string }
-  >;
+  deleteMigrationQuery: Statement;
 
   finalize(): void;
 }
 
 export function listMigrationHashesQuery(db: DBClass) {
-  return db.query<[path: string, hash: string]>(
+  return db.prepare(
     "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
-  );
+  ).all() as unknown as readonly [path: string, hash: string][];
 }
 
-export function prepareQueries(db: DBClass): PushMigrationQueries {
-  const createMigrationQuery = db.prepareQuery<
-    never,
-    never,
-    { path: string; hash: string }
-  >(
+export function prepareQueries(db: DBClass) {
+  const createMigrationQuery = db.prepare(
     "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
   );
 
-  const updateMigrationQuery = db.prepareQuery<
-    never,
-    never,
-    { pathWas: string; path: string; hash: string }
-  >(
+  const updateMigrationQuery = db.prepare(
     "UPDATE objects SET hash = :hash, path = :path WHERE path = :pathWas",
   );
 
-  const deleteMigrationQuery = db.prepareQuery<never, never, { path: string }>(
+  const deleteMigrationQuery = db.prepare(
     "DELETE FROM objects WHERE path = :path",
   );
 
@@ -226,7 +207,7 @@ async function pushMigrationsChange(
         content: await change.entry.content(),
       });
 
-      createMigrationQuery.execute({
+      createMigrationQuery.all({
         path: change.entry.path,
         hash: await change.entry.digest(),
       });
@@ -240,7 +221,7 @@ async function pushMigrationsChange(
         ...await change.entry.getDiff(),
       });
 
-      updateMigrationQuery.execute({
+      updateMigrationQuery.all({
         pathWas: change.entry.pathWas,
         path: change.entry.path,
         hash: await change.entry.digest(),
@@ -254,7 +235,7 @@ async function pushMigrationsChange(
         migrationVersion: change.entry.version,
       });
 
-      deleteMigrationQuery.execute({ path: change.entry.path });
+      deleteMigrationQuery.all({ path: change.entry.path });
 
       break;
   }
