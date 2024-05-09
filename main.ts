@@ -1,6 +1,6 @@
 import { Command, CompletionsCommand } from "cliffy-command";
 
-import { version } from "./deno.json" with { type: "json" };
+import deno_json from "./deno.json" with { type: "json" };
 
 import { getConfig } from "@/api/mod.ts";
 import { setupLogger } from "@/jcli/logger.ts";
@@ -29,7 +29,7 @@ const upgradeCommand = await createUpgradeCommand();
 
 await new Command()
   .name("jcli")
-  .version(version)
+  .version(deno_json.version)
   .description("Jet command-line tool")
   .globalOption("-d, --debug", "Enable debug output.", {
     action: globalOptionAction,
