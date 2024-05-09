@@ -190,17 +190,19 @@ download() {
 
 # --- download binary from github url ---
 download_binary() {
-    BIN_URL=${GITHUB_URL}/download/${VERSION_JCLI}/jcli-${SUFFIX}
+    BIN_URL=${GITHUB_URL}/download/${VERSION_JCLI}/jcli-${SUFFIX}.tar.gz
     info "Downloading binary ${BIN_URL}"
-    download ${TMP_BIN} ${BIN_URL}
+    download ${TMP_BIN}.tar.gz ${BIN_URL}
 }
 
 # --- setup permissions and move binary to system directory ---
 setup_binary() {
-    chmod 755 ${TMP_BIN}
+    info "Extracting binary to ${TMP_DIR}"
+    tar xvzf ${TMP_BIN}.tar.gz -C ${TMP_DIR}
+    chmod 755 ${TMP_DIR}/jcli
     info "Installing jcli to ${BIN_DIR}/jcli"
-    chown $(id -u) ${TMP_BIN}
-    $SUDO mv -f ${TMP_BIN} ${BIN_DIR}
+    chown $(id -u) ${TMP_DIR}/jcli
+    $SUDO mv -f ${TMP_DIR}/jcli ${BIN_DIR}
 }
 
 # --- download and verify jcli ---
