@@ -12,6 +12,20 @@
         "https://nightly.jet.apps.jet.work/project_man/graphql"
       ]
     },
+    "authentications": {
+      "type": "object",
+      "description": "存储不同服务的访问令牌，其中每个服务端点为键，包括协议和端口。",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "description": "用于服务访问的令牌",
+            "type": "string"
+          }
+        },
+        "required": ["token"]
+      }
+    },
     "logLevel": {
       "description": "日志级别",
       "default": "INFO",
