@@ -6,11 +6,20 @@ export async function query<T>(
   variables: object,
   config: JcliConfigDotJSON,
 ): Promise<T> {
+  const logger = getLogger();
+  const token = config?.authentications?.[config.jetEndpoint]?.token;
+  const headers = new Headers({
+    "Content-Type": "application/json",
+  });
+
+  if (token) {
+    headers.append("Authorization", `Basic ${token}`);
+    logger.debug(`Authorization header added to request.`);
+  }
+
   const response = await fetch(config.jetEndpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({ query, variables }),
   });
 
