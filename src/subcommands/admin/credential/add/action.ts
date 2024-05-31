@@ -14,26 +14,26 @@ async function addCredential(token: string) {
 
   const configData = await getConfig().get();
 
+  const tokenExisting = Boolean(
+    configData.authentications?.[configData.jetEndpoint]
+      ?.token,
+  );
+
   if (!configData.authentications) {
     configData.authentications = {};
   }
 
-  const existingToken = configData.authentications[configData.jetEndpoint];
+  configData.authentications[configData.jetEndpoint] = { token };
 
-  if (existingToken) {
+  if (tokenExisting) {
     logger.info(
-      `Updating existing credential for endpoint ${configData.jetEndpoint}`,
+      `The credential for the endpoint ${configData.jetEndpoint} is replaced.`,
     );
   } else {
     logger.info(
-      `No existing credential found for endpoint ${configData.jetEndpoint}. Setting new credential.`,
+      `The credential for the endpoint ${configData.jetEndpoint} is set.`,
     );
   }
-
-  configData.authentications[configData.jetEndpoint] = { token };
-  logger.info(
-    `Credential added for endpoint ${configData.jetEndpoint}: Token set`,
-  );
 
   await getConfig().set(configData);
 }

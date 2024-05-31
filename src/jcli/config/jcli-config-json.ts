@@ -6,7 +6,7 @@ interface AuthToken {
 }
 
 interface Authentications {
-  [url: string]: AuthToken;
+  [url: string]: Partial<AuthToken> | undefined;
 }
 
 export function jcliConfigDotJSONPath(): string {

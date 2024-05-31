@@ -14,7 +14,7 @@ export async function query<T>(
 
   if (token) {
     headers.append("Authorization", `Basic ${token}`);
-    logger.debug(`Authorization header added to request.`);
+    logger.debug(`Authorization header is set for the request.`);
   }
 
   const response = await fetch(config.jetEndpoint, {
