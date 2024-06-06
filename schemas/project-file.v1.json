@@ -27,13 +27,21 @@
       "items": {
         "$ref": "#/definitions/instance"
       }
+    },
+    "imports": {
+      "description": "项目中使用的 importMap",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
   "required": [
     "title",
     "name",
     "capabilities",
-    "instances"
+    "instances",
+    "imports"
   ],
   "definitions": {
     "capability": {
