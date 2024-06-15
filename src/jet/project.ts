@@ -18,10 +18,20 @@ export interface ProjectPluginInstance {
   capabilityNames: Array<string>;
 }
 
+export interface ProjectImports {
+  [key: string]: string;
+}
+
+export interface ProjectScopes {
+  [scopeName: string]: Record<string, string>;
+}
+
 export interface Project {
   id: string;
   name: string;
   title: string;
   capabilities: Array<ProjectCapability>;
   instances: Array<ProjectPluginInstance>;
+  imports?: ProjectImports;
+  scopes?: ProjectScopes;
 }
