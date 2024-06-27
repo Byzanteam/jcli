@@ -210,10 +210,16 @@ function buildCommandArgument(command: ProjectPatch) {
     }
   });
 
+  const imports = JSON.stringify(command.imports);
+
+  const scopes = JSON.stringify(command.scopes);
+
   return {
     title: command.title,
     capabilities,
     instances,
+    imports,
+    scopes,
   };
 }
 
