@@ -1,4 +1,4 @@
-import { Command, ValidationError } from "cliffy-command";
+import { Command, ValidationError } from "@cliffy/command";
 import { getLogger } from "@/jcli/logger.ts";
 
 export default function <T>(error: T, cmd: Command) {

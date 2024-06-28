@@ -1,7 +1,7 @@
 import { InspectOptions } from "./option.ts";
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
 import { buildEnvironmentName } from "@/subcommands/admin/var/utilities.ts";
-import { Table } from "cliffy-table";
+import { Table } from "@cliffy/table";
 
 export default async function (options: InspectOptions, functionName: string) {
   const db = await api.db.connect(PROJECT_DB_PATH);

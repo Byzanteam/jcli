@@ -3,7 +3,7 @@ import {
   GithubReleasesProvider,
   GithubReleasesUpgradeCommand,
 } from "@polyseam/cliffy-provider-gh-releases";
-import { dirname } from "path";
+import { dirname } from "@std/path";
 
 const getOsAssetMap = () => {
   const { os, arch } = Deno.build;
