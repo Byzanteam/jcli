@@ -26,6 +26,7 @@ jobs:
       - name: Deploy
         run: |
           cd "<%= project.distDir %>"
+          jcli admin credential add "<%= jcli.jcliCredential %>"
           jcli link "<%= project.id %>"
           jcli push
           jcli commit
@@ -39,6 +40,7 @@ export default function (options: GithubWorkflowOptions) {
     jcli: {
       version: options.jcliVersion ?? "latest",
       jetEndpoint: options.jetEndpoint,
+      jcliCredential: "${{ secrets.JET_PRODUCTION_API_BASIC_AUTH_CREDENTIAL }}",
     },
     project: {
       id: options.projectId,
