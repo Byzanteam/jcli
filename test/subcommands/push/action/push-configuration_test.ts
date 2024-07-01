@@ -54,6 +54,14 @@ describe("configuration", () => {
           capabilityNames: ["capability1"],
         },
       ],
+      imports: {
+        "#functions": "./",
+      },
+      scopes: {
+        "https://deno.land/x/example/": {
+          "@std/foo": "./patched/mod.ts",
+        },
+      },
     };
 
     beforeEach(async () => {
@@ -91,6 +99,10 @@ describe("configuration", () => {
             capabilityNames: ["capability1"],
           },
         ],
+        imports: { "#functions": "./" },
+        scopes: {
+          "https://deno.land/x/example/": { "@std/foo": "./patched/mod.ts" },
+        },
       });
     });
 
@@ -105,6 +117,57 @@ describe("configuration", () => {
       const config = JSON.parse(entries[0].data);
 
       assertObjectMatch(config, newConfiguration);
+
+      db.close();
+    });
+  });
+
+  describe("does not push importmap", () => {
+    const newConfiguration = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [],
+    };
+
+    beforeEach(async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(newConfiguration),
+      );
+
+      await action(options);
+    });
+
+    it("pushes to jet", () => {
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(patches, undefined);
+      assertEquals(patches!.length, 1);
+
+      assertObjectMatch(patches![0], {
+        name: "name",
+        title: "title",
+        capabilities: [],
+        instances: [],
+      });
+      assertEquals(patches![0].imports, undefined);
+      assertEquals(patches![0].scopes, undefined);
+    });
+
+    it("updates db", async () => {
+      const db = await api.db.connect(PROJECT_DB_PATH);
+      const entries = db.queryEntries<{ data: string }>(
+        "SELECT data FROM configuration",
+      );
+
+      assertEquals(entries.length, 1);
+
+      const config = JSON.parse(entries[0].data);
+
+      assertObjectMatch(config, newConfiguration);
+      assertEquals(config.imports, undefined);
+      assertEquals(config.scopes, undefined);
 
       db.close();
     });
@@ -159,6 +222,58 @@ describe("configuration", () => {
         capabilities: [],
         instances: [],
       });
+
+      db.close();
+    });
+  });
+
+  describe("fails importmap", () => {
+    const invalidConfiguration = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [],
+      imports: {
+        "#functions": 1,
+      },
+      scopes: {
+        "https://deno.land/x/example/": {
+          "@std/foo": "./patched/mod.ts",
+        },
+      },
+    };
+
+    beforeEach(async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(invalidConfiguration),
+      );
+    });
+
+    it("rejects invalid configuration", async () => {
+      await assertRejects(async () => {
+        await action(options);
+      }, "Invalid configuration");
+
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertEquals(patches!.length, 0);
+
+      const db = await api.db.connect(PROJECT_DB_PATH);
+      const entries = db.queryEntries<{ data: string }>(
+        "SELECT data FROM configuration",
+      );
+
+      const config = JSON.parse(entries[0].data);
+
+      assertObjectMatch(config, {
+        name: "my_proj",
+        title: "my_proj",
+        capabilities: [],
+        instances: [],
+      });
+      assertEquals(config.imports, undefined);
+      assertEquals(config.scopes, undefined);
 
       db.close();
     });

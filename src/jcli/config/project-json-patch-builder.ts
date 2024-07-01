@@ -3,7 +3,9 @@ import { apply_patch as applyPatch } from "jsonpatch";
 import {
   Project,
   ProjectCapability,
+  ProjectImports,
   ProjectPluginInstance,
+  ProjectScopes,
 } from "@/jet/project.ts";
 
 import {
@@ -369,6 +371,22 @@ function updatePatch<T>(
   }
 }
 
+function buildImportsPatch(
+  _op: DiffPatchOp,
+  value: unknown,
+  patch: ProjectPatch,
+): void {
+  patch.imports = value as ProjectImports | undefined;
+}
+
+function buildScopesPatch(
+  _op: DiffPatchOp,
+  value: unknown,
+  patch: ProjectPatch,
+): void {
+  patch.scopes = value as ProjectScopes | undefined;
+}
+
 export const builder = new BuilderNode().children([
   new BuilderNode().on(equal("name")).do(buildNamePatch),
   new BuilderNode().on(equal("title")).do(buildTitlePatch),
@@ -390,4 +408,10 @@ export const builder = new BuilderNode().children([
         ).do(buildInstancePatch),
       ]),
   ]),
+  new BuilderNode({ alwaysRun: true }).on(equal("imports")).do(
+    buildImportsPatch,
+  ),
+  new BuilderNode({ alwaysRun: true }).on(equal("scopes")).do(
+    buildScopesPatch,
+  ),
 ]);

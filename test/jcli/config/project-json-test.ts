@@ -6,7 +6,12 @@ import {
   it,
 } from "@test/mod.ts";
 
-import { ProjectCapability, ProjectPluginInstance } from "@/jet/project.ts";
+import {
+  ProjectCapability,
+  ProjectImports,
+  ProjectPluginInstance,
+  ProjectScopes,
+} from "@/jet/project.ts";
 
 import { ProjectDotJSON } from "@/jcli/config/project-json.ts";
 
@@ -19,6 +24,8 @@ describe("ProjectDotJSON", () => {
       title?: string;
       capabilities?: Array<ProjectCapability>;
       instances?: Array<ProjectPluginInstance>;
+      imports?: ProjectImports;
+      scopes?: ProjectScopes;
     } = {}) => {
       return new ProjectDotJSON({
         id,
@@ -26,6 +33,8 @@ describe("ProjectDotJSON", () => {
         title: args.title ?? "title",
         capabilities: args.capabilities ?? [],
         instances: args.instances ?? [],
+        imports: args.imports,
+        scopes: args.scopes,
       });
     };
 
@@ -263,6 +272,41 @@ describe("ProjectDotJSON", () => {
           capabilityNames: ["cap2", "cap1"],
         });
       });
+    });
+
+    it("diff imports", () => {
+      const initialImports = undefined;
+      const updatedImports = { "lib": "v2" };
+      const updatedImportsTwo = undefined;
+      const one = build({ imports: initialImports });
+      const another = build({ imports: updatedImports });
+      const diff = one.diff(another);
+
+      assertObjectMatch(diff!, {
+        imports: updatedImports,
+      });
+
+      const anotherTwo = build({ imports: updatedImportsTwo });
+      const diffTwo = one.diff(anotherTwo);
+      assertEquals(diffTwo.imports, undefined);
+    });
+
+    it.only("diff scopes", () => {
+      const initialScopes = undefined;
+      const updatedScopes = { "std": { "foo": "foo" } };
+      const updatedScopesTwo = undefined;
+
+      const one = build({ scopes: initialScopes });
+      const another = build({ scopes: updatedScopes });
+      const diff = one.diff(another);
+
+      assertObjectMatch(diff!, {
+        scopes: updatedScopes,
+      });
+
+      const anotherTwo = build({ scopes: updatedScopesTwo });
+      const diffTwo = one.diff(anotherTwo);
+      assertEquals(diffTwo.scopes, undefined);
     });
   });
 });

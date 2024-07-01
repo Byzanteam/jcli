@@ -27,6 +27,28 @@
       "items": {
         "$ref": "#/definitions/instance"
       }
+    },
+    "imports": {
+      "description": "A map of specifiers to their remapped specifiers.",
+      "type": "object",
+      "additionalProperties": {
+        "description": "The key is the specifier or partial specifier to match, with a value that represents the target specifier.",
+        "type": "string"
+      }
+    },
+    "scopes": {
+      "default": {},
+      "description": "Define a scope which remaps a specifier in only a specified scope",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": {
+        "description": "A definition of a scoped remapping.",
+        "type": "object",
+        "additionalProperties": {
+          "description": "The key is the specifier or partial specifier to match within the referring scope, with a value that represents the target specifier.",
+          "type": "string"
+        }
+      }
     }
   },
   "required": [
