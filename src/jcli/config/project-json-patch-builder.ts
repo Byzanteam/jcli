@@ -3,9 +3,7 @@ import { apply_patch as applyPatch } from "jsonpatch";
 import {
   Project,
   ProjectCapability,
-  ProjectImports,
   ProjectPluginInstance,
-  ProjectScopes,
 } from "@/jet/project.ts";
 
 import {
@@ -13,6 +11,8 @@ import {
   ProjectPatch,
   ProjectPluginInstanceUpdatePatch,
 } from "@/jcli/config/project-json.ts";
+
+import { diffApply } from "just-diff-apply";
 
 type PathNode = string | number;
 
@@ -372,19 +372,29 @@ function updatePatch<T>(
 }
 
 function buildImportsPatch(
-  _op: DiffPatchOp,
+  op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
+  context: BuilderContext,
 ): void {
-  patch.imports = value as ProjectImports | undefined;
+  if (!patch.imports) patch.imports = { ...context.dataWas.imports };
+
+  diffApply(patch, [
+    { op, path: ["imports", ...context.restPathNodes] as string[], value },
+  ]);
 }
 
 function buildScopesPatch(
-  _op: DiffPatchOp,
+  op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
+  context: BuilderContext,
 ): void {
-  patch.scopes = value as ProjectScopes | undefined;
+  if (!patch.scopes) patch.scopes = structuredClone(context.dataWas.scopes);
+
+  diffApply(patch, [
+    { op, path: ["scopes", ...context.restPathNodes] as string[], value },
+  ]);
 }
 
 export const builder = new BuilderNode().children([
