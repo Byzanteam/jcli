@@ -372,19 +372,63 @@ function updatePatch<T>(
 }
 
 function buildImportsPatch(
-  _op: DiffPatchOp,
+  op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
+  context: BuilderContext,
 ): void {
-  patch.imports = value as ProjectImports | undefined;
+  switch (op) {
+    case "replace": {
+      patch.imports = value as ProjectImports | undefined;
+      break;
+    }
+    case "add":
+    case "remove": {
+      const key = context.restPathNodes[0];
+      if (op === "add") {
+        context.dataWas.imports![key] = value as string;
+      } else if (op === "remove") {
+        delete context.dataWas.imports![key];
+      }
+      patch.imports = context.dataWas.imports;
+      break;
+    }
+  }
 }
 
 function buildScopesPatch(
-  _op: DiffPatchOp,
+  op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
+  context: BuilderContext,
 ): void {
-  patch.scopes = value as ProjectScopes | undefined;
+  switch (op) {
+    case "replace": {
+      patch.scopes = value as ProjectScopes | undefined;
+      break;
+    }
+    case "add":
+    case "remove": {
+      const key = context.restPathNodes[0];
+
+      if (op === "add") {
+        if (context.restPathNodes.length === 2) {
+          context.dataWas.scopes![key][context.restPathNodes[1]] =
+            value as string;
+        } else {
+          context.dataWas.scopes![key] = value as Record<string, string>;
+        }
+      } else if (op === "remove") {
+        if (context.restPathNodes.length === 2) {
+          delete context.dataWas.scopes![key][context.restPathNodes[1]];
+        } else {
+          delete context.dataWas.scopes![key];
+        }
+      }
+
+      patch.scopes = context.dataWas.scopes;
+    }
+  }
 }
 
 export const builder = new BuilderNode().children([
