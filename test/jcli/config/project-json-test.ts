@@ -277,7 +277,9 @@ describe("ProjectDotJSON", () => {
     it("diff imports", () => {
       const initialImports = undefined;
       const updatedImports = { "lib": "v2" };
-      const updatedImportsTwo = undefined;
+      const updatedImportsTwo = { "lib": "v2", "src": "./src" };
+
+      // replace 从 undefined 到有值
       const one = build({ imports: initialImports });
       const another = build({ imports: updatedImports });
       const diff = one.diff(another);
@@ -286,27 +288,50 @@ describe("ProjectDotJSON", () => {
         imports: updatedImports,
       });
 
+      // add 从有 lib 到既含有 lib 又含有 src
       const anotherTwo = build({ imports: updatedImportsTwo });
       const diffTwo = one.diff(anotherTwo);
-      assertEquals(diffTwo.imports, undefined);
+      assertEquals(diffTwo.imports, updatedImportsTwo);
+
+      // remove 从既含有 lib 又含有 src 到只有 lib
+      const anotherThree = build({ imports: updatedImports });
+      const diffThree = anotherTwo.diff(anotherThree);
+      assertEquals(diffThree.imports, updatedImports);
+
+      //replace 从只有 lib 到 undefined
+      const anotherFour = build({ imports: initialImports });
+      const diffFour = anotherThree.diff(anotherFour);
+      assertEquals(diffFour.imports, initialImports);
     });
 
-    it.only("diff scopes", () => {
+    it("diff scopes", () => {
       const initialScopes = undefined;
       const updatedScopes = { "std": { "foo": "foo" } };
-      const updatedScopesTwo = undefined;
+      const updatedScopesTwo = {
+        "std": { "foo": "foo" },
+        "dev": { "bar": "bar" },
+      };
 
+      // replace 从 undefined 到有值
       const one = build({ scopes: initialScopes });
       const another = build({ scopes: updatedScopes });
       const diff = one.diff(another);
+      assertEquals(diff.scopes, updatedScopes);
 
-      assertObjectMatch(diff!, {
-        scopes: updatedScopes,
-      });
-
+      // add 从有 std 到既含有 std 又含有 dev
       const anotherTwo = build({ scopes: updatedScopesTwo });
       const diffTwo = one.diff(anotherTwo);
-      assertEquals(diffTwo.scopes, undefined);
+      assertEquals(diffTwo.scopes, updatedScopesTwo);
+
+      // remove 从既含有 std 又含有 dev 到只有 std
+      const anotherThree = build({ scopes: updatedScopes });
+      const diffThree = anotherTwo.diff(anotherThree);
+      assertEquals(diffThree.scopes, updatedScopes);
+
+      // replace 从只有 std 到 undefined
+      const anotherFour = build({ scopes: initialScopes });
+      const diffFour = anotherThree.diff(anotherFour);
+      assertEquals(diffFour.scopes, initialScopes);
     });
   });
 });
