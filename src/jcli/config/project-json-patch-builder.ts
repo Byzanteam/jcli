@@ -14,6 +14,8 @@ import {
   ProjectPluginInstanceUpdatePatch,
 } from "@/jcli/config/project-json.ts";
 
+import { diffApply } from "just-diff-apply";
+
 type PathNode = string | number;
 
 type DiffPatchOp = "add" | "replace" | "remove";
@@ -377,23 +379,16 @@ function buildImportsPatch(
   patch: ProjectPatch,
   context: BuilderContext,
 ): void {
-  switch (op) {
-    case "replace": {
-      patch.imports = value as ProjectImports | undefined;
-      break;
-    }
-    case "add":
-    case "remove": {
-      const key = context.restPathNodes[0];
-      if (op === "add") {
-        context.dataWas.imports![key] = value as string;
-      } else if (op === "remove") {
-        delete context.dataWas.imports![key];
-      }
-      patch.imports = context.dataWas.imports;
-      break;
-    }
+  if (op === "replace") {
+    patch.imports = value as ProjectImports | undefined;
+    return;
   }
+
+  diffApply(context.dataWas.imports!, [
+    { op, path: context.restPathNodes as string[], value },
+  ]);
+
+  patch.imports = context.dataWas.imports;
 }
 
 function buildScopesPatch(
@@ -402,33 +397,16 @@ function buildScopesPatch(
   patch: ProjectPatch,
   context: BuilderContext,
 ): void {
-  switch (op) {
-    case "replace": {
-      patch.scopes = value as ProjectScopes | undefined;
-      break;
-    }
-    case "add":
-    case "remove": {
-      const key = context.restPathNodes[0];
-
-      if (op === "add") {
-        if (context.restPathNodes.length === 2) {
-          context.dataWas.scopes![key][context.restPathNodes[1]] =
-            value as string;
-        } else {
-          context.dataWas.scopes![key] = value as Record<string, string>;
-        }
-      } else if (op === "remove") {
-        if (context.restPathNodes.length === 2) {
-          delete context.dataWas.scopes![key][context.restPathNodes[1]];
-        } else {
-          delete context.dataWas.scopes![key];
-        }
-      }
-
-      patch.scopes = context.dataWas.scopes;
-    }
+  if (op === "replace") {
+    patch.scopes = value as ProjectScopes | undefined;
+    return;
   }
+
+  diffApply(context.dataWas.scopes!, [
+    { op, path: context.restPathNodes as string[], value },
+  ]);
+
+  patch.scopes = context.dataWas.scopes;
 }
 
 export const builder = new BuilderNode().children([
