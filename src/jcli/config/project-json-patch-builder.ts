@@ -14,6 +14,8 @@ import {
   ProjectPluginInstanceUpdatePatch,
 } from "@/jcli/config/project-json.ts";
 
+import { diffApply } from "just-diff-apply";
+
 type PathNode = string | number;
 
 type DiffPatchOp = "add" | "replace" | "remove";
@@ -372,19 +374,39 @@ function updatePatch<T>(
 }
 
 function buildImportsPatch(
-  _op: DiffPatchOp,
+  op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
+  context: BuilderContext,
 ): void {
-  patch.imports = value as ProjectImports | undefined;
+  if (op === "replace") {
+    patch.imports = value as ProjectImports | undefined;
+    return;
+  }
+
+  diffApply(context.dataWas.imports!, [
+    { op, path: context.restPathNodes as string[], value },
+  ]);
+
+  patch.imports = context.dataWas.imports;
 }
 
 function buildScopesPatch(
-  _op: DiffPatchOp,
+  op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
+  context: BuilderContext,
 ): void {
-  patch.scopes = value as ProjectScopes | undefined;
+  if (op === "replace") {
+    patch.scopes = value as ProjectScopes | undefined;
+    return;
+  }
+
+  diffApply(context.dataWas.scopes!, [
+    { op, path: context.restPathNodes as string[], value },
+  ]);
+
+  patch.scopes = context.dataWas.scopes;
 }
 
 export const builder = new BuilderNode().children([

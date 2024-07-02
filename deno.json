@@ -15,6 +15,7 @@
     "jsonschema": "npm:jsonschema@1.4.1",
     "jsonpatch": "npm:jsonpatch@3.1.0",
     "just-diff": "npm:just-diff@6.0.2",
+    "just-diff-apply": "npm:just-diff-apply@5.5.0",
     "ejs": "npm:ejs@3.1.9"
   },
   "tasks": {
