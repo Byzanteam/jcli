@@ -31,6 +31,7 @@
       "npm:ejs@3.1.9": "npm:ejs@3.1.9",
       "npm:jsonpatch@3.1.0": "npm:jsonpatch@3.1.0",
       "npm:jsonschema@1.4.1": "npm:jsonschema@1.4.1",
+      "npm:just-diff-apply@5.5.0": "npm:just-diff-apply@5.5.0",
       "npm:just-diff@6.0.2": "npm:just-diff@6.0.2",
       "npm:octokit@^3.1.2": "npm:octokit@3.2.0_@octokit+core@5.2.0"
     },
@@ -522,6 +523,10 @@
           "semver": "semver@7.6.0"
         }
       },
+      "just-diff-apply@5.5.0": {
+        "integrity": "sha512-OYTthRfSh55WOItVqwpefPtNt2VdKsq5AnAK6apdtR6yCH8pr0CmSr710J0Mf+WdQy7K/OzMy7K2MgAfdQURDw==",
+        "dependencies": {}
+      },
       "just-diff@6.0.2": {
         "integrity": "sha512-S59eriX5u3/QhMNq3v/gm8Kd0w8OS6Tz2FS1NG4blv+z0MuQcBRJyFWjdovM0Rad4/P4aUPFtnkNjMjyMlMSYA==",
         "dependencies": {}
@@ -847,6 +852,7 @@
       "npm:ejs@3.1.9",
       "npm:jsonpatch@3.1.0",
       "npm:jsonschema@1.4.1",
+      "npm:just-diff-apply@5.5.0",
       "npm:just-diff@6.0.2"
     ]
   }

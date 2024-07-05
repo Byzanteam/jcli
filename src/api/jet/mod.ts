@@ -210,17 +210,21 @@ function buildCommandArgument(command: ProjectPatch) {
     }
   });
 
-  const imports = JSON.stringify(command.imports);
-
-  const scopes = JSON.stringify(command.scopes);
-
   return {
     title: command.title,
     capabilities,
     instances,
-    imports,
-    scopes,
+    imports: serializeValue(command.imports),
+    scopes: serializeValue(command.scopes),
   };
+}
+
+function serializeValue<T extends object>(
+  value: T | undefined,
+): string | undefined {
+  return (!value || Object.keys(value).length === 0)
+    ? undefined
+    : JSON.stringify(value);
 }
 
 export async function deleteFunction(
