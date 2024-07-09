@@ -12,6 +12,8 @@ import {
   ProjectPluginInstanceUpdatePatch,
 } from "@/jcli/config/project-json.ts";
 
+import { diffApply } from "just-diff-apply";
+
 type PathNode = string | number;
 
 type DiffPatchOp = "add" | "replace" | "remove";
@@ -369,6 +371,32 @@ function updatePatch<T>(
   }
 }
 
+function buildImportsPatch(
+  op: DiffPatchOp,
+  value: unknown,
+  patch: ProjectPatch,
+  context: BuilderContext,
+): void {
+  if (!patch.imports) patch.imports = { ...context.dataWas.imports };
+
+  diffApply(patch, [
+    { op, path: ["imports", ...context.restPathNodes] as string[], value },
+  ]);
+}
+
+function buildScopesPatch(
+  op: DiffPatchOp,
+  value: unknown,
+  patch: ProjectPatch,
+  context: BuilderContext,
+): void {
+  if (!patch.scopes) patch.scopes = structuredClone(context.dataWas.scopes);
+
+  diffApply(patch, [
+    { op, path: ["scopes", ...context.restPathNodes] as string[], value },
+  ]);
+}
+
 export const builder = new BuilderNode().children([
   new BuilderNode().on(equal("name")).do(buildNamePatch),
   new BuilderNode().on(equal("title")).do(buildTitlePatch),
@@ -390,4 +418,10 @@ export const builder = new BuilderNode().children([
         ).do(buildInstancePatch),
       ]),
   ]),
+  new BuilderNode({ alwaysRun: true }).on(equal("imports")).do(
+    buildImportsPatch,
+  ),
+  new BuilderNode({ alwaysRun: true }).on(equal("scopes")).do(
+    buildScopesPatch,
+  ),
 ]);

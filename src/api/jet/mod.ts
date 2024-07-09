@@ -214,7 +214,17 @@ function buildCommandArgument(command: ProjectPatch) {
     title: command.title,
     capabilities,
     instances,
+    imports: serializeValue(command.imports),
+    scopes: serializeValue(command.scopes),
   };
+}
+
+function serializeValue<T extends object>(
+  value: T | undefined,
+): string | undefined {
+  return (!value || Object.keys(value).length === 0)
+    ? undefined
+    : JSON.stringify(value);
 }
 
 export async function deleteFunction(
