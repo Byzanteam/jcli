@@ -1,4 +1,4 @@
-import { Command } from "cliffy-command";
+import { Command } from "@cliffy/command";
 import errorHandler from "@/error-handler.ts";
 
 import { PushOptions } from "./option.ts";
