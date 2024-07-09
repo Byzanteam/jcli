@@ -9,7 +9,7 @@ import {
   ProjectDotJSON,
   projectDotJSONPath,
 } from "@/jcli/config/project-json.ts";
-import { dirname, join } from "path";
+import { dirname, join } from "@std/path";
 
 abstract class BaseBuilder {
   protected configuration: ProjectDotJSON;

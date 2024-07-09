@@ -1,4 +1,4 @@
-import { Command } from "cliffy-command";
+import { Command } from "@cliffy/command";
 import { GlobalOptions } from "@/args.ts";
 
 import installCommand from "@/subcommands/plugin/install/mod.ts";

@@ -1,4 +1,4 @@
-import { extname, join } from "path";
+import { extname, join } from "@std/path";
 import { api, DirEntry, FS } from "@/api/mod.ts";
 import { digest } from "@/jcli/crypto.ts";
 

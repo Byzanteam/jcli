@@ -1,5 +1,5 @@
 import { DB, DBClass } from "@/api/db.ts";
-import { join } from "path";
+import { join } from "@std/path";
 
 export interface DBTest extends DB {
   chdir(path: string): void;

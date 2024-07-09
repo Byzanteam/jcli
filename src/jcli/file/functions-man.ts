@@ -1,4 +1,4 @@
-import { join } from "path";
+import { join } from "@std/path";
 
 import { chunk } from "@/utility/async-iterable.ts";
 
