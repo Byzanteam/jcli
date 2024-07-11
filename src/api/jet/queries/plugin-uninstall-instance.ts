@@ -1,6 +1,6 @@
 export const pluginUninstallInstanceMutation = `
   mutation uninstallPluginInstance(
-    $environmentName: String!,
+    $environmentName: ProjectsEnvironmentName!,
     $instanceName: String!,
     $projectId: UUID!
   ) {

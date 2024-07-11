@@ -1,6 +1,6 @@
 export const pluginInstallInstanceMutation = `
   mutation installPluginInstance(
-    $environmentName: String!,
+    $environmentName: ProjectsEnvironmentName!,
     $instanceName: String!,
     $projectId: UUID!
   ) {
