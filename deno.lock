@@ -855,6 +855,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@cliffy/ansi@^1.0.0-rc.4",
       "jsr:@cliffy/command@^1.0.0-rc.4",
       "jsr:@cliffy/table@^1.0.0-rc.4",
       "jsr:@polyseam/cliffy-provider-gh-releases@^0.3.0",

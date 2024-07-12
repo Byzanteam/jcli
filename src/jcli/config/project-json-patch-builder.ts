@@ -55,6 +55,7 @@ type BuilderFn = (
  * or the path is all consumed.
  */
 class BuilderNode {
+  #name: string;
   #alwaysRun: boolean;
 
   #filter: BuilderNodeFilter = function (_pathNode) {
@@ -65,8 +66,9 @@ class BuilderNode {
 
   #children: ReadonlyArray<BuilderNode> = [];
 
-  constructor(options?: { alwaysRun?: boolean }) {
-    this.#alwaysRun = options?.alwaysRun ?? false;
+  constructor(options: { alwaysRun?: boolean; name: string }) {
+    this.#alwaysRun = options.alwaysRun ?? false;
+    this.#name = options.name;
   }
 
   on(fn: BuilderNodeFilter): BuilderNode {
@@ -124,7 +126,10 @@ class BuilderNode {
       return child;
     }
 
-    throw new Error(`PathNode ${pathNode} has no handler.`);
+    throw new Error(
+      `BuilderNode(${this.#name}) has no handler for '${pathNode}' node.\n` +
+        `available nodes: ${this.#children.map((e) => e.#name).join(", ")}`,
+    );
   }
 }
 
@@ -397,31 +402,39 @@ function buildScopesPatch(
   ]);
 }
 
-export const builder = new BuilderNode().children([
-  new BuilderNode().on(equal("name")).do(buildNamePatch),
-  new BuilderNode().on(equal("title")).do(buildTitlePatch),
-  new BuilderNode().on(equal("capabilities")).children([
-    new BuilderNode({ alwaysRun: true }).on(isNumber).do(buildCapabilitiesPatch)
+export const builder = new BuilderNode({ name: "root" }).children([
+  new BuilderNode({ name: "name" }).on(equal("name")).do(buildNamePatch),
+  new BuilderNode({ name: "title" }).on(equal("title")).do(buildTitlePatch),
+  new BuilderNode({ name: "capabilities" }).on(equal("capabilities")).children([
+    new BuilderNode({ name: "capabilities.item", alwaysRun: true }).on(isNumber)
+      .do(buildCapabilitiesPatch)
       .children(
         [
-          new BuilderNode({ alwaysRun: true }).on(equal("payload")).do(
+          new BuilderNode({
+            name: "capabilities.item.payload",
+            alwaysRun: true,
+          }).on(
+            equal("payload"),
+          ).do(
             buildCapabilityPatch,
           ),
         ],
       ),
   ]),
-  new BuilderNode().on(equal("instances")).children([
-    new BuilderNode({ alwaysRun: true }).on(isNumber).do(buildInstancesPatch)
+  new BuilderNode({ name: "instances" }).on(equal("instances")).children([
+    new BuilderNode({ name: "instances.item", alwaysRun: true }).on(isNumber)
+      .do(buildInstancesPatch)
       .children([
-        new BuilderNode({ alwaysRun: true }).on(
-          equalAny(["description", "config", "capabilityNames"]),
-        ).do(buildInstancePatch),
+        new BuilderNode({ name: "instances.item.attributes", alwaysRun: true })
+          .on(
+            equalAny(["description", "config", "capabilityNames"]),
+          ).do(buildInstancePatch),
       ]),
   ]),
-  new BuilderNode({ alwaysRun: true }).on(equal("imports")).do(
+  new BuilderNode({ name: "imports", alwaysRun: true }).on(equal("imports")).do(
     buildImportsPatch,
   ),
-  new BuilderNode({ alwaysRun: true }).on(equal("scopes")).do(
+  new BuilderNode({ name: "scopes", alwaysRun: true }).on(equal("scopes")).do(
     buildScopesPatch,
   ),
 ]);
