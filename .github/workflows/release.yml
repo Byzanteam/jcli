@@ -20,8 +20,10 @@ jobs:
         run: |
           for i in x86_64-unknown-linux-gnu x86_64-apple-darwin aarch64-apple-darwin aarch64-unknown-linux-gnu
           do
-            deno compile -A --target $i -o jcli-$i main.ts
-            tar -czf jcli-$i.tar.gz jcli-$i
+            deno compile -A --target $i -o jcli main.ts
+            cp jcli jcli-$i
+            tar -czf jcli-$i.tar.gz jcli
+            rm jcli
           done
 
       - name: Release jcli
