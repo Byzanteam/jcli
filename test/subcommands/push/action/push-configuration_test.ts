@@ -278,4 +278,146 @@ describe("configuration", () => {
       db.close();
     });
   });
+
+  describe("instance management", () => {
+    const initialConfiguration = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [
+        {
+          capabilityNames: [],
+          config: { queues: ["timing", "default"] },
+          name: "queue",
+          pluginName: "queue",
+        },
+        {
+          capabilityNames: [],
+          config: { pluginKey: "{{ TIME_SLOT_RESERVATION_TOWER_PLUGIN_KEY }}" },
+          name: "tower",
+          pluginName: "tower",
+        },
+        {
+          capabilityNames: [],
+          config: {
+            accessKeyId: "{{ ACCESS_KEY_ID }}",
+            accessSecret: "{{ ACCESS_SECRET }}",
+            queues: "default:20,timing:10",
+            signName: "{{ SIGN_NAME }}",
+          },
+          name: "sms",
+          pluginName: "sms",
+        },
+      ],
+    };
+
+    const configurationWithUpdatedInstance = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [
+        {
+          capabilityNames: [],
+          config: { queues: ["timing", "default"] },
+          name: "queue",
+          pluginName: "queue",
+        },
+        {
+          capabilityNames: [],
+          config: { pluginKey: "{{ NEW_PLUGIN_KEY }}" }, // Modified value
+          name: "tower",
+          pluginName: "tower",
+        },
+        {
+          capabilityNames: [],
+          config: {
+            accessKeyId: "{{ ACCESS_KEY_ID }}",
+            accessSecret: "{{ ACCESS_SECRET }}",
+            queues: "default:20,timing:10",
+            signName: "{{ SIGN_NAME }}",
+          },
+          name: "sms",
+          pluginName: "sms",
+        },
+      ],
+    };
+
+    const configurationWithRemovedInstance = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [
+        {
+          capabilityNames: [],
+          config: { queues: ["timing", "default"] },
+          name: "queue",
+          pluginName: "queue",
+        },
+        {
+          capabilityNames: [],
+          config: {
+            accessKeyId: "{{ ACCESS_KEY_ID }}",
+            accessSecret: "{{ ACCESS_SECRET }}",
+            queues: "default:20,timing:10",
+            signName: "{{ SIGN_NAME }}",
+          },
+          name: "sms",
+          pluginName: "sms",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(initialConfiguration),
+      );
+
+      await action(options);
+    });
+
+    it("updates an instance", async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(configurationWithUpdatedInstance),
+      );
+      await action(options);
+
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(patches, undefined);
+      assertEquals(patches!.length, 2);
+
+      assertObjectMatch(patches![1], {
+        capabilities: [],
+        instances: [
+          {
+            action: "update",
+            name: "tower",
+            description: undefined,
+            config: { pluginKey: "{{ NEW_PLUGIN_KEY }}" },
+            capabilityNames: [],
+          },
+        ],
+      });
+    });
+
+    it("removes the first instance", async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(configurationWithRemovedInstance),
+      );
+      await action(options);
+
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(patches, undefined);
+      assertEquals(patches!.length, 2);
+
+      assertObjectMatch(patches![1], {
+        capabilities: [],
+        instances: [{ action: "delete", name: "tower" }],
+      });
+    });
+  });
 });
