@@ -278,4 +278,332 @@ describe("configuration", () => {
       db.close();
     });
   });
+
+  describe("instances", () => {
+    const initialConfiguration = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [
+        {
+          capabilityNames: [],
+          config: { queues: ["timing", "default"] },
+          name: "queue",
+          pluginName: "queue",
+        },
+        {
+          capabilityNames: [],
+          config: { pluginKey: "{{ TIME_SLOT_RESERVATION_TOWER_PLUGIN_KEY }}" },
+          name: "tower",
+          pluginName: "tower",
+        },
+        {
+          capabilityNames: [],
+          config: {
+            accessKeyId: "{{ ACCESS_KEY_ID }}",
+            accessSecret: "{{ ACCESS_SECRET }}",
+            queues: "default:20,timing:10",
+            signName: "{{ SIGN_NAME }}",
+          },
+          name: "sms",
+          pluginName: "sms",
+        },
+      ],
+    };
+
+    const configurationWithUpdatedInstance = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [
+        {
+          capabilityNames: [],
+          config: { pluginKey: "{{ NEW_PLUGIN_KEY }}" }, // Modified value
+          name: "tower",
+          pluginName: "tower",
+        },
+        // order changed
+        {
+          capabilityNames: [],
+          config: { queues: ["timing", "default"] },
+          name: "queue",
+          pluginName: "queue",
+        },
+        {
+          capabilityNames: [],
+          config: {
+            accessKeyId: "{{ ACCESS_KEY_ID }}",
+            accessSecret: "{{ ACCESS_SECRET }}",
+            queues: "default:20,timing:10",
+            signName: "{{ SIGN_NAME }}",
+          },
+          name: "sms",
+          pluginName: "sms",
+        },
+      ],
+    };
+
+    const configurationWithRemovedInstance = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [
+        {
+          capabilityNames: [],
+          config: {
+            accessKeyId: "{{ ACCESS_KEY_ID }}",
+            accessSecret: "{{ ACCESS_SECRET }}",
+            queues: "default:20,timing:10",
+            signName: "{{ SIGN_NAME }}",
+          },
+          name: "sms",
+          pluginName: "sms",
+        },
+        // order changed
+        {
+          capabilityNames: [],
+          config: { queues: ["timing", "default"] },
+          name: "queue",
+          pluginName: "queue",
+        },
+      ],
+    };
+
+    const configurationWithChangedOrder = {
+      name: "name",
+      title: "title",
+      capabilities: [],
+      instances: [
+        {
+          capabilityNames: [],
+          config: { pluginKey: "{{ TIME_SLOT_RESERVATION_TOWER_PLUGIN_KEY }}" },
+          name: "tower",
+          pluginName: "tower",
+        },
+        {
+          capabilityNames: [],
+          config: { queues: ["timing", "default"] },
+          name: "queue",
+          pluginName: "queue",
+        },
+        {
+          capabilityNames: [],
+          config: {
+            accessKeyId: "{{ ACCESS_KEY_ID }}",
+            accessSecret: "{{ ACCESS_SECRET }}",
+            queues: "default:20,timing:10",
+            signName: "{{ SIGN_NAME }}",
+          },
+          name: "sms",
+          pluginName: "sms",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(initialConfiguration),
+      );
+
+      await action(options);
+    });
+
+    it("updates an instance", async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(configurationWithUpdatedInstance),
+      );
+      await action(options);
+
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(patches, undefined);
+      assertEquals(patches!.length, 2);
+
+      assertObjectMatch(patches![1], {
+        capabilities: [],
+        instances: [
+          {
+            action: "update",
+            name: "tower",
+            config: { pluginKey: "{{ NEW_PLUGIN_KEY }}" },
+            capabilityNames: [],
+          },
+        ],
+      });
+    });
+
+    it("removes the first instance", async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(configurationWithRemovedInstance),
+      );
+      await action(options);
+
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(patches, undefined);
+      assertEquals(patches!.length, 2);
+
+      assertObjectMatch(patches![1], {
+        capabilities: [],
+        instances: [{ action: "delete", name: "tower" }],
+      });
+    });
+
+    it("detects instance order change", async () => {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify(configurationWithChangedOrder),
+      );
+      await action(options);
+
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(patches, undefined);
+      assertEquals(patches!.length, 1);
+      assertEquals(patches![1], undefined);
+    });
+  });
+
+  describe("capabilities and capabilities patches", () => {
+    async function getPatch(
+      from: Record<string, unknown>,
+      to: Record<string, unknown>,
+    ) {
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify({
+          name: "name",
+          title: "title",
+          instantiate: [],
+          capabilities: [],
+          ...from,
+        }),
+      );
+      await action(options);
+
+      await api.fs.writeTextFile(
+        "project.json",
+        JSON.stringify({
+          name: "name",
+          title: "title",
+          instantiate: [],
+          capabilities: [],
+          ...to,
+        }),
+      );
+      await action(options);
+
+      const patches = api.jet.getConfigurationPatches(projectId);
+
+      assertEquals(patches!.length, 2, "Expected 2 patches");
+
+      return patches![1];
+    }
+
+    it("complex changes", async () => {
+      const patch = await getPatch(
+        {
+          capabilities: [
+            {
+              name: "capability1",
+              payload: { __type__: "database", schema: "schema1" },
+            },
+            {
+              name: "capability2",
+              payload: { __type__: "database", schema: "schema2" },
+            },
+          ],
+          instances: [
+            {
+              capabilityNames: [],
+              config: {},
+              name: "plugina",
+              pluginName: "pluginA",
+            },
+            {
+              capabilityNames: [],
+              config: { foo: "bar" },
+              name: "pluginb",
+              pluginName: "pluginB",
+            },
+            {
+              capabilityNames: [],
+              config: { foo: "bar" },
+              name: "pluginc",
+              pluginName: "pluginC",
+            },
+          ],
+        },
+        {
+          capabilities: [
+            {
+              name: "capability2",
+              payload: { __type__: "database", schema: "schema3" },
+            },
+          ],
+          instances: [
+            {
+              capabilityNames: [],
+              config: { foo: "bar" },
+              name: "pluginc",
+              pluginName: "pluginC",
+            },
+            {
+              capabilityNames: [],
+              config: { foo: "bar" },
+              name: "plugind",
+              pluginName: "pluginD",
+            },
+            {
+              capabilityNames: [],
+              config: { foo: "baz" },
+              name: "pluginb",
+              pluginName: "pluginB",
+            },
+          ],
+        },
+      );
+
+      assertObjectMatch(patch, {
+        capabilities: [
+          {
+            action: "delete",
+            name: "capability1",
+          },
+          {
+            action: "update",
+            name: "capability2",
+            payload: { __type__: "database", schema: "schema3" },
+          },
+        ],
+        instances: [
+          {
+            action: "delete",
+            name: "plugina",
+          },
+          {
+            action: "update",
+            capabilityNames: [],
+            config: {
+              foo: "baz",
+            },
+            name: "pluginb",
+            pluginName: "pluginB",
+          },
+          {
+            action: "create",
+            capabilityNames: [],
+            config: {
+              foo: "bar",
+            },
+            name: "plugind",
+            pluginName: "pluginD",
+          },
+        ],
+      });
+    });
+  });
 });

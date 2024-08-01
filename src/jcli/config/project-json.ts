@@ -19,6 +19,17 @@ import projectJSONSchema from "@schemas/project-file.v1.json" with {
   type: "json",
 };
 
+export type ProjectJsonForDiff =
+  & Omit<ProjectJSON, "instances" | "capabilities">
+  & {
+    capabilities: {
+      [key: string]: ProjectJSON["capabilities"][number];
+    };
+    instances: {
+      [key: string]: ProjectJSON["instances"][number];
+    };
+  };
+
 export function projectDotJSONPath(projectName?: string): string {
   if (undefined === projectName) {
     return "./project.json";
@@ -61,15 +72,42 @@ export class ProjectDotJSON {
   }
 
   diff(other: ProjectDotJSON): ProjectPatch {
-    const selfJSON = this.toJSON();
-    const result = diff(selfJSON, other.toJSON());
-    return buildPatch(result, selfJSON);
+    const dataWas = buildProjectJsonForDiff(this.toJSON());
+    const data = buildProjectJsonForDiff(other.toJSON());
+
+    const result = diff(dataWas, data);
+
+    return buildPatch(result, dataWas);
   }
+}
+
+export function buildProjectJsonForDiff(
+  project: ProjectJSON,
+): ProjectJsonForDiff {
+  function convertArrayToObject<T extends { name: string }>(
+    name: string,
+    array: T[],
+  ): { [key: string]: T } {
+    return array.reduce<{ [key: string]: T }>((acc, item) => {
+      if (Object.prototype.isPrototypeOf.call(acc, item.name)) {
+        throw new Error(`Duplicate ${name}: ${item.name}`);
+      }
+
+      acc[item.name] = item;
+      return acc;
+    }, {});
+  }
+
+  return {
+    ...project,
+    capabilities: convertArrayToObject("capability", [...project.capabilities]),
+    instances: convertArrayToObject("instance", [...project.instances]),
+  };
 }
 
 function buildPatch(
   diffPatches: ReadonlyArray<DiffPatch>,
-  dataWas: ProjectJSON,
+  dataWas: ProjectJsonForDiff,
 ): ProjectPatch {
   const patch: ProjectPatch = { capabilities: [], instances: [] };
 
