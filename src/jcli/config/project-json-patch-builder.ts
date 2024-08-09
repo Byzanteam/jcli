@@ -1,5 +1,3 @@
-import { apply_patch as applyPatch } from "jsonpatch";
-
 import {
   Project,
   ProjectCapability,
@@ -7,9 +5,9 @@ import {
 } from "@/jet/project.ts";
 
 import {
-  ProjectCapabilityUpdatePatch,
+  buildProjectJsonWithObjects,
+  ProjectJsonWithObject,
   ProjectPatch,
-  ProjectPluginInstanceUpdatePatch,
 } from "@/jcli/config/project-json.ts";
 
 import { diffApply } from "just-diff-apply";
@@ -33,6 +31,7 @@ interface BuilderContext {
   currentPathNode: PathNode;
   assigns: Map<string, unknown>;
   restPathNodes: ReadonlyArray<PathNode>;
+  datawasWithObject: ProjectJsonWithObject;
 }
 
 type BuilderFn = (
@@ -99,6 +98,7 @@ class BuilderNode {
         currentPathNode,
         assigns,
         restPathNodes: diffPatch.path,
+        datawasWithObject: buildProjectJsonWithObjects(dataWas),
       });
     }
 
@@ -137,14 +137,6 @@ function equal(value: PathNode): BuilderNodeFilter {
   return (pathNode) => pathNode === value;
 }
 
-function equalAny(value: ReadonlyArray<PathNode>): BuilderNodeFilter {
-  return (pathNode) => value.includes(pathNode);
-}
-
-function isNumber(value: PathNode): value is number {
-  return typeof value === "number";
-}
-
 function buildNamePatch(
   _op: DiffPatchOp,
   value: unknown,
@@ -162,27 +154,41 @@ function buildTitlePatch(
   patch.title = value as string;
 }
 
-function buildCapabilitiesPatch(
+function buildCapabilitysPatch(
   op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
   context: BuilderContext,
 ): void {
-  if (0 === context.restPathNodes.length) {
+  const { currentPathNode, restPathNodes } = context;
+
+  if (0 === restPathNodes.length) {
     doBuildCapabilityPatch(op, value, patch, context);
   } else {
-    const { dataWas: { capabilities }, currentPathNode, assigns } = context;
-    const capability = capabilities[currentPathNode as number];
+    diffApply(context.datawasWithObject.capabilities, [
+      {
+        op,
+        path: [currentPathNode, ...restPathNodes] as string[],
+        value,
+      },
+    ]);
+    const currentCapability =
+      context.datawasWithObject.capabilities[currentPathNode as string];
 
-    if (patch.capabilities.every((e) => e.name !== capability.name)) {
-      patch.capabilities.push({
-        action: "update",
-        name: capability.name,
-        payload: capability.payload,
-      });
+    const capabilityData = {
+      name: currentPathNode as string,
+      payload: currentCapability.payload,
+    };
+
+    const index = patch.capabilities.findIndex((cap) =>
+      cap.name === currentPathNode
+    );
+
+    if (index === -1) {
+      patch.capabilities.push({ action: "update", ...capabilityData });
+    } else {
+      patch.capabilities[index] = { action: "update", ...capabilityData };
     }
-
-    assigns.set("capability", capability);
   }
 }
 
@@ -200,47 +206,12 @@ function doBuildCapabilityPatch(
     }
 
     case "remove": {
-      const { dataWas: { capabilities }, currentPathNode } = context;
+      const { currentPathNode } = context;
       patch.capabilities.push({
         action: "delete",
-        name: capabilities[currentPathNode as number].name,
+        name: currentPathNode as string,
       });
     }
-  }
-}
-
-function buildCapabilityPatch(
-  op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-  context: BuilderContext,
-): void {
-  const capability = context.assigns.get("capability") as ProjectCapability;
-
-  switch (context.currentPathNode) {
-    case "payload": {
-      const path = `/${context.restPathNodes.join("/")}`;
-      updatePatch(
-        patch.capabilities,
-        (e) => e.name === capability.name,
-        (e) => {
-          const patch = e as ProjectCapabilityUpdatePatch;
-          const payload = applyPatch(
-            patch.payload ?? capability.payload,
-            [{
-              op,
-              path,
-              value,
-            }],
-          );
-          patch.payload = payload;
-        },
-      );
-      break;
-    }
-
-    default:
-      break;
   }
 }
 
@@ -249,18 +220,39 @@ function buildInstancesPatch(
   value: unknown,
   patch: ProjectPatch,
   context: BuilderContext,
-): void {
-  if (0 === context.restPathNodes.length) {
+) {
+  const { currentPathNode, restPathNodes } = context;
+
+  if (restPathNodes.length === 0) {
     doBuildInstancesPatch(op, value, patch, context);
   } else {
-    const { dataWas: { instances }, currentPathNode, assigns } = context;
-    const instance = instances[currentPathNode as number];
+    diffApply(context.datawasWithObject.instances, [
+      {
+        op,
+        path: [currentPathNode, ...restPathNodes] as string[],
+        value,
+      },
+    ]);
 
-    if (patch.instances.every((e) => e.name !== instance.name)) {
-      patch.instances.push({ action: "update", name: instance.name });
+    const currentInstance =
+      context.datawasWithObject.instances[currentPathNode as string];
+
+    const instanceData = {
+      name: currentPathNode as string,
+      description: currentInstance.description,
+      config: currentInstance.config,
+      capabilityNames: currentInstance.capabilityNames,
+    };
+
+    const index = patch.instances.findIndex((ins) =>
+      ins.name === currentPathNode
+    );
+
+    if (index === -1) {
+      patch.instances.push({ action: "update", ...instanceData });
+    } else {
+      patch.instances[index] = { action: "update", ...instanceData };
     }
-
-    assigns.set("instance", instance);
   }
 }
 
@@ -283,96 +275,16 @@ function doBuildInstancesPatch(
         config,
         capabilityNames,
       });
-
       break;
     }
 
     case "remove": {
-      const { dataWas: { instances }, currentPathNode } = context;
+      const { currentPathNode } = context;
       patch.instances.push({
         action: "delete",
-        name: instances[currentPathNode as number].name,
+        name: currentPathNode as string,
       });
     }
-  }
-}
-
-function buildInstancePatch(
-  op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-  context: BuilderContext,
-): void {
-  const instance = context.assigns.get("instance") as ProjectPluginInstance;
-
-  switch (context.currentPathNode) {
-    case "description": {
-      updatePatch(
-        patch.instances,
-        (e) => e.name === instance.name,
-        (p) =>
-          (p as ProjectPluginInstanceUpdatePatch).description = value as string,
-      );
-
-      break;
-    }
-
-    case "config": {
-      const path = `/${context.restPathNodes.join("/")}`;
-
-      updatePatch(
-        patch.instances,
-        (e) => e.name === instance.name,
-        (e) => {
-          const patch = e as ProjectPluginInstanceUpdatePatch;
-          const config = applyPatch(patch.config ?? instance.config, [{
-            op,
-            path,
-            value,
-          }]);
-          patch.config = config;
-        },
-      );
-
-      break;
-    }
-
-    case "capabilityNames": {
-      const path = `/${context.restPathNodes.join("/")}`;
-
-      updatePatch(
-        patch.instances,
-        (e) => e.name === instance.name,
-        (e) => {
-          const patch = e as ProjectPluginInstanceUpdatePatch;
-          const capabilityNames = applyPatch(
-            patch.capabilityNames ?? instance.capabilityNames,
-            [{
-              op,
-              path,
-              value,
-            }],
-          );
-          patch.capabilityNames = capabilityNames;
-        },
-      );
-
-      break;
-    }
-  }
-}
-
-function updatePatch<T>(
-  patches: Array<T>,
-  predicate: (value: T) => boolean,
-  updater: (value: T) => void,
-): void {
-  const elem = patches.find((e) => predicate(e));
-
-  if (undefined !== elem) {
-    updater(elem);
-  } else {
-    throw new Error("Patch not found");
   }
 }
 
@@ -405,31 +317,16 @@ function buildScopesPatch(
 export const builder = new BuilderNode({ name: "root" }).children([
   new BuilderNode({ name: "name" }).on(equal("name")).do(buildNamePatch),
   new BuilderNode({ name: "title" }).on(equal("title")).do(buildTitlePatch),
+
   new BuilderNode({ name: "capabilities" }).on(equal("capabilities")).children([
-    new BuilderNode({ name: "capabilities.item", alwaysRun: true }).on(isNumber)
-      .do(buildCapabilitiesPatch)
-      .children(
-        [
-          new BuilderNode({
-            name: "capabilities.item.payload",
-            alwaysRun: true,
-          }).on(
-            equal("payload"),
-          ).do(
-            buildCapabilityPatch,
-          ),
-        ],
-      ),
+    new BuilderNode({ name: "capabilitie", alwaysRun: true }).do(
+      buildCapabilitysPatch,
+    ),
   ]),
   new BuilderNode({ name: "instances" }).on(equal("instances")).children([
-    new BuilderNode({ name: "instances.item", alwaysRun: true }).on(isNumber)
-      .do(buildInstancesPatch)
-      .children([
-        new BuilderNode({ name: "instances.item.attributes", alwaysRun: true })
-          .on(
-            equalAny(["description", "config", "capabilityNames"]),
-          ).do(buildInstancePatch),
-      ]),
+    new BuilderNode({ name: "instance", alwaysRun: true }).do(
+      buildInstancesPatch,
+    ),
   ]),
   new BuilderNode({ name: "imports", alwaysRun: true }).on(equal("imports")).do(
     buildImportsPatch,

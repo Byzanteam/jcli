@@ -19,6 +19,17 @@ import projectJSONSchema from "@schemas/project-file.v1.json" with {
   type: "json",
 };
 
+export type ProjectJsonWithObject =
+  & Omit<Project, "id" | "instances" | "capabilities">
+  & {
+    capabilities: {
+      [key: string]: ProjectCapability;
+    };
+    instances: {
+      [key: string]: ProjectPluginInstance;
+    };
+  };
+
 export function projectDotJSONPath(projectName?: string): string {
   if (undefined === projectName) {
     return "./project.json";
@@ -61,10 +72,29 @@ export class ProjectDotJSON {
   }
 
   diff(other: ProjectDotJSON): ProjectPatch {
-    const selfJSON = this.toJSON();
-    const result = diff(selfJSON, other.toJSON());
-    return buildPatch(result, selfJSON);
+    const result = diff(
+      buildProjectJsonWithObjects(this.toJSON()),
+      buildProjectJsonWithObjects(other.toJSON()),
+    );
+
+    return buildPatch(result, this.toJSON());
   }
+}
+
+export function buildProjectJsonWithObjects(
+  project: ProjectJSON,
+): ProjectJsonWithObject {
+  const convertArrayToObject = <T extends { name: string }>(array: T[]) =>
+    array.reduce((acc, item) => {
+      acc[item.name] = item;
+      return acc;
+    }, {} as { [key: string]: T });
+
+  return {
+    ...project,
+    capabilities: convertArrayToObject(project.capabilities),
+    instances: convertArrayToObject(project.instances),
+  };
 }
 
 function buildPatch(
