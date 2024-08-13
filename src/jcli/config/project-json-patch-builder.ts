@@ -1,15 +1,8 @@
-import { apply_patch as applyPatch } from "jsonpatch";
+import { Project } from "@/jet/project.ts";
 
 import {
-  Project,
-  ProjectCapability,
-  ProjectPluginInstance,
-} from "@/jet/project.ts";
-
-import {
-  ProjectCapabilityUpdatePatch,
+  ProjectJsonForDiff,
   ProjectPatch,
-  ProjectPluginInstanceUpdatePatch,
 } from "@/jcli/config/project-json.ts";
 
 import { diffApply } from "just-diff-apply";
@@ -29,7 +22,7 @@ export type ProjectJSON = Omit<Project, "id">;
 type BuilderNodeFilter = (pathNode: PathNode) => boolean;
 
 interface BuilderContext {
-  dataWas: ProjectJSON;
+  dataWas: ProjectJsonForDiff;
   currentPathNode: PathNode;
   assigns: Map<string, unknown>;
   restPathNodes: ReadonlyArray<PathNode>;
@@ -89,7 +82,7 @@ class BuilderNode {
   run(
     diffPatch: DiffPatch,
     patch: ProjectPatch,
-    dataWas: ProjectJSON,
+    dataWas: ProjectJsonForDiff,
     currentPathNode: PathNode = "",
     assigns: Map<string, unknown> = new Map(),
   ) {
@@ -137,14 +130,6 @@ function equal(value: PathNode): BuilderNodeFilter {
   return (pathNode) => pathNode === value;
 }
 
-function equalAny(value: ReadonlyArray<PathNode>): BuilderNodeFilter {
-  return (pathNode) => value.includes(pathNode);
-}
-
-function isNumber(value: PathNode): value is number {
-  return typeof value === "number";
-}
-
 function buildNamePatch(
   _op: DiffPatchOp,
   value: unknown,
@@ -162,217 +147,99 @@ function buildTitlePatch(
   patch.title = value as string;
 }
 
-function buildCapabilitiesPatch(
+function buildObjectLikePatch<P extends "capabilities" | "instances">(
+  property: P,
   op: DiffPatchOp,
   value: unknown,
   patch: ProjectPatch,
   context: BuilderContext,
 ): void {
-  if (0 === context.restPathNodes.length) {
-    doBuildCapabilityPatch(op, value, patch, context);
-  } else {
-    const { dataWas: { capabilities }, currentPathNode, assigns } = context;
-    const capability = capabilities[currentPathNode as number];
+  type Item = ProjectPatch[P][number];
+  const container = patch[property] as Array<Item>;
 
-    if (patch.capabilities.every((e) => e.name !== capability.name)) {
-      patch.capabilities.push({
-        action: "update",
-        name: capability.name,
-        payload: capability.payload,
-      });
+  function getCurrent(defaultValue: () => Item): Item;
+  function getCurrent(): Item | undefined;
+  function getCurrent(defaultValue?: () => Item): Item | undefined {
+    let current = container.find((item) =>
+      item.name === currentPathNode as string
+    );
+
+    if (!current) {
+      if (!defaultValue) {
+        return;
+      }
+
+      current = defaultValue();
+      container.push(current);
     }
 
-    assigns.set("capability", capability);
+    return current;
   }
-}
 
-function doBuildCapabilityPatch(
-  op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-  context: BuilderContext,
-): void {
-  switch (op) {
-    case "add": {
-      const { name, payload } = value as ProjectCapability;
-      patch.capabilities.push({ action: "create", name, payload });
-      break;
-    }
+  const { currentPathNode, restPathNodes } = context;
 
-    case "remove": {
-      const { dataWas: { capabilities }, currentPathNode } = context;
-      patch.capabilities.push({
-        action: "delete",
-        name: capabilities[currentPathNode as number].name,
-      });
-    }
-  }
-}
+  if (restPathNodes.length === 0) {
+    // the op is on a capability or instance
 
-function buildCapabilityPatch(
-  op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-  context: BuilderContext,
-): void {
-  const capability = context.assigns.get("capability") as ProjectCapability;
+    switch (op) {
+      case "add": {
+        if (getCurrent()) {
+          throw new Error(`Duplicate ${currentPathNode} in ${property}`);
+        }
 
-  switch (context.currentPathNode) {
-    case "payload": {
-      const path = `/${context.restPathNodes.join("/")}`;
-      updatePatch(
-        patch.capabilities,
-        (e) => e.name === capability.name,
-        (e) => {
-          const patch = e as ProjectCapabilityUpdatePatch;
-          const payload = applyPatch(
-            patch.payload ?? capability.payload,
-            [{
-              op,
-              path,
-              value,
-            }],
-          );
-          patch.payload = payload;
-        },
-      );
-      break;
-    }
+        type Value = Omit<Item, "action">;
+        const item = { action: "create" as const, ...value as Value } as Item;
 
-    default:
-      break;
-  }
-}
+        container.push(item);
 
-function buildInstancesPatch(
-  op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-  context: BuilderContext,
-): void {
-  if (0 === context.restPathNodes.length) {
-    doBuildInstancesPatch(op, value, patch, context);
-  } else {
-    const { dataWas: { instances }, currentPathNode, assigns } = context;
-    const instance = instances[currentPathNode as number];
+        break;
+      }
 
-    if (patch.instances.every((e) => e.name !== instance.name)) {
-      patch.instances.push({ action: "update", name: instance.name });
-    }
+      case "replace": {
+        const current = getCurrent(() => ({
+          action: "update",
+          ...(structuredClone(
+            context.dataWas[property][currentPathNode as string],
+          )),
+        }));
 
-    assigns.set("instance", instance);
-  }
-}
-
-function doBuildInstancesPatch(
-  op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-  context: BuilderContext,
-): void {
-  switch (op) {
-    case "add": {
-      const { pluginName, name, description, config, capabilityNames } =
-        value as ProjectPluginInstance;
-
-      patch.instances.push({
-        action: "create",
-        pluginName,
-        name,
-        description,
-        config,
-        capabilityNames,
-      });
-
-      break;
-    }
-
-    case "remove": {
-      const { dataWas: { instances }, currentPathNode } = context;
-      patch.instances.push({
-        action: "delete",
-        name: instances[currentPathNode as number].name,
-      });
-    }
-  }
-}
-
-function buildInstancePatch(
-  op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-  context: BuilderContext,
-): void {
-  const instance = context.assigns.get("instance") as ProjectPluginInstance;
-
-  switch (context.currentPathNode) {
-    case "description": {
-      updatePatch(
-        patch.instances,
-        (e) => e.name === instance.name,
-        (p) =>
-          (p as ProjectPluginInstanceUpdatePatch).description = value as string,
-      );
-
-      break;
-    }
-
-    case "config": {
-      const path = `/${context.restPathNodes.join("/")}`;
-
-      updatePatch(
-        patch.instances,
-        (e) => e.name === instance.name,
-        (e) => {
-          const patch = e as ProjectPluginInstanceUpdatePatch;
-          const config = applyPatch(patch.config ?? instance.config, [{
+        diffApply(current, [
+          {
             op,
-            path,
+            path: [...restPathNodes],
             value,
-          }]);
-          patch.config = config;
-        },
-      );
+          },
+        ]);
 
-      break;
+        break;
+      }
+
+      case "remove": {
+        container.push({
+          action: "delete",
+          name: currentPathNode as string,
+        });
+
+        break;
+      }
     }
-
-    case "capabilityNames": {
-      const path = `/${context.restPathNodes.join("/")}`;
-
-      updatePatch(
-        patch.instances,
-        (e) => e.name === instance.name,
-        (e) => {
-          const patch = e as ProjectPluginInstanceUpdatePatch;
-          const capabilityNames = applyPatch(
-            patch.capabilityNames ?? instance.capabilityNames,
-            [{
-              op,
-              path,
-              value,
-            }],
-          );
-          patch.capabilityNames = capabilityNames;
-        },
-      );
-
-      break;
-    }
-  }
-}
-
-function updatePatch<T>(
-  patches: Array<T>,
-  predicate: (value: T) => boolean,
-  updater: (value: T) => void,
-): void {
-  const elem = patches.find((e) => predicate(e));
-
-  if (undefined !== elem) {
-    updater(elem);
   } else {
-    throw new Error("Patch not found");
+    // the op is on a property of a capability or instance
+
+    const current = getCurrent(() => ({
+      action: "update",
+      ...(structuredClone(
+        context.dataWas[property][currentPathNode as string],
+      )),
+    }));
+
+    diffApply(current, [
+      {
+        op,
+        path: [...restPathNodes],
+        value,
+      },
+    ]);
   }
 }
 
@@ -405,31 +272,16 @@ function buildScopesPatch(
 export const builder = new BuilderNode({ name: "root" }).children([
   new BuilderNode({ name: "name" }).on(equal("name")).do(buildNamePatch),
   new BuilderNode({ name: "title" }).on(equal("title")).do(buildTitlePatch),
+
   new BuilderNode({ name: "capabilities" }).on(equal("capabilities")).children([
-    new BuilderNode({ name: "capabilities.item", alwaysRun: true }).on(isNumber)
-      .do(buildCapabilitiesPatch)
-      .children(
-        [
-          new BuilderNode({
-            name: "capabilities.item.payload",
-            alwaysRun: true,
-          }).on(
-            equal("payload"),
-          ).do(
-            buildCapabilityPatch,
-          ),
-        ],
-      ),
+    new BuilderNode({ name: "capabilitie", alwaysRun: true }).do(
+      buildObjectLikePatch.bind(null, "capabilities"),
+    ),
   ]),
   new BuilderNode({ name: "instances" }).on(equal("instances")).children([
-    new BuilderNode({ name: "instances.item", alwaysRun: true }).on(isNumber)
-      .do(buildInstancesPatch)
-      .children([
-        new BuilderNode({ name: "instances.item.attributes", alwaysRun: true })
-          .on(
-            equalAny(["description", "config", "capabilityNames"]),
-          ).do(buildInstancePatch),
-      ]),
+    new BuilderNode({ name: "instance", alwaysRun: true }).do(
+      buildObjectLikePatch.bind(null, "instances"),
+    ),
   ]),
   new BuilderNode({ name: "imports", alwaysRun: true }).on(equal("imports")).do(
     buildImportsPatch,
