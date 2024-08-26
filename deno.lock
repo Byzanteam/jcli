@@ -55,7 +55,10 @@
         ]
       },
       "@cliffy/flags@1.0.0-rc.4": {
-        "integrity": "29f370ade4ddf6e150a4d25fc44661234c19870ffcf7fb07cd100f1843fcd6e1"
+        "integrity": "29f370ade4ddf6e150a4d25fc44661234c19870ffcf7fb07cd100f1843fcd6e1",
+        "dependencies": [
+          "jsr:@std/text@0.221"
+        ]
       },
       "@cliffy/table@1.0.0-rc.4": {
         "integrity": "990e4e0b3910e6c9cf7a5b4318b8f5e121cf681494c94fd113febb9b4d4c0741",
@@ -132,6 +135,7 @@
       "@std/io@0.214.0": {
         "integrity": "81563289d48830f966a5c607841fb5b7048874e0368f873d6148776de0a1e890",
         "dependencies": [
+          "jsr:@std/assert@^0.214.0",
           "jsr:@std/bytes@^0.214.0"
         ]
       },
@@ -145,7 +149,10 @@
         ]
       },
       "@std/path@0.221.0": {
-        "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095"
+        "integrity": "0a36f6b17314ef653a3a1649740cc8db51b25a133ecfe838f20b79a56ebe0095",
+        "dependencies": [
+          "jsr:@std/assert@^0.221.0"
+        ]
       },
       "@std/semver@0.221.0": {
         "integrity": "836a446cd1d054d08c7498c243199ddf0b604740d72dec56df96e2833413f039"

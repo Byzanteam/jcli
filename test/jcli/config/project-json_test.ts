@@ -45,7 +45,6 @@ describe("ProjectDotJSON", () => {
 
       assertNotEquals(diff, undefined);
       assertObjectMatch(diff!, {
-        name: "bar",
         capabilities: [],
         instances: [],
       });

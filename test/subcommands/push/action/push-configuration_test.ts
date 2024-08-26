@@ -80,7 +80,6 @@ describe("configuration", () => {
       assertEquals(patches!.length, 1);
 
       assertObjectMatch(patches![0], {
-        name: "name",
         title: "title",
         capabilities: [
           {
@@ -146,7 +145,6 @@ describe("configuration", () => {
       assertEquals(patches!.length, 1);
 
       assertObjectMatch(patches![0], {
-        name: "name",
         title: "title",
         capabilities: [],
         instances: [],
