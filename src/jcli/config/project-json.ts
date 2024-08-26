@@ -174,7 +174,6 @@ export type ProjectPluginInstancePatch =
   | ProjectPluginInstanceDeletePatch;
 
 export interface ProjectPatch {
-  name?: string;
   title?: string;
   capabilities: Array<ProjectCapabilityPatch>;
   instances: Array<ProjectPluginInstancePatch>;

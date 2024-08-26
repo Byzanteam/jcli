@@ -1,4 +1,5 @@
-import { Command, CompletionsCommand } from "@cliffy/command";
+import { Command } from "@cliffy/command";
+import { CompletionsCommand } from "@cliffy/command/completions";
 
 import denoJson from "./deno.json" with { type: "json" };
 

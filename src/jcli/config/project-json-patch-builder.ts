@@ -130,14 +130,7 @@ function equal(value: PathNode): BuilderNodeFilter {
   return (pathNode) => pathNode === value;
 }
 
-function buildNamePatch(
-  _op: DiffPatchOp,
-  value: unknown,
-  patch: ProjectPatch,
-): void {
-  /* op must be "replace" */
-  patch.name = value as string;
-}
+function skip(_op: DiffPatchOp, _value: unknown, _patch: ProjectPatch): void {}
 
 function buildTitlePatch(
   _op: DiffPatchOp,
@@ -270,7 +263,7 @@ function buildScopesPatch(
 }
 
 export const builder = new BuilderNode({ name: "root" }).children([
-  new BuilderNode({ name: "name" }).on(equal("name")).do(buildNamePatch),
+  new BuilderNode({ name: "name" }).on(equal("name")).do(skip),
   new BuilderNode({ name: "title" }).on(equal("title")).do(buildTitlePatch),
 
   new BuilderNode({ name: "capabilities" }).on(equal("capabilities")).children([
