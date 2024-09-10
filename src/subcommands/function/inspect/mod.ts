@@ -6,7 +6,7 @@ import action from "./action.ts";
 
 const command = new Command<InspectOptions>()
   .description("Inspect given function")
-  .arguments("<functionName:string>")
+  .arguments("[functionName:string]")
   .option("--prod", "Print production logs")
   .error(errorHandler)
   .action(action);
