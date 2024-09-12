@@ -12,6 +12,8 @@ import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import createProject from "@/subcommands/admin/projects/create/action.ts";
 import action from "@/subcommands/function/inspect/action.ts";
+import pushFunctionaction from "@/subcommands/push/action.ts";
+import { colors } from "@cliffy/ansi";
 
 describe("inspect", () => {
   let api: APIClientTest;
@@ -26,6 +28,11 @@ describe("inspect", () => {
     projectId = api.jet.getProject({ projectName: "my_proj" })!.id;
 
     api.chdir("my_proj");
+
+    await api.fs.mkdir("functions/main");
+    await api.fs.mkdir("functions/api");
+    await api.fs.mkdir("functions/_core");
+    await pushFunctionaction({ onlyFunctions: true });
   });
 
   afterEach(() => {
@@ -45,7 +52,9 @@ describe("inspect", () => {
     assertEquals(api.console.logs.length, 1);
     assertEquals(
       api.console.logs[0],
-      "Environment         DEVELOPMENT           \nFunction Name       main                  \nDeployment State    RUNNING               \nDeployment Endpoint https://breeze.rt/main",
+      `Environment         DEVELOPMENT           \nFunction Name       main                  \nDeployment State    ${
+        colors.green("RUNNING")
+      }               \nDeployment Endpoint https://breeze.rt/main`,
     );
 
     api.jet.setDeployment(projectId, "PRODUCTION", "main", {
@@ -57,7 +66,35 @@ describe("inspect", () => {
     assertEquals(api.console.logs.length, 2);
     assertEquals(
       api.console.logs[1],
-      "Environment         PRODUCTION\nFunction Name       main      \nDeployment State    BOOTING   \nDeployment Endpoint N/A       ",
+      `Environment         PRODUCTION\nFunction Name       main      \nDeployment State    ${
+        colors.cyan("BOOTING")
+      }   \nDeployment Endpoint N/A       `,
+    );
+  });
+
+  it("print function inspection all", async () => {
+    api.console.configure({ capture: true });
+
+    api.jet.setDeployment(projectId, "DEVELOPMENT", "main", {
+      state: "RUNNING",
+      endpoint: "https://breeze.rt/main",
+    });
+
+    api.jet.setDeployment(projectId, "DEVELOPMENT", "api", {
+      state: "BOOTING",
+    });
+
+    await action({});
+
+    assertEquals(api.console.logs.length, 1);
+
+    assertEquals(
+      api.console.logs[0],
+      `Environment         DEVELOPMENT\nFunction Name       api        \nDeployment State    ${
+        colors.cyan("BOOTING")
+      }    \nDeployment Endpoint N/A        \n\nEnvironment         DEVELOPMENT           \nFunction Name       main                  \nDeployment State    ${
+        colors.green("RUNNING")
+      }               \nDeployment Endpoint https://breeze.rt/main`,
     );
   });
 });
