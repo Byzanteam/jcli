@@ -1,4 +1,4 @@
-import { Project } from "@/jet/project.ts";
+import { Project, ProjectPluginInstance } from "@/jet/project.ts";
 
 import {
   ProjectJsonForDiff,
@@ -218,12 +218,23 @@ function buildObjectLikePatch<P extends "capabilities" | "instances">(
     }
   } else {
     // the op is on a property of a capability or instance
+    const getNewObj = () => {
+      const clonedObj = structuredClone(
+        context.dataWas[property][currentPathNode as string],
+      );
+
+      if (property === "instances") {
+        // deno-lint-ignore no-unused-vars
+        const { pluginName, ...newObj } = clonedObj as ProjectPluginInstance;
+        return newObj;
+      }
+
+      return clonedObj;
+    };
 
     const current = getCurrent(() => ({
       action: "update",
-      ...(structuredClone(
-        context.dataWas[property][currentPathNode as string],
-      )),
+      ...getNewObj(),
     }));
 
     diffApply(current, [
