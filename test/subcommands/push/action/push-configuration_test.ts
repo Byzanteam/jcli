@@ -589,7 +589,6 @@ describe("configuration", () => {
               foo: "baz",
             },
             name: "pluginb",
-            pluginName: "pluginB",
           },
           {
             action: "create",
