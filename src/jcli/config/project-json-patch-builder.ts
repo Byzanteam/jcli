@@ -218,12 +218,22 @@ function buildObjectLikePatch<P extends "capabilities" | "instances">(
     }
   } else {
     // the op is on a property of a capability or instance
+    const getNewObj = () => {
+      const obj = structuredClone(
+        context.dataWas[property][currentPathNode as string],
+      );
+      if ("pluginName" in obj) {
+        // deno-lint-ignore no-unused-vars
+        const { pluginName, ...newObj } = obj;
+        return newObj;
+      } else {
+        return obj;
+      }
+    };
 
     const current = getCurrent(() => ({
       action: "update",
-      ...(structuredClone(
-        context.dataWas[property][currentPathNode as string],
-      )),
+      ...getNewObj(),
     }));
 
     diffApply(current, [
