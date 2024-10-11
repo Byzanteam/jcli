@@ -10,7 +10,7 @@ import { setupAPI } from "@/api/mod.ts";
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import createProject from "@/subcommands/admin/projects/create/action.ts";
-import action from "../../../../src/subcommands/function/generate/action.ts";
+import action from "@/subcommands/generate/functions/action.ts";
 
 describe("generate", () => {
   let api: APIClientTest;
