@@ -330,7 +330,7 @@ describe("ProjectDotJSON", () => {
         const updatedConfig = build({ imports: undefined });
         const resultDiff = initialConfig.diff(updatedConfig);
 
-        assertEquals(resultDiff.imports, undefined);
+        assertEquals(resultDiff.imports, null);
         assertEquals(initialConfig.toJSON().imports, {
           "#functions": "./functions",
         });
@@ -509,7 +509,7 @@ describe("ProjectDotJSON", () => {
         const undefinedScopeConfig = build({ scopes: undefined });
         const resultDiff = definedScopeConfig.diff(undefinedScopeConfig);
 
-        assertEquals(resultDiff.scopes, undefined);
+        assertEquals(resultDiff.scopes, null);
         assertEquals(definedScopeConfig.toJSON().scopes, {
           "https://deno.land/x/example/": {
             "@std/foo": "./patched/mod.ts",

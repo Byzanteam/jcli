@@ -245,7 +245,11 @@ function buildImportsPatch(
   if (!patch.imports) patch.imports = { ...context.dataWas.imports };
 
   diffApply(patch, [
-    { op, path: ["imports", ...context.restPathNodes] as string[], value },
+    {
+      op,
+      path: ["imports", ...context.restPathNodes] as string[],
+      value: value === undefined ? null : value,
+    },
   ]);
 }
 
@@ -258,7 +262,11 @@ function buildScopesPatch(
   if (!patch.scopes) patch.scopes = structuredClone(context.dataWas.scopes);
 
   diffApply(patch, [
-    { op, path: ["scopes", ...context.restPathNodes] as string[], value },
+    {
+      op,
+      path: ["scopes", ...context.restPathNodes] as string[],
+      value: value === undefined ? null : value,
+    },
   ]);
 }
 
