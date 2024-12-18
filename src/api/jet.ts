@@ -33,6 +33,7 @@ import { ProjectDotJSON, ProjectPatch } from "@/jcli/config/project-json.ts";
 import { JcliConfigDotJSON } from "@/jcli/config/jcli-config-json.ts";
 import { getLogger } from "@/jcli/logger.ts";
 import { Project } from "@/jet/project.ts";
+import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
 
 export interface CreateProjectArgs {
   name: string;
@@ -182,6 +183,7 @@ export interface JetProject {
     hash: string;
     content: string;
   }>;
+  workflows: AsyncIterable<WorkflowDraftWorkflow>;
 }
 
 export type DeploymentLogSeverity = "INFO" | "ERROR" | "DEBUG" | "WARN";

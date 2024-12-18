@@ -83,6 +83,8 @@ import {
 import {
   listDraftMigrationsQuery,
   ListDraftMigrationsQueryResponse,
+  listDraftWorkflowsQuery,
+  ListDraftWorkflowsQueryResponse,
   projectQuery,
   ProjectQueryResponse,
 } from "@/api/jet/queries/clone.ts";
@@ -142,6 +144,7 @@ export async function createProject(
     title,
     capabilities: [],
     instances: [],
+    runningWorkflows: {},
   };
 }
 
@@ -420,6 +423,7 @@ export async function cloneProject(
     configuration: ProjectDotJSON.fromJSON(draftConfiguration),
     functions: cloneProjectFunctions(projectNodeId, config),
     migrations: cloneProjectMigrations(projectNodeId, config),
+    workflows: cloneProjectWorkflows(projectNodeId, config),
   };
 }
 
@@ -435,48 +439,6 @@ export async function pluginUninstallInstance(
   args: PluginInstanceArgs,
 ) {
   await query(pluginUninstallInstanceMutation, args, config);
-}
-
-function cloneProjectMigrations(
-  projectNodeId: string,
-  config: JcliConfigDotJSON,
-) {
-  function queryListDraftMigrations(
-    { first, after }: { first: number; after?: string },
-  ) {
-    return query<ListDraftMigrationsQueryResponse>(
-      listDraftMigrationsQuery,
-      {
-        projectNodeId,
-        first,
-        after,
-      },
-      config,
-    );
-  }
-
-  function queryListDraftMigrationsCallback(
-    response: ListDraftMigrationsQueryResponse,
-  ) {
-    const { node: { draftMigrations: { pageInfo, nodes } } } = response;
-
-    return {
-      pageInfo,
-      records: nodes.map((n) => {
-        return {
-          version: n.version,
-          name: n.name,
-          hash: n.hash,
-          content: n.content,
-        };
-      }),
-    };
-  }
-
-  return connectionIterator(
-    queryListDraftMigrations,
-    queryListDraftMigrationsCallback,
-  );
 }
 
 function cloneProjectFunctions(
@@ -523,6 +485,80 @@ function cloneProjectFunctions(
   return connectionIterator(
     queryListDraftFunctions,
     queryListDraftFunctionsCallback,
+  );
+}
+
+function cloneProjectMigrations(
+  projectNodeId: string,
+  config: JcliConfigDotJSON,
+) {
+  function queryListDraftMigrations(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListDraftMigrationsQueryResponse>(
+      listDraftMigrationsQuery,
+      {
+        projectNodeId,
+        first,
+        after,
+      },
+      config,
+    );
+  }
+
+  function queryListDraftMigrationsCallback(
+    response: ListDraftMigrationsQueryResponse,
+  ) {
+    const { node: { draftMigrations: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map((n) => {
+        return {
+          version: n.version,
+          name: n.name,
+          hash: n.hash,
+          content: n.content,
+        };
+      }),
+    };
+  }
+
+  return connectionIterator(
+    queryListDraftMigrations,
+    queryListDraftMigrationsCallback,
+  );
+}
+
+function cloneProjectWorkflows(
+  projectNodeId: string,
+  config: JcliConfigDotJSON,
+) {
+  function queryListDraftWorkflows(
+    { first, after }: { first: number; after?: string },
+  ) {
+    return query<ListDraftWorkflowsQueryResponse>(listDraftWorkflowsQuery, {
+      projectNodeId,
+      after,
+      first,
+    }, config);
+  }
+
+  function queryListDraftWorkflowsCallback(
+    response: ListDraftWorkflowsQueryResponse,
+  ) {
+    const { node: { draftWorkflows: { pageInfo, nodes } } } = response;
+
+    return {
+      pageInfo,
+      records: nodes.map(({ data, ...rest }) => {
+        return { data: JSON.parse(data), ...rest };
+      }),
+    };
+  }
+  return connectionIterator(
+    queryListDraftWorkflows,
+    queryListDraftWorkflowsCallback,
   );
 }
 

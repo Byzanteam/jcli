@@ -1,4 +1,57 @@
-const projectQuery = `
+interface PageInfo {
+  endCursor: string;
+  hasNextPage: boolean;
+}
+
+export interface ProjectQueryResponse {
+  node: {
+    name: string;
+    draftConfiguration: string;
+  };
+}
+
+export interface ListDraftFunctionsQueryResponse {
+  node: {
+    draftFunctions: {
+      pageInfo: PageInfo;
+      nodes: ReadonlyArray<{
+        name: string;
+        files: ReadonlyArray<{
+          path: string;
+          hash: string;
+          settings: {
+            code: string;
+          };
+        }>;
+      }>;
+    };
+  };
+}
+
+export interface ListDraftMigrationsQueryResponse {
+  node: {
+    draftMigrations: {
+      pageInfo: PageInfo;
+      nodes: ReadonlyArray<{
+        version: number;
+        name: string;
+        hash: string;
+        content: string;
+      }>;
+    };
+  };
+}
+
+export interface ListDraftWorkflowsQueryResponse {
+  node: {
+    draftWorkflows: {
+      pageInfo: PageInfo;
+      nodes: ReadonlyArray<{ name: string; data: string; hash: string }>;
+    };
+  };
+}
+
+export const projectQuery = `
 query Project(
   $projectNodeId: ID!
 ) {
@@ -11,35 +64,7 @@ query Project(
 }
 `;
 
-const listDraftMigrationsQuery = `
-  query ListDraftMigrations(
-    $projectNodeId: ID!
-    $first: Int!
-    $after: String
-  ) {
-    node(nodeId: $projectNodeId) {
-      ... on ProjectsProject {
-        draftMigrations(first: $first, after: $after) {
-          pageInfo {
-            endCursor
-            hasNextPage
-          }
-
-          nodes {
-            ... on DatabaseDraftMigration {
-              version
-              name
-              hash
-              content
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const listDraftFunctionsQuery = `
+export const listDraftFunctionsQuery = `
   query ListDraftFunctions(
     $projectNodeId: ID!
     $first: Int!
@@ -71,54 +96,58 @@ const listDraftFunctionsQuery = `
   }
 `;
 
-interface ProjectQueryResponse {
-  node: {
-    name: string;
-    draftConfiguration: string;
-  };
-}
+export const listDraftMigrationsQuery = `
+  query ListDraftMigrations(
+    $projectNodeId: ID!
+    $first: Int!
+    $after: String
+  ) {
+    node(nodeId: $projectNodeId) {
+      ... on ProjectsProject {
+        draftMigrations(first: $first, after: $after) {
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
 
-interface ListDraftMigrationsQueryResponse {
-  node: {
-    draftMigrations: {
-      pageInfo: {
-        endCursor: string;
-        hasNextPage: boolean;
-      };
-      nodes: ReadonlyArray<{
-        version: number;
-        name: string;
-        hash: string;
-        content: string;
-      }>;
-    };
-  };
-}
+          nodes {
+            ... on DatabaseDraftMigration {
+              version
+              name
+              hash
+              content
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
-interface ListDraftFunctionsQueryResponse {
-  node: {
-    draftFunctions: {
-      pageInfo: {
-        endCursor: string;
-        hasNextPage: boolean;
-      };
-      nodes: ReadonlyArray<{
-        name: string;
-        files: ReadonlyArray<{
-          path: string;
-          hash: string;
-          settings: {
-            code: string;
-          };
-        }>;
-      }>;
-    };
-  };
-}
+// TODO: align API implementation
+export const listDraftWorkflowsQuery = `
+  query ListDraftWorkflows(
+    $projectNodeId: ID!
+    $first: Int!
+    $after: String
+  ) {
+    node(nodeId: $projectNodeId) {
+      ... on ProjectsProject {
+        draftWorkflows(first: $first, after: $after) {
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
 
-export { listDraftFunctionsQuery, listDraftMigrationsQuery, projectQuery };
-export type {
-  ListDraftFunctionsQueryResponse,
-  ListDraftMigrationsQueryResponse,
-  ProjectQueryResponse,
-};
+          nodes {
+            ... on WorkflowsDraftWorkflow {
+              name
+              data
+              hash
+            }
+          }
+        }
+      }
+    }
+  }
+`;

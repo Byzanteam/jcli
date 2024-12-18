@@ -281,10 +281,28 @@ function buildScopesPatch(
   ]);
 }
 
+function buildRunningWorkflowsPatch(
+  op: DiffPatchOp,
+  value: unknown,
+  patch: ProjectPatch,
+  context: BuilderContext,
+): void {
+  const { dataWas, currentPathNode, restPathNodes } = context;
+
+  if (!patch.runningWorkflows) {
+    patch.runningWorkflows = structuredClone(dataWas.runningWorkflows);
+  }
+
+  diffApply(patch, [{
+    op,
+    path: [currentPathNode, ...restPathNodes],
+    value: value,
+  }]);
+}
+
 export const builder = new BuilderNode({ name: "root" }).children([
   new BuilderNode({ name: "name" }).on(equal("name")).do(skip),
   new BuilderNode({ name: "title" }).on(equal("title")).do(buildTitlePatch),
-
   new BuilderNode({ name: "capabilities" }).on(equal("capabilities")).children([
     new BuilderNode({ name: "capabilitie", alwaysRun: true }).do(
       buildObjectLikePatch.bind(null, "capabilities"),
@@ -295,10 +313,13 @@ export const builder = new BuilderNode({ name: "root" }).children([
       buildObjectLikePatch.bind(null, "instances"),
     ),
   ]),
-  new BuilderNode({ name: "imports", alwaysRun: true }).on(equal("imports")).do(
-    buildImportsPatch,
-  ),
-  new BuilderNode({ name: "scopes", alwaysRun: true }).on(equal("scopes")).do(
-    buildScopesPatch,
-  ),
+  new BuilderNode({ name: "imports", alwaysRun: true })
+    .on(equal("imports"))
+    .do(buildImportsPatch),
+  new BuilderNode({ name: "scopes", alwaysRun: true })
+    .on(equal("scopes"))
+    .do(buildScopesPatch),
+  new BuilderNode({ name: "runningWorkflows", alwaysRun: true })
+    .on(equal("runningWorkflows"))
+    .do(buildRunningWorkflowsPatch),
 ]);
