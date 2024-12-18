@@ -64,6 +64,9 @@ describe("link", () => {
     await writeFuncFile("users/mod.ts", "mod");
     await writeFuncFile("posts/entry.ts", "entry");
 
+    // TODO: write workflows after workflows pushing is implemented
+    await api.fs.mkdir("workflows");
+
     await push({});
 
     api.fs.mkdir(".tmp");
@@ -159,6 +162,7 @@ describe("link", () => {
       title: "my_proj",
       capabilities: [],
       instances: [],
+      runningWorkflows: {},
     });
 
     database.close();
@@ -231,6 +235,43 @@ describe("link", () => {
     assertEquals(fileEntries[1].hash, "posts/entry.ts");
     assertEquals(fileEntries[2].path, `${FUNC_PATH}/users/mod.ts`);
     assertEquals(fileEntries[2].hash, "users/mod.ts");
+
+    db.close();
+  });
+
+  it("clone workflows", async () => {
+    await action(options, projectId);
+
+    assert(api.db.hasDatabase(PROJECT_DB_PATH));
+
+    const db = await api.db.connect(PROJECT_DB_PATH);
+
+    const columns = db.queryEntries<
+      { name: string; type: string; notnull: number; pk: number }
+    >(
+      `SELECT name, type, "notnull", pk FROM pragma_table_info(:tableName)`,
+      { tableName: "workflows" },
+    );
+
+    assertEquals(columns.length, 2);
+    assertObjectMatch(columns[0], {
+      name: "name",
+      type: "TEXT",
+      pk: 1,
+      notnull: 0,
+    });
+    assertObjectMatch(columns[1], {
+      name: "hash",
+      type: "TEXT",
+      pk: 0,
+      notnull: 1,
+    });
+
+    const workflowEntries = db.queryEntries<{ name: string }>(
+      "SELECT name FROM workflows",
+    );
+
+    assertEquals(workflowEntries, []);
 
     db.close();
   });

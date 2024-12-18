@@ -6,6 +6,7 @@ import {
   ProjectCapabilityPayload,
   ProjectImports,
   ProjectPluginInstance,
+  ProjectRunningWorkflows,
   ProjectScopes,
 } from "@/jet/project.ts";
 
@@ -45,6 +46,7 @@ export class ProjectDotJSON {
   #instances: Array<ProjectPluginInstance>;
   #imports: ProjectImports | undefined;
   #scopes: ProjectScopes | undefined;
+  #runningWorkflows: ProjectRunningWorkflows;
 
   static fromJSON(data: string) {
     return new ProjectDotJSON(JSON.parse(data));
@@ -57,6 +59,7 @@ export class ProjectDotJSON {
     this.#instances = project.instances;
     this.#imports = project.imports;
     this.#scopes = project.scopes;
+    this.#runningWorkflows = project.runningWorkflows;
   }
 
   toJSON() {
@@ -68,6 +71,7 @@ export class ProjectDotJSON {
       instances: this.#instances,
       imports: this.#imports,
       scopes: this.#scopes,
+      runningWorkflows: this.#runningWorkflows,
     };
   }
 
@@ -179,4 +183,5 @@ export interface ProjectPatch {
   instances: Array<ProjectPluginInstancePatch>;
   imports?: ProjectImports;
   scopes?: ProjectScopes;
+  runningWorkflows?: ProjectRunningWorkflows;
 }

@@ -26,6 +26,14 @@ export interface ProjectScopes {
   [scopeName: string]: Record<string, string>;
 }
 
+type WorkflowName = string;
+type WorkflowVersion = number;
+
+export type ProjectRunningWorkflows = Record<
+  WorkflowName,
+  Array<WorkflowVersion>
+>;
+
 export interface Project {
   id: string;
   name: string;
@@ -34,4 +42,5 @@ export interface Project {
   instances: Array<ProjectPluginInstance>;
   imports?: ProjectImports;
   scopes?: ProjectScopes;
+  runningWorkflows: ProjectRunningWorkflows;
 }

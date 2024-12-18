@@ -1,9 +1,11 @@
 import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
+import { createConfigurationQuery } from "@/api/db/queries/create-configuration.ts";
+import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
 import { createMetadataQuery } from "@/api/db/queries/create-metadata.ts";
 import { createTableObjectsQuery } from "@/api/db/queries/create-table-objects.ts";
-import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
-import { createConfigurationQuery } from "@/api/db/queries/create-configuration.ts";
+import { createWorkflowsQuery } from "@/api/db/queries/create-workflows.ts";
 
+import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
 import { Config } from "@/jcli/config/config.ts";
 import {
   ProjectDotJSON,
@@ -23,15 +25,6 @@ abstract class BaseBuilder {
   abstract provisionFiles(): Promise<void>;
   abstract provisionDatabases(): void;
   abstract buildMetadata(projectId: string): Promise<void>;
-  abstract buildMigrations(
-    migrations: AsyncIterable<{
-      version: number;
-      name: string | null;
-      hash: string;
-      content: string;
-    }>,
-  ): Promise<void>;
-
   abstract buildFunctions(
     functions: AsyncIterable<{
       name: string;
@@ -41,6 +34,17 @@ abstract class BaseBuilder {
         code: string;
       }>;
     }>,
+  ): Promise<void>;
+  abstract buildMigrations(
+    migrations: AsyncIterable<{
+      version: number;
+      name: string | null;
+      hash: string;
+      content: string;
+    }>,
+  ): Promise<void>;
+  abstract buildWorkflows(
+    workflows: AsyncIterable<{ name: string; hash: string }>,
   ): Promise<void>;
 
   protected buildVersionString(version: number): string {
@@ -75,8 +79,9 @@ class DatabaseBuilder extends BaseBuilder {
     const db = api.db.createDatabase(`${this.directory}/${PROJECT_DB_PATH}`);
 
     db.execute(createMetadataQuery);
-    db.execute(createTableObjectsQuery);
     db.execute(createFunctionsQuery);
+    db.execute(createWorkflowsQuery);
+    db.execute(createTableObjectsQuery);
     db.execute(createConfigurationQuery);
 
     db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {
@@ -93,38 +98,6 @@ class DatabaseBuilder extends BaseBuilder {
       projectId,
     });
 
-    db.close();
-  }
-
-  async buildMigrations(
-    migrations: AsyncIterable<{
-      version: number;
-      name: string | null;
-      hash: string;
-      content: string;
-    }>,
-  ) {
-    const db = await this.connectDB();
-
-    const createMigrationQuery = db.prepareQuery<
-      never,
-      never,
-      { path: string; hash: string }
-    >(
-      "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
-    );
-
-    for await (const { version, name, hash } of migrations) {
-      const versionStr = this.buildVersionString(version);
-
-      const path = name
-        ? join("migrations", `${versionStr}_${name}.sql`)
-        : join("migrations", `${versionStr}.sql`);
-
-      createMigrationQuery.execute({ path, hash });
-    }
-
-    createMigrationQuery.finalize();
     db.close();
   }
 
@@ -173,6 +146,54 @@ class DatabaseBuilder extends BaseBuilder {
     createFunctionFileQuery.finalize();
     db.close();
   }
+
+  async buildMigrations(
+    migrations: AsyncIterable<{
+      version: number;
+      name: string | null;
+      hash: string;
+      content: string;
+    }>,
+  ) {
+    const db = await this.connectDB();
+
+    const createMigrationQuery = db.prepareQuery<
+      never,
+      never,
+      { path: string; hash: string }
+    >(
+      "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
+    );
+
+    for await (const { version, name, hash } of migrations) {
+      const versionStr = this.buildVersionString(version);
+
+      const path = name
+        ? join("migrations", `${versionStr}_${name}.sql`)
+        : join("migrations", `${versionStr}.sql`);
+
+      createMigrationQuery.execute({ path, hash });
+    }
+
+    createMigrationQuery.finalize();
+    db.close();
+  }
+
+  async buildWorkflows(
+    workflows: AsyncIterable<{ name: string; hash: string }>,
+  ): Promise<void> {
+    const db = await this.connectDB();
+    const createWorkflowQuery = db.prepareQuery<
+      never,
+      never,
+      { name: string; hash: string }
+    >("INSERT INTO workflows (name, hash) VALUES (:name, :hash)");
+    for await (const workflow of workflows) {
+      createWorkflowQuery.execute(workflow);
+    }
+    createWorkflowQuery.finalize();
+    db.close();
+  }
 }
 
 class FileBuilder extends BaseBuilder {
@@ -217,42 +238,6 @@ class FileBuilder extends BaseBuilder {
       projectId,
     });
 
-    db.close();
-  }
-
-  async buildMigrations(
-    migrations: AsyncIterable<{
-      version: number;
-      name: string | null;
-      hash: string;
-      content: string;
-    }>,
-  ) {
-    const db = await this.connectDB();
-
-    const createMigrationQuery = db.prepareQuery<
-      never,
-      never,
-      { path: string; hash: string }
-    >(
-      "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
-    );
-
-    for await (const { version, name, hash, content } of migrations) {
-      const versionStr = this.buildVersionString(version);
-
-      const path = name
-        ? join("migrations", `${versionStr}_${name}.sql`)
-        : join("migrations", `${versionStr}.sql`);
-
-      await api.fs.writeTextFile(join(this.directory, path), content, {
-        createNew: true,
-      });
-
-      createMigrationQuery.execute({ path, hash });
-    }
-
-    createMigrationQuery.finalize();
     db.close();
   }
 
@@ -303,6 +288,66 @@ class FileBuilder extends BaseBuilder {
     createFunctionFileQuery.finalize();
     db.close();
   }
+
+  async buildMigrations(
+    migrations: AsyncIterable<{
+      version: number;
+      name: string | null;
+      hash: string;
+      content: string;
+    }>,
+  ) {
+    const db = await this.connectDB();
+
+    const createMigrationQuery = db.prepareQuery<
+      never,
+      never,
+      { path: string; hash: string }
+    >(
+      "INSERT INTO objects (path, hash, filetype) VALUES (:path, :hash, 'MIGRATION')",
+    );
+
+    for await (const { version, name, hash, content } of migrations) {
+      const versionStr = this.buildVersionString(version);
+
+      const path = name
+        ? join("migrations", `${versionStr}_${name}.sql`)
+        : join("migrations", `${versionStr}.sql`);
+
+      await api.fs.writeTextFile(join(this.directory, path), content, {
+        createNew: true,
+      });
+
+      createMigrationQuery.execute({ path, hash });
+    }
+
+    createMigrationQuery.finalize();
+    db.close();
+  }
+
+  async buildWorkflows(
+    workflows: AsyncIterable<WorkflowDraftWorkflow>,
+  ): Promise<void> {
+    const db = await this.connectDB();
+    const createWorkflowQuery = db.prepareQuery<
+      never,
+      never,
+      { name: string; hash: string }
+    >(
+      "INSERT INTO workflows (name, hash) VALUES (:name, :hash)",
+    );
+
+    for await (const { name, data, hash } of workflows) {
+      const path = join(this.directory, "workflows", `${name}.json`);
+      const definition = JSON.stringify({ name, ...data }, null, 2);
+      await api.fs.writeTextFile(path, definition, { createNew: true });
+
+      createWorkflowQuery.execute({ name, hash });
+    }
+
+    createWorkflowQuery.finalize();
+    db.close();
+  }
 }
 
 class ProjectBuilder {
@@ -330,17 +375,6 @@ class ProjectBuilder {
     await this.builder.buildMetadata(projectId);
   }
 
-  async buildMigrations(
-    migrations: AsyncIterable<{
-      version: number;
-      name: string | null;
-      hash: string;
-      content: string;
-    }>,
-  ): Promise<void> {
-    await this.builder.buildMigrations(migrations);
-  }
-
   async buildFunctions(
     functions: AsyncIterable<{
       name: string;
@@ -352,6 +386,23 @@ class ProjectBuilder {
     }>,
   ): Promise<void> {
     await this.builder.buildFunctions(functions);
+  }
+
+  async buildMigrations(
+    migrations: AsyncIterable<{
+      version: number;
+      name: string | null;
+      hash: string;
+      content: string;
+    }>,
+  ): Promise<void> {
+    await this.builder.buildMigrations(migrations);
+  }
+
+  async buildWorkflows(
+    workflows: AsyncIterable<{ name: string; hash: string }>,
+  ): Promise<void> {
+    await this.builder.buildWorkflows(workflows);
   }
 }
 

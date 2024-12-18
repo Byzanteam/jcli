@@ -1,5 +1,7 @@
 import {
+  assert,
   assertEquals,
+  assertFalse,
   assertNotEquals,
   assertObjectMatch,
   describe,
@@ -10,6 +12,7 @@ import {
   ProjectCapability,
   ProjectImports,
   ProjectPluginInstance,
+  ProjectRunningWorkflows,
   ProjectScopes,
 } from "@/jet/project.ts";
 
@@ -26,6 +29,7 @@ describe("ProjectDotJSON", () => {
       instances?: Array<ProjectPluginInstance>;
       imports?: ProjectImports;
       scopes?: ProjectScopes;
+      runningWorkflows?: ProjectRunningWorkflows;
     } = {}) => {
       return new ProjectDotJSON({
         id,
@@ -35,6 +39,7 @@ describe("ProjectDotJSON", () => {
         instances: args.instances ?? [],
         imports: args.imports,
         scopes: args.scopes,
+        runningWorkflows: args.runningWorkflows ?? {},
       });
     };
 
@@ -605,6 +610,83 @@ describe("ProjectDotJSON", () => {
             "@std/foo": "v3",
           },
         });
+      });
+    });
+
+    describe("diff running workflows", () => {
+      it("does not change", () => {
+        const one = build({ runningWorkflows: { foo: [1] } });
+        const another = build({ runningWorkflows: { foo: [1] } });
+        const diff = one.diff(another);
+
+        assertFalse(Object.hasOwn(diff, "runningWorkflows"));
+      });
+
+      it("add workflow", () => {
+        const one = build({ runningWorkflows: { foo: [1] } });
+        const another = build({ runningWorkflows: { foo: [1], bar: [1] } });
+        const diff = one.diff(another);
+
+        assert(Object.hasOwn(diff, "runningWorkflows"));
+        assertEquals(diff.runningWorkflows, { foo: [1], bar: [1] });
+      });
+
+      it("remove workflow", () => {
+        const one = build({
+          runningWorkflows: { foo: [1], bar: [1], baz: [1] },
+        });
+        const another = build({ runningWorkflows: { foo: [1], bar: [1] } });
+        const diff = one.diff(another);
+
+        assert(Object.hasOwn(diff, "runningWorkflows"));
+        assertEquals(diff.runningWorkflows, { foo: [1], bar: [1] });
+      });
+
+      it("add and remove workflow", () => {
+        const one = build({ runningWorkflows: { foo: [1], baz: [1] } });
+        const another = build({ runningWorkflows: { foo: [1], bar: [1] } });
+        const diff = one.diff(another);
+
+        assert(Object.hasOwn(diff, "runningWorkflows"));
+        assertEquals(diff.runningWorkflows, { foo: [1], bar: [1] });
+      });
+
+      it("add version", () => {
+        const one = build({ runningWorkflows: { foo: [1] } });
+        const another = build({ runningWorkflows: { foo: [1, 2] } });
+        const diff = one.diff(another);
+
+        assert(Object.hasOwn(diff, "runningWorkflows"));
+        assertEquals(diff.runningWorkflows, { foo: [1, 2] });
+      });
+
+      it("remove version", () => {
+        const one = build({ runningWorkflows: { foo: [1, 2, 3] } });
+        const another = build({ runningWorkflows: { foo: [2, 3] } });
+        const diff = one.diff(another);
+
+        assert(Object.hasOwn(diff, "runningWorkflows"));
+        assertEquals(diff.runningWorkflows, { foo: [2, 3] });
+      });
+
+      it("add and delete version in same workflow", () => {
+        const one = build({ runningWorkflows: { foo: [1, 2] } });
+        const another = build({ runningWorkflows: { foo: [2, 3] } });
+        const diff = one.diff(another);
+
+        assert(Object.hasOwn(diff, "runningWorkflows"));
+        assertEquals(diff.runningWorkflows, { foo: [2, 3] });
+      });
+
+      it("add and delete version in different workflows", () => {
+        const one = build({ runningWorkflows: { foo: [2], bar: [1, 2, 3] } });
+        const another = build({
+          runningWorkflows: { foo: [2, 3], bar: [2, 3] },
+        });
+        const diff = one.diff(another);
+
+        assert(Object.hasOwn(diff, "runningWorkflows"));
+        assertEquals(diff.runningWorkflows, { foo: [2, 3], bar: [2, 3] });
       });
     });
   });

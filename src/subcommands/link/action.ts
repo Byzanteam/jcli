@@ -18,4 +18,5 @@ export default async function action(
   builder.buildMetadata(projectId);
   await builder.buildFunctions(project.functions);
   await builder.buildMigrations(project.migrations);
+  await builder.buildWorkflows(project.workflows);
 }

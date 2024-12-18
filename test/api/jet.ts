@@ -14,6 +14,7 @@ import { ProjectDotJSON, ProjectPatch } from "@/jcli/config/project-json.ts";
 
 import { digest } from "@/jcli/file/project.ts";
 import { listFilesRec } from "@/jcli/file/files-man.ts";
+import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
 
 interface ProjectQuery {
   projectName?: string;
@@ -103,6 +104,11 @@ export function makeJet(): JetTest {
     Map<number, MigrationObject>
   >();
 
+  const projectWorkflows = new Map<
+    string,
+    Map<string, WorkflowDraftWorkflow>
+  >();
+
   const projectExecutedMigrations = new Map<string, Array<number>>();
 
   const commitRequests = new Map<string, Array<CommitRequest>>();
@@ -152,9 +158,10 @@ export function makeJet(): JetTest {
           const id = crypto.randomUUID();
           projectNameIdMappings.set(name, id);
           projects.set(id, { id, name, title: name });
-          projectMigrations.set(id, new Map());
           projectExecutedMigrations.set(id, []);
           projectFunctions.set(id, new Map());
+          projectMigrations.set(id, new Map());
+          projectWorkflows.set(id, new Map());
           deployDraftFunctionsRequests.set(id, 0);
           commitRequests.set(id, []);
           deployRequests.set(id, []);
@@ -176,7 +183,14 @@ export function makeJet(): JetTest {
           projDeployments.set("PRODUCTION", new Map<string, Deployment>());
           deployments.set(id, projDeployments);
 
-          resolve({ id, name, title, capabilities: [], instances: [] });
+          resolve({
+            id,
+            name,
+            title,
+            capabilities: [],
+            instances: [],
+            runningWorkflows: {},
+          });
         } else {
           reject(new Error(`Project ${name} has already exist.`));
         }
@@ -562,6 +576,14 @@ export function makeJet(): JetTest {
           }
         }
 
+        async function* workflows() {
+          for (
+            const workflow of projectWorkflows.get(projectId)!.values()
+          ) {
+            yield workflow;
+          }
+        }
+
         resolve({
           name: project!.name,
           configuration: ProjectDotJSON.fromJSON(
@@ -570,10 +592,12 @@ export function makeJet(): JetTest {
               title: project!.title,
               instances: [],
               capabilities: [],
+              runningWorkflows: {},
             }),
           ),
-          migrations: migrations(),
           functions: functions(),
+          migrations: migrations(),
+          workflows: workflows(),
         });
       });
     },
