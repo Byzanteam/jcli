@@ -46,7 +46,9 @@ export interface ListDraftWorkflowsQueryResponse {
   node: {
     draftWorkflows: {
       pageInfo: PageInfo;
-      nodes: ReadonlyArray<{ name: string; data: string; hash: string }>;
+      nodes: ReadonlyArray<
+        { name: string; definition: { data: string; hash: string } }
+      >;
     };
   };
 }
@@ -124,24 +126,19 @@ export const listDraftMigrationsQuery = `
   }
 `;
 
-// TODO: align API implementation
 export const listDraftWorkflowsQuery = `
-  query ListDraftWorkflows(
-    $projectNodeId: ID!
-    $first: Int!
-    $after: String
-  ) {
-    node(nodeId: $projectNodeId) {
-      ... on ProjectsProject {
-        draftWorkflows(first: $first, after: $after) {
-          pageInfo {
-            endCursor
-            hasNextPage
-          }
-
-          nodes {
-            ... on WorkflowsDraftWorkflow {
-              name
+query ListDraftWorkflows($projectNodeId: ID!, $first: Int!, $after: String) {
+  node(nodeId: $projectNodeId) {
+    ... on ProjectsProject {
+      draftWorkflows(after: $after, first: $first) {
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+        nodes {
+          ... on WorkflowsDraftWorkflow {
+            name
+            definition {
               data
               hash
             }
@@ -150,4 +147,5 @@ export const listDraftWorkflowsQuery = `
       }
     }
   }
+}
 `;
