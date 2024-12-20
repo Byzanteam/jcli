@@ -82,9 +82,7 @@ async function* diffFunctions(
     if (e.isDirectory) {
       newFunctionNames.add(e.name);
 
-      const change = buildFunctionChange(e.name, existingFunctionNames);
-
-      if (change) yield change;
+      yield buildFunctionChange(e.name, existingFunctionNames);
     }
   }
 
