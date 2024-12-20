@@ -14,6 +14,7 @@ import { ProjectDotJSON, ProjectPatch } from "@/jcli/config/project-json.ts";
 
 import { digest } from "@/jcli/file/project.ts";
 import { listFilesRec } from "@/jcli/file/files-man.ts";
+import { parseParams } from "@/jcli/file/workflows-man.ts";
 import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
 
 interface ProjectQuery {
@@ -398,6 +399,11 @@ export function makeJet(): JetTest {
           resolve(executedMigrations);
         }
       });
+    },
+
+    async upsertWorkflow({ params }): Promise<string> {
+      const { hash } = await parseParams(params);
+      return Promise.resolve(hash);
     },
 
     configurationHash({ configuration }): Promise<string> {
