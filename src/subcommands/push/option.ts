@@ -4,4 +4,5 @@ export type PushOptions = GlobalOptions & {
   onlyConfiguration?: boolean;
   onlyFunctions?: boolean;
   onlyMigrations?: boolean;
+  onlyWorkflows?: boolean;
 };
