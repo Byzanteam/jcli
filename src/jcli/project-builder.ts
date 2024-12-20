@@ -79,9 +79,9 @@ class DatabaseBuilder extends BaseBuilder {
     const db = api.db.createDatabase(`${this.directory}/${PROJECT_DB_PATH}`);
 
     db.execute(createMetadataQuery);
+    db.execute(createTableObjectsQuery);
     db.execute(createFunctionsQuery);
     db.execute(createWorkflowsQuery);
-    db.execute(createTableObjectsQuery);
     db.execute(createConfigurationQuery);
 
     db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {
@@ -205,9 +205,10 @@ class FileBuilder extends BaseBuilder {
     const directory = this.directory;
 
     await api.fs.mkdir(directory);
-    await api.fs.mkdir(join(directory, "migrations"));
-    await api.fs.mkdir(join(directory, "functions"));
     await api.fs.mkdir(join(directory, ".jcli"));
+    await api.fs.mkdir(join(directory, "functions"));
+    await api.fs.mkdir(join(directory, "migrations"));
+    await api.fs.mkdir(join(directory, "workflows"));
 
     const projectDotJSON = new Config<ProjectDotJSON>(
       projectDotJSONPath(directory),
@@ -222,6 +223,7 @@ class FileBuilder extends BaseBuilder {
     db.execute(createMetadataQuery);
     db.execute(createTableObjectsQuery);
     db.execute(createFunctionsQuery);
+    db.execute(createWorkflowsQuery);
     db.execute(createConfigurationQuery);
 
     db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {
