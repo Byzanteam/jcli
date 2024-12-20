@@ -180,7 +180,7 @@ class DatabaseBuilder extends BaseBuilder {
   }
 
   async buildWorkflows(
-    workflows: AsyncIterable<{ name: string; hash: string }>,
+    workflows: AsyncIterable<WorkflowDraftWorkflow>,
   ): Promise<void> {
     const db = await this.connectDB();
     const createWorkflowQuery = db.prepareQuery<
@@ -189,7 +189,7 @@ class DatabaseBuilder extends BaseBuilder {
       { name: string; hash: string }
     >("INSERT INTO workflows (name, hash) VALUES (:name, :hash)");
     for await (const workflow of workflows) {
-      createWorkflowQuery.execute(workflow);
+      createWorkflowQuery.execute({ name: workflow.name, hash: workflow.hash });
     }
     createWorkflowQuery.finalize();
     db.close();

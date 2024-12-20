@@ -14,7 +14,7 @@ class TestDB extends DBClass {
     this.#connectionCount++;
   }
 
-  close(_force: boolean) {
+  override close(_force: boolean) {
     this.#connectionCount--;
   }
 
@@ -42,7 +42,6 @@ export function makeDB(): DBTest {
     },
 
     connect(path: string): Promise<DBClass> {
-      console.log({ cwd, path });
       return new Promise((resolve, reject) => {
         const instance = databases.get(join(cwd, path));
 
@@ -66,7 +65,6 @@ export function makeDB(): DBTest {
     },
 
     hasDatabase(path: string): boolean {
-      console.log({ databases });
       return databases.has(join(cwd, path));
     },
   };

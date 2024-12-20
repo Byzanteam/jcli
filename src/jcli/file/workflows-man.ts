@@ -4,6 +4,7 @@ import { PreparedQuery } from "sqlite";
 import { api, DBClass, DirEntry } from "@/api/mod.ts";
 import { digest } from "@/jcli/file/project.ts";
 import { chunk } from "@/utility/async-iterable.ts";
+import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
 
 interface PushWorkflowsOptions {
   concurrency?: number;
@@ -51,11 +52,11 @@ function readParams(directory: string, file: string): Promise<string> {
 
 export async function parseParams(
   params: string,
-): Promise<{ name: string; hash: string }> {
+): Promise<WorkflowDraftWorkflow> {
   const { name, ...data } = JSON.parse(params);
   const hash = await digest(JSON.stringify(data));
 
-  return { name, hash };
+  return { name, hash, data };
 }
 
 async function* diffWorkflows(
