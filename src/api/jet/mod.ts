@@ -219,6 +219,8 @@ function buildCommandArgument(command: ProjectPatch) {
     instances,
     imports: serializeValue(command.imports),
     scopes: serializeValue(command.scopes),
+    runningWorkflows: command.runningWorkflows ??
+      JSON.stringify(command.runningWorkflows),
   };
 }
 
