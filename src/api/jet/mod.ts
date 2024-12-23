@@ -551,8 +551,12 @@ function cloneProjectWorkflows(
 
     return {
       pageInfo,
-      records: nodes.map(({ data, ...rest }) => {
-        return { data: JSON.parse(data), ...rest };
+      records: nodes.map(({ name, definition }) => {
+        return {
+          name,
+          data: JSON.parse(definition.data),
+          hash: definition.hash,
+        };
       }),
     };
   }
