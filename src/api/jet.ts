@@ -27,6 +27,7 @@ import {
   updateConfiguration as doUpdateConfiguration,
   updateFunctionFile as doUpdateFunctionFile,
   updateMigration as doUpdateMigration,
+  upsertWorkflow as doUpsertWorkflow,
 } from "@/api/jet/mod.ts";
 
 import { ProjectDotJSON, ProjectPatch } from "@/jcli/config/project-json.ts";
@@ -110,6 +111,11 @@ export interface RollbackDBArgs {
 
 export interface ListMigrationsArgs {
   projectId: string;
+}
+
+export interface UpsertWorkflowArgs {
+  projectId: string;
+  params: string;
 }
 
 export interface ConfigurationHashArgs {
@@ -226,6 +232,7 @@ export interface Jet {
   migrateDB(args: MigrateDBArgs): Promise<void>;
   rollbackDB(args: RollbackDBArgs): Promise<void>;
   listMigrations(args: ListMigrationsArgs): Promise<Array<number>>;
+  upsertWorkflow(args: UpsertWorkflowArgs): Promise<string>;
   configurationHash(args: ConfigurationHashArgs): Promise<string>;
   commit(args: CommitArgs): Promise<void>;
   deploy(args: DeployArgs): Promise<void>;
@@ -307,6 +314,7 @@ export const jet: Jet = {
     doListMigrations,
     "list DB migrations",
   ),
+  upsertWorkflow: logDebugMetricsWrapper(doUpsertWorkflow, "upsert workflow"),
   deleteFunction: logDebugMetricsWrapper(
     doDeleteFunction,
     "delete function",

@@ -32,6 +32,7 @@ import {
   UpdateConfigurationArgs,
   UpdateFunctionFileArgs,
   UpdateMigrationArgs,
+  UpsertWorkflowArgs,
 } from "@/api/jet.ts";
 
 import { JetProject } from "@/api/jet.ts";
@@ -124,6 +125,10 @@ import {
 
 import { ProjectEnvironmentName } from "@/api/mod.ts";
 import { deployFunctionsMutation } from "@/api/jet/queries/deploy-functions.ts";
+import {
+  upsertWorkflowQuery,
+  UpsertWorkflowQueryResponse,
+} from "@/api/jet/queries/upsert-workflow.ts";
 
 export async function createProject(
   config: JcliConfigDotJSON,
@@ -219,6 +224,8 @@ function buildCommandArgument(command: ProjectPatch) {
     instances,
     imports: serializeValue(command.imports),
     scopes: serializeValue(command.scopes),
+    runningWorkflows: command.runningWorkflows ??
+      JSON.stringify(command.runningWorkflows),
   };
 }
 
@@ -332,6 +339,19 @@ export function listMigrations(
   return Array.fromAsync(
     connectionIterator(queryListMigrations, callback),
   );
+}
+
+export async function upsertWorkflow(
+  config: JcliConfigDotJSON,
+  args: UpsertWorkflowArgs,
+): Promise<string> {
+  const definition = await query<UpsertWorkflowQueryResponse>(
+    upsertWorkflowQuery,
+    args,
+    config,
+  );
+
+  return definition.workflowDefinition.hash;
 }
 
 export async function configurationHash(
@@ -551,8 +571,12 @@ function cloneProjectWorkflows(
 
     return {
       pageInfo,
-      records: nodes.map(({ data, ...rest }) => {
-        return { data: JSON.parse(data), ...rest };
+      records: nodes.map(({ name, definition }) => {
+        return {
+          name,
+          data: JSON.parse(definition.data),
+          hash: definition.hash,
+        };
       }),
     };
   }

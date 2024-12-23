@@ -125,7 +125,8 @@ function buildPatch(
 export function isPatchEmpty(patch: ProjectPatch): boolean {
   return !("title" in patch) && !("name" in patch) &&
     patch.capabilities.length === 0 && patch.instances.length === 0 &&
-    !("imports" in patch) && !("scopes" in patch);
+    !("imports" in patch) && !("scopes" in patch) &&
+    !("runningWorkflows" in patch);
 }
 
 export interface ProjectCapabilityCreatePatch {

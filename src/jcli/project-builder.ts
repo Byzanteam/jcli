@@ -79,9 +79,9 @@ class DatabaseBuilder extends BaseBuilder {
     const db = api.db.createDatabase(`${this.directory}/${PROJECT_DB_PATH}`);
 
     db.execute(createMetadataQuery);
+    db.execute(createTableObjectsQuery);
     db.execute(createFunctionsQuery);
     db.execute(createWorkflowsQuery);
-    db.execute(createTableObjectsQuery);
     db.execute(createConfigurationQuery);
 
     db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {
@@ -180,7 +180,7 @@ class DatabaseBuilder extends BaseBuilder {
   }
 
   async buildWorkflows(
-    workflows: AsyncIterable<{ name: string; hash: string }>,
+    workflows: AsyncIterable<WorkflowDraftWorkflow>,
   ): Promise<void> {
     const db = await this.connectDB();
     const createWorkflowQuery = db.prepareQuery<
@@ -189,7 +189,7 @@ class DatabaseBuilder extends BaseBuilder {
       { name: string; hash: string }
     >("INSERT INTO workflows (name, hash) VALUES (:name, :hash)");
     for await (const workflow of workflows) {
-      createWorkflowQuery.execute(workflow);
+      createWorkflowQuery.execute({ name: workflow.name, hash: workflow.hash });
     }
     createWorkflowQuery.finalize();
     db.close();
@@ -205,9 +205,10 @@ class FileBuilder extends BaseBuilder {
     const directory = this.directory;
 
     await api.fs.mkdir(directory);
-    await api.fs.mkdir(join(directory, "migrations"));
-    await api.fs.mkdir(join(directory, "functions"));
     await api.fs.mkdir(join(directory, ".jcli"));
+    await api.fs.mkdir(join(directory, "functions"));
+    await api.fs.mkdir(join(directory, "migrations"));
+    await api.fs.mkdir(join(directory, "workflows"));
 
     const projectDotJSON = new Config<ProjectDotJSON>(
       projectDotJSONPath(directory),
@@ -222,6 +223,7 @@ class FileBuilder extends BaseBuilder {
     db.execute(createMetadataQuery);
     db.execute(createTableObjectsQuery);
     db.execute(createFunctionsQuery);
+    db.execute(createWorkflowsQuery);
     db.execute(createConfigurationQuery);
 
     db.query<never>("INSERT INTO configuration (data) VALUES (:data);", {

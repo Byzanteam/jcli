@@ -64,8 +64,21 @@ describe("link", () => {
     await writeFuncFile("users/mod.ts", "mod");
     await writeFuncFile("posts/entry.ts", "entry");
 
-    // TODO: write workflows after workflows pushing is implemented
-    await api.fs.mkdir("workflows");
+    async function writeWorkflowFile(
+      name: string,
+      declarations: string,
+      structure: object,
+    ) {
+      const path = `workflows/${name}.json`;
+      const workflow = { name, declarations, structure };
+      const content = JSON.stringify(workflow, null, 2);
+      const options = { createNew: !api.fs.hasFile(path) };
+
+      await api.fs.writeTextFile(path, content, options);
+    }
+
+    await writeWorkflowFile("foo", "# declarations of foo", {});
+    await writeWorkflowFile("bar", "# declarations of bar", {});
 
     await push({});
 
@@ -268,10 +281,10 @@ describe("link", () => {
     });
 
     const workflowEntries = db.queryEntries<{ name: string }>(
-      "SELECT name FROM workflows",
+      "SELECT name FROM workflows ORDER BY name ASC",
     );
 
-    assertEquals(workflowEntries, []);
+    assertEquals(workflowEntries, [{ name: "bar" }, { name: "foo" }]);
 
     db.close();
   });

@@ -14,6 +14,7 @@ import { ProjectDotJSON, ProjectPatch } from "@/jcli/config/project-json.ts";
 
 import { digest } from "@/jcli/file/project.ts";
 import { listFilesRec } from "@/jcli/file/files-man.ts";
+import { parseParams as parseWorkflowParams } from "@/jcli/file/workflows-man.ts";
 import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
 
 interface ProjectQuery {
@@ -62,6 +63,9 @@ export interface JetTest extends Jet {
   getConfigurationPatches(projectId: string): Array<ProjectPatch> | undefined;
   getFunctions(projectId: string): Map<string, FunctionObject> | undefined;
   getMigrations(projectId: string): Map<number, MigrationObject> | undefined;
+  getWorkflows(
+    projectId: string,
+  ): Map<string, WorkflowDraftWorkflow> | undefined;
   getDeployDraftFunctionsRequests(projectId: string): number | undefined;
   getCommitRequests(
     projectId: string,
@@ -105,8 +109,8 @@ export function makeJet(): JetTest {
   >();
 
   const projectWorkflows = new Map<
-    string,
-    Map<string, WorkflowDraftWorkflow>
+    /* projectId */ string,
+    Map</* workflowName */ string, WorkflowDraftWorkflow>
   >();
 
   const projectExecutedMigrations = new Map<string, Array<number>>();
@@ -400,6 +404,21 @@ export function makeJet(): JetTest {
       });
     },
 
+    async upsertWorkflow({ projectId, params }): Promise<string> {
+      const { hash, name, data } = await parseWorkflowParams(params);
+
+      return new Promise((resolve, reject) => {
+        const workflows = projectWorkflows.get(projectId);
+
+        if (workflows) {
+          workflows.set(name, { name, data, hash });
+          resolve(hash);
+        } else {
+          reject(new Error("Project not found"));
+        }
+      });
+    },
+
     configurationHash({ configuration }): Promise<string> {
       return digest(configuration);
     },
@@ -466,6 +485,10 @@ export function makeJet(): JetTest {
       projectId: string,
     ): Map<number, MigrationObject> | undefined {
       return projectMigrations.get(projectId);
+    },
+
+    getWorkflows(projectId: string) {
+      return projectWorkflows.get(projectId);
     },
 
     getDeployDraftFunctionsRequests(projectId) {
