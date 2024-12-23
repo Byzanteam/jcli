@@ -65,7 +65,6 @@ describe("link", () => {
     await writeFuncFile("posts/entry.ts", "entry");
 
     // TODO: write workflows after workflows pushing is implemented
-    await api.fs.mkdir("workflows");
 
     await push({});
 
