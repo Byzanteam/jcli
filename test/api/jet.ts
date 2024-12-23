@@ -63,6 +63,9 @@ export interface JetTest extends Jet {
   getConfigurationPatches(projectId: string): Array<ProjectPatch> | undefined;
   getFunctions(projectId: string): Map<string, FunctionObject> | undefined;
   getMigrations(projectId: string): Map<number, MigrationObject> | undefined;
+  getWorkflows(
+    projectId: string,
+  ): Map<string, WorkflowDraftWorkflow> | undefined;
   getDeployDraftFunctionsRequests(projectId: string): number | undefined;
   getCommitRequests(
     projectId: string,
@@ -482,6 +485,10 @@ export function makeJet(): JetTest {
       projectId: string,
     ): Map<number, MigrationObject> | undefined {
       return projectMigrations.get(projectId);
+    },
+
+    getWorkflows(projectId: string) {
+      return projectWorkflows.get(projectId);
     },
 
     getDeployDraftFunctionsRequests(projectId) {
