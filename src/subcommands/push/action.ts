@@ -15,6 +15,11 @@ import {
   pushMigrations,
 } from "@/jcli/file/migrations-man.ts";
 
+import {
+  prepareQueries as preparePushWorkflowQueries,
+  pushWorkflows,
+} from "@/jcli/file/workflows-man.ts";
+
 import { PushOptions } from "./option.ts";
 
 function buildFeatureFlags(
@@ -23,30 +28,42 @@ function buildFeatureFlags(
   pushConfiguration: boolean;
   pushFunctions: boolean;
   pushMigrations: boolean;
+  pushWorkflows: boolean;
 } {
   if (options.onlyConfiguration) {
     return {
       pushConfiguration: true,
       pushFunctions: false,
       pushMigrations: false,
+      pushWorkflows: false,
     };
   } else if (options.onlyFunctions) {
     return {
       pushConfiguration: false,
       pushFunctions: true,
       pushMigrations: false,
+      pushWorkflows: false,
     };
   } else if (options.onlyMigrations) {
     return {
       pushConfiguration: false,
       pushFunctions: false,
       pushMigrations: true,
+      pushWorkflows: false,
+    };
+  } else if (options.onlyWorkflows) {
+    return {
+      pushConfiguration: false,
+      pushFunctions: false,
+      pushMigrations: false,
+      pushWorkflows: true,
     };
   } else {
     return {
       pushConfiguration: true,
       pushFunctions: true,
       pushMigrations: true,
+      pushWorkflows: true,
     };
   }
 }
@@ -67,6 +84,10 @@ export default async function (options: PushOptions) {
     ? preparePushMigrationQueries(db)
     : undefined;
 
+  const pushWorkflowQueries = flags.pushWorkflows
+    ? preparePushWorkflowQueries(db)
+    : undefined;
+
   try {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
@@ -84,10 +105,16 @@ export default async function (options: PushOptions) {
       api.console.log("Pushing migrations...");
       await pushMigrations(pushMigrationQueries!, projectId);
     }
+
+    if (flags.pushWorkflows) {
+      api.console.log("Pushing workflows...");
+      await pushWorkflows(pushWorkflowQueries!, projectId);
+    }
   } finally {
     pushConfigurationQueries?.finalize();
     pushFunctionQueries?.finalize();
     pushMigrationQueries?.finalize();
+    pushWorkflowQueries?.finalize();
 
     db.close();
   }
