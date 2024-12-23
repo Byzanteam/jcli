@@ -49,13 +49,28 @@
           "type": "string"
         }
       }
+    },
+    "runningWorkflows": {
+      "description": "Defines the running workflows",
+      "default": {},
+      "type": "object",
+      "patternProperties": {
+        ".*": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
     }
   },
   "required": [
     "title",
     "name",
     "capabilities",
-    "instances"
+    "instances",
+    "runningWorkflows"
   ],
   "definitions": {
     "capability": {

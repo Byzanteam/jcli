@@ -62,6 +62,7 @@ describe("configuration", () => {
           "@std/foo": "./patched/mod.ts",
         },
       },
+      runningWorkflows: {},
     };
 
     beforeEach(async () => {
@@ -127,6 +128,7 @@ describe("configuration", () => {
       title: "title",
       capabilities: [],
       instances: [],
+      runningWorkflows: {},
     };
 
     beforeEach(async () => {
@@ -307,6 +309,7 @@ describe("configuration", () => {
           pluginName: "sms",
         },
       ],
+      runningWorkflows: {},
     };
 
     const configurationWithUpdatedInstance = {
@@ -339,6 +342,7 @@ describe("configuration", () => {
           pluginName: "sms",
         },
       ],
+      runningWorkflows: {},
     };
 
     const configurationWithRemovedInstance = {
@@ -365,6 +369,7 @@ describe("configuration", () => {
           pluginName: "queue",
         },
       ],
+      runningWorkflows: {},
     };
 
     const configurationWithChangedOrder = {
@@ -396,6 +401,7 @@ describe("configuration", () => {
           pluginName: "sms",
         },
       ],
+      runningWorkflows: {},
     };
 
     beforeEach(async () => {
@@ -477,6 +483,7 @@ describe("configuration", () => {
           title: "title",
           instantiate: [],
           capabilities: [],
+          runningWorkflows: {},
           ...from,
         }),
       );
@@ -489,6 +496,7 @@ describe("configuration", () => {
           title: "title",
           instantiate: [],
           capabilities: [],
+          runningWorkflows: {},
           ...to,
         }),
       );
