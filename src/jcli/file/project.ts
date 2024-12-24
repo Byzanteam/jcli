@@ -12,14 +12,6 @@ function composeDigests(digests: ReadonlyArray<string>): Promise<string> {
   return digest(digests.toSorted().join(""));
 }
 
-function digestMigrations(db: DBClass): Promise<string> {
-  const entries = db.queryEntries<{ hash: string }>(
-    "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
-  );
-
-  return composeDigests(entries.map((e) => e.hash));
-}
-
 async function digestFunctions(db: DBClass): Promise<string> {
   const entries = db.queryEntries<{ path: string; hash: string }>(
     "SELECT path, hash FROM objects WHERE filetype = 'FUNCTION'",
@@ -46,6 +38,23 @@ async function digestFunctions(db: DBClass): Promise<string> {
   return composeDigests(functionHashes);
 }
 
+function digestMigrations(db: DBClass): Promise<string> {
+  const entries = db.queryEntries<{ hash: string }>(
+    "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION'",
+  );
+
+  return composeDigests(entries.map((e) => e.hash));
+}
+
+function digestWorkflows(db: DBClass): Promise<string> {
+  const entries = db.queryEntries<{ name: string; hash: string }>(
+    "SELECT name, hash FROM workflows",
+  );
+  const hashes = entries.map((entry) => entry.hash);
+
+  return composeDigests(hashes);
+}
+
 function getConfiguration(db: DBClass): string {
   const [{ data: configuration }] = db.queryEntries<{ data: string }>(
     "SELECT data FROM configuration",
@@ -69,8 +78,14 @@ export async function digestProject(db: DBClass): Promise<string> {
   const configurationHash = await api.jet.configurationHash({
     configuration: getConfiguration(db),
   });
-  const migrationsHash = await digestMigrations(db);
   const functionsHash = await digestFunctions(db);
+  const migrationsHash = await digestMigrations(db);
+  const workflowsHash = await digestWorkflows(db);
 
-  return composeDigests([configurationHash, migrationsHash, functionsHash]);
+  return composeDigests([
+    configurationHash,
+    functionsHash,
+    migrationsHash,
+    workflowsHash,
+  ]);
 }
