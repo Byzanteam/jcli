@@ -11,6 +11,7 @@ import {
   deleteFunction as doDeleteFunction,
   deleteFunctionFile as doDeleteFunctionFile,
   deleteMigration as doDeleteMigration,
+  deleteWorkflow as doDeleteWorkflow,
   deploy as doDeploy,
   deployFunctions as doDeployFunctions,
   inspectFunction as doInspectFunction,
@@ -116,6 +117,11 @@ export interface ListMigrationsArgs {
 export interface UpsertWorkflowArgs {
   projectId: string;
   params: string;
+}
+
+export interface DeleteWorkflowArgs {
+  projectId: string;
+  name: string;
 }
 
 export interface ConfigurationHashArgs {
@@ -233,6 +239,7 @@ export interface Jet {
   rollbackDB(args: RollbackDBArgs): Promise<void>;
   listMigrations(args: ListMigrationsArgs): Promise<Array<number>>;
   upsertWorkflow(args: UpsertWorkflowArgs): Promise<string>;
+  deleteWorkflow(args: DeleteWorkflowArgs): Promise<void>;
   configurationHash(args: ConfigurationHashArgs): Promise<string>;
   commit(args: CommitArgs): Promise<void>;
   deploy(args: DeployArgs): Promise<void>;
@@ -315,6 +322,7 @@ export const jet: Jet = {
     "list DB migrations",
   ),
   upsertWorkflow: logDebugMetricsWrapper(doUpsertWorkflow, "upsert workflow"),
+  deleteWorkflow: logDebugMetricsWrapper(doDeleteWorkflow, "delete workflow"),
   deleteFunction: logDebugMetricsWrapper(
     doDeleteFunction,
     "delete function",

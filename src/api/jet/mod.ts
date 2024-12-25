@@ -18,6 +18,7 @@ import {
   DeleteFunctionArgs,
   DeleteFunctionFileArgs,
   DeleteMigrationArgs,
+  DeleteWorkflowArgs,
   DeployArgs,
   DeployFunctionsArgs,
   InspectFunctionArgs,
@@ -68,7 +69,7 @@ import {
 import {
   configurationHashQuery,
   ConfigurationHashQueryResponse,
-} from "./queries/configuration-hash.ts";
+} from "@/api/jet/queries/configuration-hash.ts";
 
 import { commitMutation } from "@/api/jet/queries/commit.ts";
 
@@ -92,7 +93,12 @@ import {
 import { ProjectDotJSON } from "@/jcli/config/project-json.ts";
 import { pluginInstallInstanceMutation } from "@/api/jet/queries/plugin-install-instance.ts";
 import { pluginUninstallInstanceMutation } from "@/api/jet/queries/plugin-uninstall-instance.ts";
-
+import { deployFunctionsMutation } from "@/api/jet/queries/deploy-functions.ts";
+import {
+  upsertWorkflowQuery,
+  UpsertWorkflowQueryResponse,
+} from "@/api/jet/queries/upsert-workflow.ts";
+import { deleteWorkflowQuery } from "@/api/jet/queries/delete-workflow.ts";
 import {
   listEnvironmentsQuery,
   type ListEnvironmentsQueryResponse,
@@ -124,11 +130,6 @@ import {
 } from "@/api/jet/queries/list-projects.ts";
 
 import { ProjectEnvironmentName } from "@/api/mod.ts";
-import { deployFunctionsMutation } from "@/api/jet/queries/deploy-functions.ts";
-import {
-  upsertWorkflowQuery,
-  UpsertWorkflowQueryResponse,
-} from "@/api/jet/queries/upsert-workflow.ts";
 
 export async function createProject(
   config: JcliConfigDotJSON,
@@ -352,6 +353,13 @@ export async function upsertWorkflow(
   );
 
   return definition.workflowDefinition.hash;
+}
+
+export async function deleteWorkflow(
+  config: JcliConfigDotJSON,
+  args: DeleteWorkflowArgs,
+): Promise<void> {
+  await query(deleteWorkflowQuery, args, config);
 }
 
 export async function configurationHash(
