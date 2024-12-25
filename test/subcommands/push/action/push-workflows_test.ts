@@ -68,5 +68,50 @@ describe("workflows", () => {
     });
   });
 
-  // TODO: test delete workflow
+  describe("delete workflows", () => {
+    beforeEach(async () => {
+      const traffic = JSON.stringify({
+        name: "traffic",
+        declaractions: "",
+        structure: {},
+      });
+      await api.fs.writeTextFile("workflows/traffic.json", traffic, {
+        createNew: true,
+      });
+      const light = JSON.stringify({
+        name: "light",
+        declaractions: "",
+        structure: {},
+      });
+      await api.fs.writeTextFile("workflows/light.json", light, {
+        createNew: true,
+      });
+
+      await action(options);
+
+      await api.fs.remove("workflows/light.json");
+
+      await action(options);
+    });
+
+    it("updates db", async () => {
+      const db = await api.db.connect(PROJECT_DB_PATH);
+      const entries = db.queryEntries<{ name: string }>(
+        "SELECT name FROM workflows",
+      );
+
+      assertEquals(entries.length, 1);
+      assertObjectMatch(entries[0], { name: "traffic" });
+
+      db.close();
+    });
+
+    it("pushed to jet", () => {
+      const workflows = api.jet.getWorkflows(projectId);
+
+      assertEquals(workflows!.size, 1);
+      assertEquals(Array.from(workflows!.keys()), ["traffic"]);
+      assertObjectMatch(workflows!.get("traffic")!, { name: "traffic" });
+    });
+  });
 });

@@ -419,6 +419,11 @@ export function makeJet(): JetTest {
       });
     },
 
+    deleteWorkflow({ projectId, name }): Promise<void> {
+      projectWorkflows.get(projectId)?.delete(name);
+      return Promise.resolve();
+    },
+
     configurationHash({ configuration }): Promise<string> {
       return digest(configuration);
     },

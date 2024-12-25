@@ -111,8 +111,7 @@ async function pushWorkflow(
       queries.upsertWorkflowQuery.execute({ name: change.name, hash });
       break;
     case "DELETED":
-      // TODO: delete remote workflow
-      // https://www.notion.so/byzanteam/delete-workflow-definition-graphql-157cfd47569680919913ddcd721a32fc
+      await api.jet.deleteWorkflow({ projectId, name: change.name });
       queries.deleteWorkflowQuery.execute({ name: change.name });
       break;
     default:
