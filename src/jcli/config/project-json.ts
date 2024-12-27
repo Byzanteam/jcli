@@ -44,6 +44,7 @@ export class ProjectDotJSON {
   readonly title: string;
   #capabilities: Array<ProjectCapability>;
   #instances: Array<ProjectPluginInstance>;
+  #entryFile: string | undefined;
   #imports: ProjectImports | undefined;
   #scopes: ProjectScopes | undefined;
   #runningWorkflows: ProjectRunningWorkflows;
@@ -57,6 +58,7 @@ export class ProjectDotJSON {
     this.title = project.title;
     this.#capabilities = project.capabilities;
     this.#instances = project.instances;
+    this.#entryFile = project.entryFile;
     this.#imports = project.imports;
     this.#scopes = project.scopes;
     this.#runningWorkflows = project.runningWorkflows;
@@ -69,6 +71,7 @@ export class ProjectDotJSON {
       title: this.title,
       capabilities: this.#capabilities,
       instances: this.#instances,
+      entryFile: this.#entryFile,
       imports: this.#imports,
       scopes: this.#scopes,
       runningWorkflows: this.#runningWorkflows,
@@ -182,6 +185,7 @@ export interface ProjectPatch {
   title?: string;
   capabilities: Array<ProjectCapabilityPatch>;
   instances: Array<ProjectPluginInstancePatch>;
+  entryFile?: string;
   imports?: ProjectImports;
   scopes?: ProjectScopes;
   runningWorkflows?: ProjectRunningWorkflows;

@@ -28,6 +28,11 @@
         "$ref": "#/definitions/instance"
       }
     },
+    "entryFile": {
+      "type": "string",
+      "description": "Function 的入口文件名称",
+      "default": "main.ts"
+    },
     "imports": {
       "description": "A map of specifiers to their remapped specifiers.",
       "type": "object",

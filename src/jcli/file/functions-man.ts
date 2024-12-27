@@ -36,7 +36,7 @@ export function FunctionFileEntry(functionName: string) {
       this.serverPath = join("/", relativePath);
     }
 
-    async digest() {
+    override async digest() {
       if (undefined === this._digest) {
         const encoder = new TextEncoder();
 

@@ -27,6 +27,7 @@ describe("ProjectDotJSON", () => {
       title?: string;
       capabilities?: Array<ProjectCapability>;
       instances?: Array<ProjectPluginInstance>;
+      entryFile?: string;
       imports?: ProjectImports;
       scopes?: ProjectScopes;
       runningWorkflows?: ProjectRunningWorkflows;
@@ -276,6 +277,15 @@ describe("ProjectDotJSON", () => {
           capabilityNames: ["cap2", "cap1"],
         });
       });
+    });
+
+    it("diff entryFile", () => {
+      const one = build({ entryFile: "foo" });
+      const another = build({ entryFile: "bar" });
+      const diff = one.diff(another);
+
+      assertNotEquals(diff, undefined);
+      assertObjectMatch(diff!, { capabilities: [], instances: [] });
     });
 
     describe("Differences in imports", () => {

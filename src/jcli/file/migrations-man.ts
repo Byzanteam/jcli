@@ -24,7 +24,7 @@ export class MigrationFileEntry extends FileEntry {
     super(path);
   }
 
-  async digest(): Promise<string> {
+  override async digest(): Promise<string> {
     if (undefined === this._digest) {
       const encoder = new TextEncoder();
 
