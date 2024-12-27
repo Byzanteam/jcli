@@ -14,7 +14,7 @@ class TestDB extends DBClass {
     this.#connectionCount++;
   }
 
-  close(_force: boolean) {
+  override close(_force: boolean) {
     this.#connectionCount--;
   }
 
