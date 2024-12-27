@@ -40,6 +40,7 @@ export interface Project {
   title: string;
   capabilities: Array<ProjectCapability>;
   instances: Array<ProjectPluginInstance>;
+  entryFile?: string;
   imports?: ProjectImports;
   scopes?: ProjectScopes;
   runningWorkflows: ProjectRunningWorkflows;

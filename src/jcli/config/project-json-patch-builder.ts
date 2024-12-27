@@ -140,6 +140,14 @@ function buildTitlePatch(
   patch.title = value as string;
 }
 
+function buildentryFilePatch(
+  _op: DiffPatchOp,
+  value: unknown,
+  patch: ProjectPatch,
+): void {
+  patch.entryFile = value as string;
+}
+
 function buildObjectLikePatch<P extends "capabilities" | "instances">(
   property: P,
   op: DiffPatchOp,
@@ -313,6 +321,9 @@ export const builder = new BuilderNode({ name: "root" }).children([
       buildObjectLikePatch.bind(null, "instances"),
     ),
   ]),
+  new BuilderNode({ name: "entryFile" }).on(equal("entryFile")).do(
+    buildentryFilePatch,
+  ),
   new BuilderNode({ name: "imports", alwaysRun: true })
     .on(equal("imports"))
     .do(buildImportsPatch),
