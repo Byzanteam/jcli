@@ -1,5 +1,5 @@
 import { extname, join } from "path";
-import { api, DirEntry, FS } from "@/api/mod.ts";
+import { api, DirEntry, FS, PROJECT_ASSETS_DIRECTORY } from "@/api/mod.ts";
 import { digest } from "@/jcli/crypto.ts";
 
 export class FileEntry {
@@ -21,8 +21,9 @@ export class FileEntry {
 
   async content(): Promise<string> {
     if (undefined === this.#content) {
-      const path = await api.fs.realPath(this.path);
-      this.#content = await api.fs.readTextFile(path);
+      const path = join(PROJECT_ASSETS_DIRECTORY, this.path);
+      const file = await api.fs.realPath(path);
+      this.#content = await api.fs.readTextFile(file);
     }
 
     return this.#content;

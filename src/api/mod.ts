@@ -1,3 +1,5 @@
+import { join } from "path";
+
 import { Console, consoleImpl } from "@/api/console.ts";
 import { DB, db, DBClass } from "@/api/db.ts";
 import { DirEntry, FS, fs, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
@@ -18,6 +20,9 @@ import {
   jcliConfigDotJSONPath,
 } from "@/jcli/config/jcli-config-json.ts";
 
+export const PROJECT_ASSETS_DIRECTORY = ".jcli";
+export const PROJECT_DB_PATH = join(PROJECT_ASSETS_DIRECTORY, "project.sqlite");
+
 let config: Config<JcliConfigDotJSON>;
 
 export function getConfig(): Config<JcliConfigDotJSON> {
@@ -27,8 +32,6 @@ export function getConfig(): Config<JcliConfigDotJSON> {
 
   return config;
 }
-
-export const PROJECT_DB_PATH = ".jcli/project.sqlite";
 
 export type {
   Console,

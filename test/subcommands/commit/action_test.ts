@@ -1,3 +1,4 @@
+import { join } from "path";
 import {
   afterEach,
   assertEquals,
@@ -6,7 +7,7 @@ import {
   it,
 } from "@test/mod.ts";
 
-import { setupAPI } from "@/api/mod.ts";
+import { PROJECT_ASSETS_DIRECTORY, setupAPI } from "@/api/mod.ts";
 
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
@@ -17,6 +18,15 @@ import action from "@/subcommands/commit/action.ts";
 describe("commit", () => {
   let api: APIClientTest;
   let projectId: string;
+
+  async function writeMigrationFile(
+    name: string,
+    content: string,
+    create: boolean = true,
+  ) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, "migrations", name);
+    await api.fs.writeTextFile(file, content, { createNew: create });
+  }
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -29,9 +39,7 @@ describe("commit", () => {
     api.chdir("my_proj");
 
     for (let i = 0; i < 3; i++) {
-      api.fs.writeTextFile(`migrations/20200000000${i}.sql`, i.toString(), {
-        createNew: true,
-      });
+      writeMigrationFile(`20200000000${i}.sql`, i.toString());
     }
 
     await push({ onlyMigrations: true });

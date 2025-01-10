@@ -1,7 +1,7 @@
 import { join, parse } from "path";
 import { PreparedQuery } from "sqlite";
 
-import { api, DBClass } from "@/api/mod.ts";
+import { api, DBClass, PROJECT_ASSETS_DIRECTORY } from "@/api/mod.ts";
 import {
   FileChange,
   FileEntry,
@@ -97,7 +97,9 @@ export class MigrationFileEntry extends FileEntry {
 async function* listMigrationFileEntries(): AsyncIterable<
   [key: number, entry: MigrationFileEntry]
 > {
-  for await (const relativePath of listFiles(BASE_PATH, ".sql")) {
+  const directory = join(PROJECT_ASSETS_DIRECTORY, BASE_PATH);
+
+  for await (const relativePath of listFiles(directory, ".sql")) {
     const path = join(BASE_PATH, relativePath);
     const entry = new MigrationFileEntry(path);
 

@@ -1,4 +1,4 @@
-import { api, PROJECT_DB_PATH } from "@/api/mod.ts";
+import { api, PROJECT_ASSETS_DIRECTORY, PROJECT_DB_PATH } from "@/api/mod.ts";
 import { createConfigurationQuery } from "@/api/db/queries/create-configuration.ts";
 import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
 import { createMetadataQuery } from "@/api/db/queries/create-metadata.ts";
@@ -70,9 +70,9 @@ class DatabaseBuilder extends BaseBuilder {
   }
 
   async provisionFiles(): Promise<void> {
-    const directory = this.directory;
+    const directory = join(this.directory, PROJECT_ASSETS_DIRECTORY);
 
-    await api.fs.mkdir(join(directory, ".jcli"));
+    await api.fs.mkdir(directory);
   }
 
   provisionDatabases(): void {
@@ -202,16 +202,16 @@ class FileBuilder extends BaseBuilder {
   }
 
   async provisionFiles(): Promise<void> {
-    const directory = this.directory;
+    const directory = join(this.directory, PROJECT_ASSETS_DIRECTORY);
 
+    await api.fs.mkdir(this.directory);
     await api.fs.mkdir(directory);
-    await api.fs.mkdir(join(directory, ".jcli"));
     await api.fs.mkdir(join(directory, "functions"));
     await api.fs.mkdir(join(directory, "migrations"));
     await api.fs.mkdir(join(directory, "workflows"));
 
     const projectDotJSON = new Config<ProjectDotJSON>(
-      projectDotJSONPath(directory),
+      projectDotJSONPath(this.directory),
     );
 
     await projectDotJSON.set(this.configuration, { createNew: true });
@@ -275,14 +275,10 @@ class FileBuilder extends BaseBuilder {
       createFunctionQuery.execute({ name: func.name });
 
       for (const { path, hash, code } of func.files) {
-        const filePath = join("functions", func.name, path);
+        const file = join("functions", func.name, path);
 
-        writeFunctionFile(join(this.directory, filePath), code);
-
-        createFunctionFileQuery.execute({
-          path: filePath,
-          hash,
-        });
+        await writeFunctionFile(this.directory, file, code);
+        createFunctionFileQuery.execute({ path: file, hash });
       }
     }
 
@@ -311,15 +307,12 @@ class FileBuilder extends BaseBuilder {
 
     for await (const { version, name, hash, content } of migrations) {
       const versionStr = this.buildVersionString(version);
-
       const path = name
         ? join("migrations", `${versionStr}_${name}.sql`)
         : join("migrations", `${versionStr}.sql`);
+      const file = join(this.directory, PROJECT_ASSETS_DIRECTORY, path);
 
-      await api.fs.writeTextFile(join(this.directory, path), content, {
-        createNew: true,
-      });
-
+      await api.fs.writeTextFile(file, content, { createNew: true });
       createMigrationQuery.execute({ path, hash });
     }
 
@@ -340,9 +333,10 @@ class FileBuilder extends BaseBuilder {
     );
 
     for await (const { name, data, hash } of workflows) {
-      const path = join(this.directory, "workflows", `${name}.json`);
+      const directory = join(this.directory, PROJECT_ASSETS_DIRECTORY);
+      const file = join(directory, "workflows", `${name}.json`);
       const definition = JSON.stringify({ name, ...data }, null, 2);
-      await api.fs.writeTextFile(path, definition, { createNew: true });
+      await api.fs.writeTextFile(file, definition, { createNew: true });
 
       createWorkflowQuery.execute({ name, hash });
     }
@@ -408,9 +402,15 @@ class ProjectBuilder {
   }
 }
 
-async function writeFunctionFile(path: string, code: string) {
-  await api.fs.mkdir(dirname(path), { recursive: true });
-  await api.fs.writeTextFile(path, code, { createNew: true });
+async function writeFunctionFile(
+  directory: string,
+  path: string,
+  code: string,
+) {
+  const file = join(directory, PROJECT_ASSETS_DIRECTORY, path);
+
+  await api.fs.mkdir(dirname(file), { recursive: true });
+  await api.fs.writeTextFile(file, code, { createNew: true });
 }
 
 export { ProjectBuilder };

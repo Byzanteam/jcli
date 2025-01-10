@@ -1,3 +1,5 @@
+import { join } from "path";
+
 import {
   afterEach,
   assertEquals,
@@ -6,7 +8,11 @@ import {
   describe,
   it,
 } from "@test/mod.ts";
-import { PROJECT_DB_PATH, setupAPI } from "@/api/mod.ts";
+import {
+  PROJECT_ASSETS_DIRECTORY,
+  PROJECT_DB_PATH,
+  setupAPI,
+} from "@/api/mod.ts";
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import createProject from "@/subcommands/admin/projects/create/action.ts";
@@ -18,6 +24,18 @@ describe("workflows", () => {
   let projectId: string;
 
   const options: PushOptions = { onlyWorkflows: true };
+
+  async function writeWorkflowFile(name: string, data: object) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, "workflows", name);
+    const content = JSON.stringify(data);
+
+    await api.fs.writeTextFile(file, content, { createNew: true });
+  }
+
+  async function removeWorkflowFile(name: string) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, "workflows", name);
+    await api.fs.remove(file);
+  }
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -34,16 +52,14 @@ describe("workflows", () => {
     api.cleanup();
   });
 
-  describe("new functions", () => {
+  describe("new workflows", () => {
     beforeEach(async () => {
-      const data = JSON.stringify({
+      const data = {
         name: "traffic",
         declaractions: "",
         structure: {},
-      });
-      await api.fs.writeTextFile("workflows/workflow.json", data, {
-        createNew: true,
-      });
+      };
+      await writeWorkflowFile("traffic.json", data);
       await action(options);
     });
 
@@ -70,26 +86,22 @@ describe("workflows", () => {
 
   describe("delete workflows", () => {
     beforeEach(async () => {
-      const traffic = JSON.stringify({
+      const traffic = {
         name: "traffic",
         declaractions: "",
         structure: {},
-      });
-      await api.fs.writeTextFile("workflows/traffic.json", traffic, {
-        createNew: true,
-      });
-      const light = JSON.stringify({
+      };
+      await writeWorkflowFile("traffic.json", traffic);
+      const light = {
         name: "light",
         declaractions: "",
         structure: {},
-      });
-      await api.fs.writeTextFile("workflows/light.json", light, {
-        createNew: true,
-      });
+      };
+      await writeWorkflowFile("light.json", light);
 
       await action(options);
 
-      await api.fs.remove("workflows/light.json");
+      await removeWorkflowFile("light.json");
 
       await action(options);
     });

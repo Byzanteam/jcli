@@ -1,8 +1,13 @@
-import { assertEquals, assertNotEquals } from "@test/mod.ts";
+import { join } from "path";
 
+import { assertEquals, assertNotEquals } from "@test/mod.ts";
 import { afterEach, beforeEach, describe, it } from "@test/mod.ts";
 
-import { PROJECT_DB_PATH, setupAPI } from "@/api/mod.ts";
+import {
+  PROJECT_ASSETS_DIRECTORY,
+  PROJECT_DB_PATH,
+  setupAPI,
+} from "@/api/mod.ts";
 
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
@@ -15,6 +20,19 @@ describe("migrations", () => {
   let projectId: string;
 
   const options = { onlyMigrations: true };
+
+  async function writeMigrationFile(
+    name: string,
+    content: string,
+    create: boolean = false,
+  ) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, "migrations", name);
+    await api.fs.writeTextFile(file, content, { createNew: create });
+  }
+  async function removeMigrationFile(name: string) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, "migrations", name);
+    await api.fs.remove(file);
+  }
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -33,15 +51,9 @@ describe("migrations", () => {
 
   describe("new migrations", () => {
     beforeEach(async () => {
-      await api.fs.writeTextFile("migrations/202301010000_a.sql", "0", {
-        createNew: true,
-      });
-      await api.fs.writeTextFile("migrations/202301010001_b.sql", "1", {
-        createNew: true,
-      });
-      await api.fs.writeTextFile("migrations/202301010002_c.sql", "2", {
-        createNew: true,
-      });
+      await writeMigrationFile("202301010000_a.sql", "0", true);
+      await writeMigrationFile("202301010001_b.sql", "1", true);
+      await writeMigrationFile("202301010002_c.sql", "2", true);
 
       await action(options);
     });
@@ -90,26 +102,18 @@ describe("migrations", () => {
 
   describe("updated migrations", () => {
     beforeEach(async () => {
-      await api.fs.writeTextFile("migrations/202301010000_a.sql", "0", {
-        createNew: true,
-      });
-      await api.fs.writeTextFile("migrations/202301010001_b.sql", "1", {
-        createNew: true,
-      });
-      await api.fs.writeTextFile("migrations/202301010002.sql", "2", {
-        createNew: true,
-      });
+      await writeMigrationFile("202301010000_a.sql", "0", true);
+      await writeMigrationFile("202301010001_b.sql", "1", true);
+      await writeMigrationFile("202301010002.sql", "2", true);
+
       await action(options);
 
-      await api.fs.writeTextFile("migrations/202301010000_a.sql", "2");
-      await api.fs.writeTextFile("migrations/202301010001.sql", "1", {
-        createNew: true,
-      });
-      await api.fs.remove("migrations/202301010001_b.sql");
-      await api.fs.writeTextFile("migrations/202301010002_c.sql", "2", {
-        createNew: true,
-      });
-      await api.fs.remove("migrations/202301010002.sql");
+      await writeMigrationFile("202301010000_a.sql", "2");
+      await writeMigrationFile("202301010001.sql", "1", true);
+      await removeMigrationFile("202301010001_b.sql");
+      await writeMigrationFile("202301010002_c.sql", "2", true);
+      await removeMigrationFile("202301010002.sql");
+
       await action(options);
     });
 
@@ -157,15 +161,12 @@ describe("migrations", () => {
 
   describe("deleted migrations", () => {
     beforeEach(async () => {
-      await api.fs.writeTextFile("migrations/202301010000_a.sql", "0", {
-        createNew: true,
-      });
-      await api.fs.writeTextFile("migrations/202301010001_b.sql", "1", {
-        createNew: true,
-      });
+      await writeMigrationFile("202301010000_a.sql", "0", true);
+      await writeMigrationFile("202301010001_b.sql", "1", true);
+
       await action(options);
 
-      await api.fs.remove("migrations/202301010000_a.sql");
+      await removeMigrationFile("202301010000_a.sql");
       await action(options);
     });
 

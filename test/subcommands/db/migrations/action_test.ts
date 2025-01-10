@@ -1,3 +1,4 @@
+import { join } from "path";
 import {
   afterEach,
   assertEquals,
@@ -6,7 +7,7 @@ import {
   it,
 } from "@test/mod.ts";
 
-import { setupAPI } from "@/api/mod.ts";
+import { PROJECT_ASSETS_DIRECTORY, setupAPI } from "@/api/mod.ts";
 
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
@@ -19,6 +20,14 @@ describe("functions", () => {
   let api: APIClientTest;
 
   const options = {};
+  async function writeMigrationFile(
+    name: string,
+    content: string,
+    create: boolean = true,
+  ) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, "migrations", name);
+    await api.fs.writeTextFile(file, content, { createNew: create });
+  }
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -29,9 +38,7 @@ describe("functions", () => {
     api.chdir("my_proj");
 
     for (let i = 0; i < 3; i++) {
-      api.fs.writeTextFile(`migrations/20200000000${i}.sql`, i.toString(), {
-        createNew: true,
-      });
+      writeMigrationFile(`20200000000${i}.sql`, i.toString());
     }
 
     await push({ onlyMigrations: true });
@@ -39,18 +46,14 @@ describe("functions", () => {
     await migrate({});
 
     for (let i = 3; i < 5; i++) {
-      api.fs.writeTextFile(`migrations/20200000000${i}.sql`, i.toString(), {
-        createNew: true,
-      });
+      writeMigrationFile(`20200000000${i}.sql`, i.toString());
     }
 
     await push({ onlyMigrations: true });
 
-    api.fs.writeTextFile(`migrations/202000000001.sql`, "111");
+    writeMigrationFile(`202000000001.sql`, "111", false);
 
-    api.fs.writeTextFile(`migrations/202000000005.sql`, "5", {
-      createNew: true,
-    });
+    writeMigrationFile(`202000000005.sql`, "5");
   });
 
   afterEach(() => {
