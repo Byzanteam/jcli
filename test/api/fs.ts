@@ -8,6 +8,10 @@ import {
 
 class File {
   content = "";
+
+  inspect() {
+    return { type: "file", content: this.content };
+  }
 }
 
 class Directory {
@@ -21,6 +25,13 @@ class Directory {
     return path
       .split("/")
       .filter((elem) => "" !== elem && "." !== elem);
+  }
+
+  inspect() {
+    const children = this.#children.entries()
+      .map(([path, entry]): unknown => ({ path, ...entry.inspect() }));
+
+    return { type: "directory", children: Array.from(children) };
   }
 
   mkdirRec(
@@ -152,6 +163,7 @@ class Directory {
 }
 
 export interface FSTest extends FS {
+  inspect(): void;
   chdir(path: string): void;
   hasDir(path: string): boolean;
   hasFile(path: string): boolean;
@@ -163,6 +175,9 @@ export function makeFS(): FSTest {
   cwd.mkdir(homePath);
 
   return {
+    inspect() {
+      console.log(JSON.stringify(cwd.inspect(), null, 2));
+    },
     homePath(): string {
       return homePath;
     },

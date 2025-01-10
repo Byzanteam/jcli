@@ -250,6 +250,8 @@ export function makeJet(): JetTest {
     },
 
     async createFunctionFile({ projectId, functionName, path, code }) {
+      console.log("mock");
+      debugger;
       const func = projectFunctions.get(projectId)?.get(functionName);
 
       if (func) {

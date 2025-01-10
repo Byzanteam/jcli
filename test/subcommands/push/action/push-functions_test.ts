@@ -1,8 +1,13 @@
-import { assert, assertEquals, assertObjectMatch } from "@test/mod.ts";
+import { join } from "path";
 
+import { assert, assertEquals, assertObjectMatch } from "@test/mod.ts";
 import { afterEach, beforeEach, describe, it } from "@test/mod.ts";
 
-import { PROJECT_DB_PATH, setupAPI } from "@/api/mod.ts";
+import {
+  PROJECT_ASSETS_DIRECTORY,
+  PROJECT_DB_PATH,
+  setupAPI,
+} from "@/api/mod.ts";
 
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
@@ -33,7 +38,9 @@ describe("functions", () => {
 
   describe("new functions", () => {
     beforeEach(async () => {
-      await api.fs.mkdir("functions/my_func");
+      await api.fs.mkdir(
+        join(PROJECT_ASSETS_DIRECTORY, "functions", "my_func"),
+      );
       await action(options);
     });
 
@@ -61,12 +68,18 @@ describe("functions", () => {
 
   describe("deleted functions", () => {
     beforeEach(async () => {
-      await api.fs.mkdir("functions/my_func1");
-      await api.fs.mkdir("functions/my_func2");
+      await api.fs.mkdir(
+        join(PROJECT_ASSETS_DIRECTORY, "functions", "my_func1"),
+      );
+      await api.fs.mkdir(
+        join(PROJECT_ASSETS_DIRECTORY, "functions", "my_func2"),
+      );
 
       await action(options);
 
-      await api.fs.remove("functions/my_func1");
+      await api.fs.remove(
+        join(PROJECT_ASSETS_DIRECTORY, "functions", "my_func1"),
+      );
 
       await action(options);
     });
@@ -93,35 +106,40 @@ describe("functions", () => {
 
   describe("files", () => {
     const FUNC_PATH = "functions/my_func";
-    const writeFuncFile = async (path: string, content: string) => {
-      const fullPath = `${FUNC_PATH}/${path}`;
+    async function writeFuncFile(path: string, content: string) {
+      const file = join(PROJECT_ASSETS_DIRECTORY, FUNC_PATH, path);
 
-      if (api.fs.hasFile(fullPath)) {
-        await api.fs.writeTextFile(fullPath, content);
+      if (api.fs.hasFile(file)) {
+        await api.fs.writeTextFile(file, content);
       } else {
-        await api.fs.writeTextFile(fullPath, content, {
+        await api.fs.writeTextFile(file, content, {
           createNew: true,
         });
       }
-    };
+    }
 
     beforeEach(async () => {
-      await api.fs.mkdir(FUNC_PATH);
+      await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, FUNC_PATH));
     });
 
     describe("new files", () => {
       beforeEach(async () => {
-        await api.fs.mkdir(`${FUNC_PATH}/users`);
-        await api.fs.mkdir(`${FUNC_PATH}/posts`);
+        await api.fs.mkdir(`${PROJECT_ASSETS_DIRECTORY}/${FUNC_PATH}/users`);
+        await api.fs.mkdir(`${PROJECT_ASSETS_DIRECTORY}/${FUNC_PATH}/posts`);
+
         await writeFuncFile("index.ts", "index");
         await writeFuncFile("users/mod.ts", "mod");
         await writeFuncFile("posts/entry.ts", "entry");
 
+        // api.fs.inspect();
+
         await action(options);
       });
 
-      it("pushes to jet", async () => {
+      it.only("pushes to jet", async () => {
         const func = api.jet.getFunctions(projectId)!.get("my_func")!;
+
+        // func.files.inspect();
 
         assert(func.files.hasFile(`index.ts`));
         assertEquals(

@@ -1,8 +1,8 @@
-import { join } from "path";
+import { join, relative } from "path";
 
 import { chunk } from "@/utility/async-iterable.ts";
 
-import { api, DBClass } from "@/api/mod.ts";
+import { api, DBClass, PROJECT_ASSETS_DIRECTORY } from "@/api/mod.ts";
 import {
   FileChange,
   FileEntry,
@@ -13,7 +13,7 @@ import { digest } from "@/jcli/crypto.ts";
 
 import { PreparedQuery } from "sqlite";
 
-const BASE_PATH = "./functions";
+const BASE_PATH = "functions";
 
 interface FunctionFileEntryBase {
   serverPath: string;
@@ -76,9 +76,10 @@ async function* diffFunctions(
   const existingFunctionNames = listFunctionNamesQuery();
   const newFunctionNames = new Set<string>();
 
-  const basePath = await api.fs.realPath(BASE_PATH);
+  const root = join(PROJECT_ASSETS_DIRECTORY, BASE_PATH);
+  const directory = await api.fs.realPath(root);
 
-  for await (const e of api.fs.readDir(basePath)) {
+  for await (const e of api.fs.readDir(directory)) {
     if (e.isDirectory) {
       newFunctionNames.add(e.name);
 
@@ -97,17 +98,15 @@ function buildFunctionFileRelativePath(
   path: string,
   functionName: string,
 ): string {
-  /*    basePathLength = "./functions"     - "./" + "/" + "my_func" */
-  const basePathLength = (BASE_PATH.length - 2) + 1 + functionName.length;
   /* functions/my_func/users/index.ts -> users/index.ts */
-  return path.slice(basePathLength + 1);
+  return relative(join(BASE_PATH, functionName), path);
 }
 
 async function* listFunctionFileEntries<T extends FileEntry>(
   functionName: string,
   FileEntryConstructor: new (path: string) => T,
 ): AsyncIterable<[path: string, entry: T]> {
-  const functionPath = join(BASE_PATH, functionName);
+  const functionPath = join(PROJECT_ASSETS_DIRECTORY, BASE_PATH, functionName);
 
   for await (const path of listFilesRec(functionPath)) {
     yield [join(functionPath, path), new FileEntryConstructor(path)];
@@ -123,12 +122,12 @@ async function* diffFunctionFiles<
   >,
   FileEntryConstructor: new (path: string) => T,
 ): AsyncIterable<FileChange<T>> {
+  const prefix = join(BASE_PATH, functionName);
+
   const functionFilesWas = new Map<string, T>(
     listFunctionFileHashesQuery()
-      .filter(([path]) => path.startsWith(`functions/${functionName}`))
-      .map((
-        [path, hash],
-      ) => {
+      .filter(([path]) => path.startsWith(prefix))
+      .map(([path, hash]) => {
         const entry = new FileEntryConstructor(
           buildFunctionFileRelativePath(path, functionName),
         );
@@ -259,6 +258,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
 
   switch (fileChange.type) {
     case "CREATED":
+      debugger;
       await api.jet.createFunctionFile({
         projectId,
         functionName,
@@ -308,7 +308,7 @@ async function pushFunctionFiles(
   options?: PushFunctionsOptions,
 ): Promise<void> {
   for await (
-    const fileChanges of chunk(
+    const changes of chunk(
       diffFunctionFiles(
         functionName,
         queries.listFunctionFileHashesQuery,
@@ -318,7 +318,7 @@ async function pushFunctionFiles(
     )
   ) {
     await Promise.allSettled(
-      fileChanges.map((fileChange) =>
+      changes.map((fileChange) =>
         pushFunctionFile(fileChange, queries, projectId, functionName)
       ),
     );

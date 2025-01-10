@@ -1,7 +1,7 @@
 import { join } from "path";
 import { PreparedQuery } from "sqlite";
 
-import { api, DBClass, DirEntry } from "@/api/mod.ts";
+import { api, DBClass, DirEntry, PROJECT_ASSETS_DIRECTORY } from "@/api/mod.ts";
 import { digest } from "@/jcli/file/project.ts";
 import { chunk } from "@/utility/async-iterable.ts";
 import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
@@ -40,7 +40,7 @@ interface WorkflowDeleted {
 
 type WorkflowChange = WorkflowCreated | WorkflowUpdated | WorkflowDeleted;
 
-const BASE_PATH = "./workflows";
+const BASE_PATH = "workflows";
 
 function isJSONFile(file: DirEntry): boolean {
   return file.isFile && /\w+\.json$/i.test(file.name);
@@ -62,13 +62,14 @@ export async function parseParams(
 async function* diffWorkflows(
   listWorkflowsQuery: () => ReadonlyMap<string, string>,
 ): AsyncIterable<WorkflowChange> {
-  const basePath = await api.fs.realPath(BASE_PATH);
+  const basePath = join(PROJECT_ASSETS_DIRECTORY, BASE_PATH);
+  const directory = await api.fs.realPath(basePath);
   const remoteWorkflows = listWorkflowsQuery();
   const localNames = new Set<string>();
 
-  for await (const file of api.fs.readDir(basePath)) {
+  for await (const file of api.fs.readDir(directory)) {
     if (isJSONFile(file)) {
-      const params = await readParams(basePath, file.name);
+      const params = await readParams(directory, file.name);
       const { name, hash } = await parseParams(params);
 
       if (remoteWorkflows.has(name) && remoteWorkflows.get(name) !== hash) {

@@ -249,6 +249,8 @@ export async function createFunctionFile(
   config: JcliConfigDotJSON,
   args: CreateFunctionFileArgs,
 ): Promise<void> {
+  console.log("impl");
+  debugger;
   await query(createFunctionFileMutation, args, config);
 }
 
