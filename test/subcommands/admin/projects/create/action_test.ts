@@ -46,9 +46,10 @@ describe("works", () => {
     await action(options, "my_proj");
 
     assert(api.fs.hasDir("my_proj"));
-    assert(api.fs.hasDir("my_proj/migrations"));
-    assert(api.fs.hasDir("my_proj/functions"));
     assert(api.fs.hasDir("my_proj/.jcli"));
+    assert(api.fs.hasDir("my_proj/.jcli/functions"));
+    assert(api.fs.hasDir("my_proj/.jcli/migrations"));
+    assert(api.fs.hasDir("my_proj/.jcli/workflows"));
   });
 
   it("provision my_proj/project.json", async () => {

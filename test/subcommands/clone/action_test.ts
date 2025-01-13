@@ -1,3 +1,4 @@
+import { join } from "path";
 import {
   afterEach,
   assert,
@@ -8,9 +9,11 @@ import {
   it,
 } from "@test/mod.ts";
 
-import { PROJECT_DB_PATH } from "@/api/mod.ts";
-
-import { setupAPI } from "@/api/mod.ts";
+import {
+  PROJECT_ASSETS_DIRECTORY,
+  PROJECT_DB_PATH,
+  setupAPI,
+} from "@/api/mod.ts";
 
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
@@ -23,7 +26,22 @@ describe("clone", () => {
   let projectId: string;
 
   const options = {};
-  const FUNC_PATH = "functions/my_func";
+  const FUNCTION_PATH = "functions/my_func";
+
+  function writeFuncFile(path: string, content: string) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, FUNCTION_PATH, path);
+
+    if (api.fs.hasFile(file)) {
+      return api.fs.writeTextFile(file, content);
+    } else {
+      return api.fs.writeTextFile(file, content, { createNew: true });
+    }
+  }
+
+  function writeMigrationFile(path: string, code: string) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, path);
+    api.fs.writeTextFile(file, code, { createNew: true });
+  }
 
   beforeEach(async () => {
     api = makeAPIClient();
@@ -36,30 +54,13 @@ describe("clone", () => {
     api.chdir("my_proj");
 
     ["a", "b", "c"].forEach((name, i) => {
-      api.fs.writeTextFile(
-        `migrations/00000000000${i}_${name}.sql`,
-        name,
-        {
-          createNew: true,
-        },
-      );
+      writeMigrationFile(`migrations/00000000000${i}_${name}.sql`, name);
     });
 
-    const writeFuncFile = async (path: string, content: string) => {
-      const fullPath = `${FUNC_PATH}/${path}`;
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, FUNCTION_PATH));
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, FUNCTION_PATH, "users"));
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, FUNCTION_PATH, "posts"));
 
-      if (api.fs.hasFile(fullPath)) {
-        await api.fs.writeTextFile(fullPath, content);
-      } else {
-        await api.fs.writeTextFile(fullPath, content, {
-          createNew: true,
-        });
-      }
-    };
-
-    await api.fs.mkdir(FUNC_PATH);
-    await api.fs.mkdir(`${FUNC_PATH}/users`);
-    await api.fs.mkdir(`${FUNC_PATH}/posts`);
     await writeFuncFile("index.ts", "index");
     await writeFuncFile("users/mod.ts", "mod");
     await writeFuncFile("posts/entry.ts", "entry");
@@ -80,9 +81,9 @@ describe("clone", () => {
     await action(options, projectId);
 
     assert(api.fs.hasDir("my_proj"));
-    assert(api.fs.hasDir("my_proj/migrations"));
-    assert(api.fs.hasDir("my_proj/functions"));
     assert(api.fs.hasDir("my_proj/.jcli"));
+    assert(api.fs.hasDir("my_proj/.jcli/functions"));
+    assert(api.fs.hasDir("my_proj/.jcli/migrations"));
   });
 
   it("creates project directory with specified directory", async () => {
@@ -91,9 +92,9 @@ describe("clone", () => {
     await action(options, projectId, "speicified");
 
     assert(api.fs.hasDir("speicified"));
-    assert(api.fs.hasDir("speicified/migrations"));
-    assert(api.fs.hasDir("speicified/functions"));
     assert(api.fs.hasDir("speicified/.jcli"));
+    assert(api.fs.hasDir("speicified/.jcli/functions"));
+    assert(api.fs.hasDir("speicified/.jcli/migrations"));
   });
 
   it("clones my_proj/project.json", async () => {
@@ -190,52 +191,12 @@ describe("clone", () => {
     database.close();
   });
 
-  it("clones migrations", async () => {
-    await action(options, projectId);
-
-    assert(api.fs.hasFile("my_proj/migrations/000000000000_a.sql"));
-    assertEquals(
-      await api.fs.readTextFile("my_proj/migrations/000000000000_a.sql"),
-      "a",
-    );
-    assert(api.fs.hasFile("my_proj/migrations/000000000001_b.sql"));
-    assertEquals(
-      await api.fs.readTextFile("my_proj/migrations/000000000001_b.sql"),
-      "b",
-    );
-    assert(api.fs.hasFile("my_proj/migrations/000000000002_c.sql"));
-    assertEquals(
-      await api.fs.readTextFile("my_proj/migrations/000000000002_c.sql"),
-      "c",
-    );
-
-    const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
-
-    assert(api.db.hasDatabase(expectedDatabase));
-
-    const db = await api.db.connect(expectedDatabase);
-
-    const entries = db.queryEntries<{ path: string; hash: string }>(
-      "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION' ORDER BY path",
-    );
-
-    assertEquals(entries.length, 3);
-    assertEquals(entries[0].path, "migrations/000000000000_a.sql");
-    assertEquals(entries[0].hash, "0");
-    assertEquals(entries[1].path, "migrations/000000000001_b.sql");
-    assertEquals(entries[1].hash, "1");
-    assertEquals(entries[2].path, "migrations/000000000002_c.sql");
-    assertEquals(entries[2].hash, "2");
-
-    db.close();
-  });
-
   it("clones functions", async () => {
     await action(options, projectId);
 
-    assert(api.fs.hasFile(`my_proj/${FUNC_PATH}/index.ts`));
-    assert(api.fs.hasFile(`my_proj/${FUNC_PATH}/posts/entry.ts`));
-    assert(api.fs.hasFile(`my_proj/${FUNC_PATH}/users/mod.ts`));
+    assert(api.fs.hasFile(`my_proj/.jcli/${FUNCTION_PATH}/index.ts`));
+    assert(api.fs.hasFile(`my_proj/.jcli/${FUNCTION_PATH}/posts/entry.ts`));
+    assert(api.fs.hasFile(`my_proj/.jcli/${FUNCTION_PATH}/users/mod.ts`));
 
     const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
 
@@ -271,12 +232,52 @@ describe("clone", () => {
     );
 
     assertEquals(fileEntries.length, 3);
-    assertEquals(fileEntries[0].path, `${FUNC_PATH}/index.ts`);
+    assertEquals(fileEntries[0].path, `${FUNCTION_PATH}/index.ts`);
     assertEquals(fileEntries[0].hash, "index.ts");
-    assertEquals(fileEntries[1].path, `${FUNC_PATH}/posts/entry.ts`);
+    assertEquals(fileEntries[1].path, `${FUNCTION_PATH}/posts/entry.ts`);
     assertEquals(fileEntries[1].hash, "posts/entry.ts");
-    assertEquals(fileEntries[2].path, `${FUNC_PATH}/users/mod.ts`);
+    assertEquals(fileEntries[2].path, `${FUNCTION_PATH}/users/mod.ts`);
     assertEquals(fileEntries[2].hash, "users/mod.ts");
+
+    db.close();
+  });
+
+  it("clones migrations", async () => {
+    await action(options, projectId);
+
+    assert(api.fs.hasFile("my_proj/.jcli/migrations/000000000000_a.sql"));
+    assertEquals(
+      await api.fs.readTextFile("my_proj/.jcli/migrations/000000000000_a.sql"),
+      "a",
+    );
+    assert(api.fs.hasFile("my_proj/.jcli/migrations/000000000001_b.sql"));
+    assertEquals(
+      await api.fs.readTextFile("my_proj/.jcli/migrations/000000000001_b.sql"),
+      "b",
+    );
+    assert(api.fs.hasFile("my_proj/.jcli/migrations/000000000002_c.sql"));
+    assertEquals(
+      await api.fs.readTextFile("my_proj/.jcli/migrations/000000000002_c.sql"),
+      "c",
+    );
+
+    const expectedDatabase = `my_proj/${PROJECT_DB_PATH}`;
+
+    assert(api.db.hasDatabase(expectedDatabase));
+
+    const db = await api.db.connect(expectedDatabase);
+
+    const entries = db.queryEntries<{ path: string; hash: string }>(
+      "SELECT path, hash FROM objects WHERE filetype = 'MIGRATION' ORDER BY path",
+    );
+
+    assertEquals(entries.length, 3);
+    assertEquals(entries[0].path, "migrations/000000000000_a.sql");
+    assertEquals(entries[0].hash, "0");
+    assertEquals(entries[1].path, "migrations/000000000001_b.sql");
+    assertEquals(entries[1].hash, "1");
+    assertEquals(entries[2].path, "migrations/000000000002_c.sql");
+    assertEquals(entries[2].hash, "2");
 
     db.close();
   });

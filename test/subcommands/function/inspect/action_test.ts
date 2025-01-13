@@ -1,3 +1,4 @@
+import { join } from "path";
 import {
   afterEach,
   assertEquals,
@@ -6,7 +7,7 @@ import {
   it,
 } from "@test/mod.ts";
 
-import { setupAPI } from "@/api/mod.ts";
+import { PROJECT_ASSETS_DIRECTORY, setupAPI } from "@/api/mod.ts";
 
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
@@ -29,9 +30,9 @@ describe("inspect", () => {
 
     api.chdir("my_proj");
 
-    await api.fs.mkdir("functions/main");
-    await api.fs.mkdir("functions/api");
-    await api.fs.mkdir("functions/_core");
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, "functions", "main"));
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, "functions", "api"));
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, "functions", "_core"));
     await pushFunctionaction({ onlyFunctions: true });
   });
 

@@ -1,3 +1,4 @@
+import { join } from "path";
 import {
   afterEach,
   assert,
@@ -8,7 +9,7 @@ import {
   it,
 } from "@test/mod.ts";
 
-import { PROJECT_DB_PATH } from "@/api/mod.ts";
+import { PROJECT_ASSETS_DIRECTORY, PROJECT_DB_PATH } from "@/api/mod.ts";
 
 import { setupAPI } from "@/api/mod.ts";
 
@@ -25,6 +26,15 @@ describe("link", () => {
   const options = {};
   const FUNC_PATH = "functions/my_func";
 
+  async function writeMigrationFile(
+    name: string,
+    content: string,
+    create: boolean = true,
+  ) {
+    const file = join(PROJECT_ASSETS_DIRECTORY, "migrations", name);
+    await api.fs.writeTextFile(file, content, { createNew: create });
+  }
+
   beforeEach(async () => {
     api = makeAPIClient();
     setupAPI(api);
@@ -36,17 +46,11 @@ describe("link", () => {
     api.chdir("my_proj");
 
     ["a", "b", "c"].forEach((name, i) => {
-      api.fs.writeTextFile(
-        `migrations/00000000000${i}_${name}.sql`,
-        name,
-        {
-          createNew: true,
-        },
-      );
+      writeMigrationFile(`00000000000${i}_${name}.sql`, name);
     });
 
     const writeFuncFile = async (path: string, content: string) => {
-      const fullPath = `${FUNC_PATH}/${path}`;
+      const fullPath = join(PROJECT_ASSETS_DIRECTORY, FUNC_PATH, path);
 
       if (api.fs.hasFile(fullPath)) {
         await api.fs.writeTextFile(fullPath, content);
@@ -57,9 +61,9 @@ describe("link", () => {
       }
     };
 
-    await api.fs.mkdir(FUNC_PATH);
-    await api.fs.mkdir(`${FUNC_PATH}/users`);
-    await api.fs.mkdir(`${FUNC_PATH}/posts`);
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, FUNC_PATH));
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, FUNC_PATH, "users"));
+    await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, FUNC_PATH, "posts"));
     await writeFuncFile("index.ts", "index");
     await writeFuncFile("users/mod.ts", "mod");
     await writeFuncFile("posts/entry.ts", "entry");
@@ -69,7 +73,7 @@ describe("link", () => {
       declarations: string,
       structure: object,
     ) {
-      const path = `workflows/${name}.json`;
+      const path = join(PROJECT_ASSETS_DIRECTORY, "workflows", `${name}.json`);
       const workflow = { name, declarations, structure };
       const content = JSON.stringify(workflow, null, 2);
       const options = { createNew: !api.fs.hasFile(path) };
