@@ -77,9 +77,19 @@ function getConfigurationFromFile(): Promise<ProjectDotJSON> {
       return new Promise((resolve, reject) => {
         const data = JSON.parse(rawData);
         const validator = new Validator();
+        const result = validator.validate(data, projectJSONSchema);
 
-        if (!validator.validate(data, projectJSONSchema).valid) {
-          return reject(new Error("Invalid configuration"));
+        if (!result.valid) {
+          const errorMessages = result
+            .errors
+            .map((e, i) => `  ${i + 1}. ${e.toString()}`)
+            .join("\n");
+
+          return reject(
+            new Error(
+              `Invalid configuration:\n${errorMessages}`,
+            ),
+          );
         }
 
         resolve(new ProjectDotJSON(data as Project));
