@@ -14,12 +14,13 @@ import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 import createProject from "@/subcommands/admin/projects/create/action.ts";
 import action from "@/subcommands/push/action.ts";
 import { digest } from "@/jcli/crypto.ts";
+import { PushOptions } from "@/subcommands/push/option.ts";
 
 describe("functions", () => {
   let api: APIClientTest;
   let projectId: string;
 
-  const options = { onlyFunctions: true };
+  const options: PushOptions = { include: ["function"] };
 
   beforeEach(async () => {
     api = makeAPIClient();

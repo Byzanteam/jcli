@@ -20,93 +20,67 @@ import {
   pushWorkflows,
 } from "@/jcli/file/workflows-man.ts";
 
-import { PushOptions } from "./option.ts";
+import { includeCategories, PushOptions } from "./option.ts";
 
-function buildFeatureFlags(
+type PushFlags = {
+  [K in (typeof includeCategories)[number]]: boolean;
+};
+
+function buildPushFlags(
   options: PushOptions,
-): {
-  pushConfiguration: boolean;
-  pushFunctions: boolean;
-  pushMigrations: boolean;
-  pushWorkflows: boolean;
-} {
-  if (options.onlyConfiguration) {
-    return {
-      pushConfiguration: true,
-      pushFunctions: false,
-      pushMigrations: false,
-      pushWorkflows: false,
-    };
-  } else if (options.onlyFunctions) {
-    return {
-      pushConfiguration: false,
-      pushFunctions: true,
-      pushMigrations: false,
-      pushWorkflows: false,
-    };
-  } else if (options.onlyMigrations) {
-    return {
-      pushConfiguration: false,
-      pushFunctions: false,
-      pushMigrations: true,
-      pushWorkflows: false,
-    };
-  } else if (options.onlyWorkflows) {
-    return {
-      pushConfiguration: false,
-      pushFunctions: false,
-      pushMigrations: false,
-      pushWorkflows: true,
-    };
-  } else {
-    return {
-      pushConfiguration: true,
-      pushFunctions: true,
-      pushMigrations: true,
-      pushWorkflows: true,
-    };
-  }
+): Readonly<PushFlags> {
+  const includes = options.include ?? [...includeCategories];
+
+  const defaultFlags = includeCategories.reduce<PushFlags>((acc, category) => {
+    acc[category] = false;
+    return acc;
+  }, {} as PushFlags);
+
+  return includes.reduce((acc, category) => {
+    acc[category] = true;
+    return acc;
+  }, defaultFlags);
 }
 
 export default async function (options: PushOptions) {
   const db = await api.db.connect(PROJECT_DB_PATH);
-  const flags = buildFeatureFlags(options);
+  const pushFlags = buildPushFlags(options);
 
-  const pushConfigurationQueries = flags.pushConfiguration
+  const pushConfigurationQueries = pushFlags.configuration
     ? preparePushConfigurationQueries(db)
     : undefined;
 
-  const pushFunctionQueries = flags.pushFunctions
+  const pushFunctionQueries = pushFlags.function
     ? preparePushFunctionQueries(db)
     : undefined;
 
-  const pushMigrationQueries = flags.pushMigrations
+  const pushMigrationQueries = pushFlags.migration
     ? preparePushMigrationQueries(db)
     : undefined;
 
-  const pushWorkflowQueries = flags.pushWorkflows
+  const pushWorkflowQueries = pushFlags.workflow
     ? preparePushWorkflowQueries(db)
     : undefined;
 
   try {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
-    if (flags.pushConfiguration) {
+    if (pushFlags.configuration) {
       api.console.log("Pushing configuration...");
       await pushConfiguration(pushConfigurationQueries!, projectId);
     }
 
-    if (flags.pushFunctions) {
+    if (pushFlags.function) {
       api.console.log("Pushing functions...");
       await pushFunctions(pushFunctionQueries!, projectId);
     }
 
-    if (flags.pushMigrations) {
+    if (pushFlags.migration) {
       api.console.log("Pushing migrations...");
       await pushMigrations(pushMigrationQueries!, projectId);
     }
 
-    if (flags.pushWorkflows) {
+    if (pushFlags.workflow) {
       api.console.log("Pushing workflows...");
       await pushWorkflows(pushWorkflowQueries!, projectId);
     }

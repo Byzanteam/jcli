@@ -1,14 +1,19 @@
-import { Command } from "@cliffy/command";
+import { Command, EnumType } from "@cliffy/command";
 import errorHandler from "@/error-handler.ts";
 
-import { PushOptions } from "./option.ts";
+import { includeCategories, PushOptions } from "./option.ts";
 import action from "./action.ts";
+
+const includeType = new EnumType(includeCategories);
 
 const command = new Command<PushOptions>()
   .description("Push local changes to Jet.")
-  .option("--only-functions", "Pushes only changes of functions")
-  .option("--only-migrations", "Pushes only changes of migrations")
-  .option("--only-workflows", "Pushes only changes of workflows")
+  .type("include", includeType)
+  .option(
+    "--include <category:category>",
+    "Pushes only changes of the specified category",
+    { collect: true },
+  )
   .error(errorHandler)
   .action(action);
 

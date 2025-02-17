@@ -33,7 +33,7 @@ describe("inspect", () => {
     await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, "functions", "main"));
     await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, "functions", "api"));
     await api.fs.mkdir(join(PROJECT_ASSETS_DIRECTORY, "functions", "_core"));
-    await pushFunctionaction({ onlyFunctions: true });
+    await pushFunctionaction({ include: ["function"] });
   });
 
   afterEach(() => {

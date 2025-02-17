@@ -1,8 +1,12 @@
 import { GlobalOptions } from "@/args.ts";
 
+export const includeCategories = [
+  "configuration",
+  "function",
+  "migration",
+  "workflow",
+] as const;
+
 export type PushOptions = GlobalOptions & {
-  onlyConfiguration?: boolean;
-  onlyFunctions?: boolean;
-  onlyMigrations?: boolean;
-  onlyWorkflows?: boolean;
+  include?: Array<typeof includeCategories[number]>;
 };

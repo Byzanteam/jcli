@@ -13,12 +13,13 @@ import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
 import createProject from "@/subcommands/admin/projects/create/action.ts";
 import action from "@/subcommands/push/action.ts";
+import { PushOptions } from "@/subcommands/push/option.ts";
 
 describe("configuration", () => {
   let api: APIClientTest;
   let projectId: string;
 
-  const options = { onlyConfiguration: true };
+  const options: PushOptions = { include: ["configuration"] };
 
   beforeEach(async () => {
     api = makeAPIClient();
