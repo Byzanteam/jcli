@@ -41,7 +41,7 @@ describe("functions", () => {
       writeMigrationFile(`20200000000${i}.sql`, i.toString());
     }
 
-    await push({ onlyMigrations: true });
+    await push({ include: ["migration"] });
 
     await migrate({});
 
@@ -49,7 +49,7 @@ describe("functions", () => {
       writeMigrationFile(`20200000000${i}.sql`, i.toString());
     }
 
-    await push({ onlyMigrations: true });
+    await push({ include: ["migration"] });
 
     writeMigrationFile(`202000000001.sql`, "111", false);
 

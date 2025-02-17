@@ -43,7 +43,7 @@ describe("functions", () => {
 
     writeMigrationFile("202000000000_a.sql", "a");
 
-    await push({ onlyMigrations: true });
+    await push({ include: ["migration"] });
   });
 
   afterEach(() => {

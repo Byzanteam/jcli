@@ -42,7 +42,7 @@ describe("commit", () => {
       writeMigrationFile(`20200000000${i}.sql`, i.toString());
     }
 
-    await push({ onlyMigrations: true });
+    await push({ include: ["migration"] });
   });
 
   afterEach(() => {

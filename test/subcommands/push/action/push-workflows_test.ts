@@ -23,7 +23,7 @@ describe("workflows", () => {
   let api: APIClientTest;
   let projectId: string;
 
-  const options: PushOptions = { onlyWorkflows: true };
+  const options: PushOptions = { include: ["workflow"] };
 
   async function writeWorkflowFile(name: string, data: object) {
     const file = join(PROJECT_ASSETS_DIRECTORY, "workflows", name);
