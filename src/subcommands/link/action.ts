@@ -3,7 +3,7 @@ import { api } from "@/api/mod.ts";
 import { ProjectBuilder } from "@/jcli/project-builder.ts";
 
 export default async function action(
-  _options: GlobalOptions,
+  options: GlobalOptions & { force?: boolean },
   projectId: string,
   directory = ".",
 ) {
@@ -11,6 +11,7 @@ export default async function action(
   const builder = new ProjectBuilder(project.configuration, {
     directory,
     onlyDb: true,
+    force: options.force,
   });
 
   await builder.provisionFiles();

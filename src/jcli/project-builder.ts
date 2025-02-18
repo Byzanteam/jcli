@@ -1,3 +1,6 @@
+import { Confirm } from "@cliffy/prompt/confirm";
+import { dirname, join } from "path";
+
 import { api, PROJECT_ASSETS_DIRECTORY, PROJECT_DB_PATH } from "@/api/mod.ts";
 import { createConfigurationQuery } from "@/api/db/queries/create-configuration.ts";
 import { createFunctionsQuery } from "@/api/db/queries/create-functions.ts";
@@ -11,15 +14,28 @@ import {
   ProjectDotJSON,
   projectDotJSONPath,
 } from "@/jcli/config/project-json.ts";
-import { dirname, join } from "path";
+
+interface BuilderOptions {
+  force?: boolean;
+}
 
 abstract class BaseBuilder {
   protected configuration: ProjectDotJSON;
   protected directory: string;
+  protected options: BuilderOptions;
 
-  constructor(configuration: ProjectDotJSON, directory: string) {
+  constructor(
+    configuration: ProjectDotJSON,
+    directory: string,
+    options: BuilderOptions,
+  ) {
     this.configuration = configuration;
     this.directory = directory;
+    this.options = options;
+  }
+
+  get DbPath(): string {
+    return join(this.directory, PROJECT_DB_PATH);
   }
 
   abstract provisionFiles(): Promise<void>;
@@ -60,23 +76,64 @@ abstract class BaseBuilder {
   }
 
   protected async connectDB() {
-    return await api.db.connect(join(this.directory, PROJECT_DB_PATH));
+    return await api.db.connect(this.DbPath);
   }
 }
 
 class DatabaseBuilder extends BaseBuilder {
-  constructor(configuration: ProjectDotJSON, directory: string) {
-    super(configuration, directory);
+  constructor(
+    configuration: ProjectDotJSON,
+    directory: string,
+    options: BuilderOptions,
+  ) {
+    super(configuration, directory, options);
   }
 
   async provisionFiles(): Promise<void> {
     const directory = join(this.directory, PROJECT_ASSETS_DIRECTORY);
 
-    await api.fs.mkdir(directory);
+    await api.fs.mkdir(directory).catch((err) => {
+      if (err instanceof Deno.errors.AlreadyExists) {
+        return;
+      }
+
+      throw err;
+    });
+
+    await api
+      .fs
+      .lstat(this.DbPath)
+      .catch((err) => {
+        if (err instanceof Deno.errors.NotFound) {
+          return err;
+        }
+
+        throw err;
+      }).then(async (file) => {
+        if (file instanceof Deno.errors.NotFound) return;
+
+        let force = this.options.force;
+
+        if (force === undefined) {
+          force = await Confirm.prompt({
+            message:
+              `The database file "${this.DbPath}" already exists. Do you want to overwrite it?`,
+            default: false,
+          });
+        }
+
+        if (force) {
+          await api.fs.remove(this.DbPath);
+        } else {
+          throw new Deno.errors.AlreadyExists(
+            `The database file "${this.DbPath}" already exists.`,
+          );
+        }
+      });
   }
 
   provisionDatabases(): void {
-    const db = api.db.createDatabase(`${this.directory}/${PROJECT_DB_PATH}`);
+    const db = api.db.createDatabase(this.DbPath);
 
     db.execute(createMetadataQuery);
     db.execute(createTableObjectsQuery);
@@ -197,8 +254,12 @@ class DatabaseBuilder extends BaseBuilder {
 }
 
 class FileBuilder extends BaseBuilder {
-  constructor(configuration: ProjectDotJSON, directory: string) {
-    super(configuration, directory);
+  constructor(
+    configuration: ProjectDotJSON,
+    directory: string,
+    options: BuilderOptions,
+  ) {
+    super(configuration, directory, options);
   }
 
   async provisionFiles(): Promise<void> {
@@ -218,7 +279,7 @@ class FileBuilder extends BaseBuilder {
   }
 
   provisionDatabases(): void {
-    const db = api.db.createDatabase(`${this.directory}/${PROJECT_DB_PATH}`);
+    const db = api.db.createDatabase(this.DbPath);
 
     db.execute(createMetadataQuery);
     db.execute(createTableObjectsQuery);
@@ -351,12 +412,13 @@ class ProjectBuilder {
 
   constructor(
     configuration: ProjectDotJSON,
-    options?: { directory?: string; onlyDb?: boolean },
+    options?: { directory?: string; onlyDb?: boolean; force?: boolean },
   ) {
     const directory = options?.directory ?? configuration.name;
+    const builderOptions: BuilderOptions = { force: options?.force };
     this.builder = options?.onlyDb
-      ? new DatabaseBuilder(configuration, directory)
-      : new FileBuilder(configuration, directory);
+      ? new DatabaseBuilder(configuration, directory, builderOptions)
+      : new FileBuilder(configuration, directory, builderOptions);
   }
 
   async provisionFiles(): Promise<void> {
