@@ -174,7 +174,7 @@ export function makeFS(): FSTest {
       return new Promise((resolve, reject) => {
         cwd.mkdirRec(Directory.normalizePath(path), options)
           ? resolve()
-          : reject(new Error(`Cannot mkdir "${path}"`));
+          : reject(new Deno.errors.AlreadyExists(`Cannot mkdir "${path}"`));
       });
     },
 
@@ -255,7 +255,9 @@ export function makeFS(): FSTest {
             isSymlink: false,
           });
         } else {
-          reject(new Error(`No such file or directory: ${path}`));
+          reject(
+            new Deno.errors.NotFound(`No such file or directory: ${path}`),
+          );
         }
       });
     },

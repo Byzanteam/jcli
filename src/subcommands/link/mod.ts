@@ -9,6 +9,7 @@ const command = new Command<GlobalOptions>()
     "Link a local repo or project folder to an existing project on Jet.",
   )
   .arguments("<projectId> [directory]")
+  .option("-f, --force", "Force the link even if the directory is not empty")
   .error(errorHandler)
   .action(action);
 

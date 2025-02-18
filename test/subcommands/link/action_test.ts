@@ -4,6 +4,7 @@ import {
   assert,
   assertEquals,
   assertObjectMatch,
+  assertRejects,
   beforeEach,
   describe,
   it,
@@ -95,14 +96,27 @@ describe("link", () => {
   });
 
   it("creates project .jcli directories", async () => {
-    assert(!api.fs.hasDir("my_proj"));
+    assert(!api.fs.hasDir(PROJECT_ASSETS_DIRECTORY));
 
     await action(options, projectId);
 
-    assert(!api.fs.hasDir("my_proj"));
-    assert(!api.fs.hasDir("my_proj/migrations"));
-    assert(!api.fs.hasDir("my_proj/functions"));
+    assert(!api.fs.hasDir("functions"));
+    assert(!api.fs.hasDir("migrations"));
+    assert(!api.fs.hasDir("workflows"));
     assert(api.fs.hasDir(".jcli"));
+  });
+
+  it("overwrites project .jcli directories", async () => {
+    assert(!api.fs.hasDir(PROJECT_ASSETS_DIRECTORY));
+
+    await api.fs.mkdir(PROJECT_ASSETS_DIRECTORY, { recursive: true });
+    await api.fs.writeTextFile(PROJECT_DB_PATH, "", { createNew: true });
+
+    assertRejects(async () => {
+      await action({ force: false }, projectId);
+    }, Deno.errors.AlreadyExists);
+
+    await action({ force: true }, projectId);
   });
 
   it("provisions metadata.db", async () => {

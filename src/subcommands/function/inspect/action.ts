@@ -8,7 +8,7 @@ import {
 } from "@/api/mod.ts";
 import { buildEnvironmentName } from "@/subcommands/admin/var/utilities.ts";
 import { Table } from "@cliffy/table";
-import { colors } from "@cliffy/ansi";
+import { colors } from "@cliffy/ansi/colors";
 
 const stateColors: Record<DeploymentState, (text: string) => string> = {
   "UNSPECIFIED": colors.gray,

@@ -14,7 +14,7 @@ import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 import createProject from "@/subcommands/admin/projects/create/action.ts";
 import action from "@/subcommands/function/inspect/action.ts";
 import pushFunctionaction from "@/subcommands/push/action.ts";
-import { colors } from "@cliffy/ansi";
+import { colors } from "@cliffy/ansi/colors";
 
 describe("inspect", () => {
   let api: APIClientTest;
