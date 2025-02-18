@@ -106,7 +106,7 @@ describe("link", () => {
     assert(api.fs.hasDir(".jcli"));
   });
 
-  it("overwirets project .jcli directories", async () => {
+  it("overwrites project .jcli directories", async () => {
     assert(!api.fs.hasDir(PROJECT_ASSETS_DIRECTORY));
 
     await api.fs.mkdir(PROJECT_ASSETS_DIRECTORY, { recursive: true });
