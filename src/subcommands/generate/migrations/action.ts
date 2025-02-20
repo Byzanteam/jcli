@@ -3,7 +3,7 @@ import { GlobalOptions } from "@/args.ts";
 
 const migrationTemplateCode = `-- migrate:up\n\n-- migrate:down`;
 
-const migrationNameRegex = /^[a-z0-9_]{0,26}$/;
+const migrationNameRegex = /^[a-z_][a-z\d_]*$/;
 
 export default async function createMigration(
   _options: GlobalOptions,
