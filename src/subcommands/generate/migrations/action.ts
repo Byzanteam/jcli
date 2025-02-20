@@ -3,7 +3,7 @@ import { GlobalOptions } from "@/args.ts";
 
 const migrationTemplateCode = `-- migrate:up\n\n-- migrate:down`;
 
-const migrationNameRegex = /^[a-z_][a-z\d_]*$/;
+const migrationNameRegex = /^[a-z_][a-z\d_]{0,254}$/;
 
 export default async function createMigration(
   _options: GlobalOptions,
@@ -11,7 +11,7 @@ export default async function createMigration(
 ) {
   if (!migrationNameRegex.test(migrationName)) {
     api.console.log(
-      "Invalid migration name. Only lowercase letters, numbers, and underscores are allowed, with a maximum length of 26 characters.",
+      "Invalid migration name. Only lowercase letters, numbers, and underscores are allowed, with a maximum length of 255 characters.",
     );
     return undefined;
   }
