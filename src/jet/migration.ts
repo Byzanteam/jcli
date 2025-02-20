@@ -18,8 +18,6 @@ const MIGRATION_FILENAME_FORMAT = new RegExp(
   `^(?<version>${VERSION_REGEX.source})(_(?<name>${MIGRATION_NAME_REGEX.source}))?$`,
 );
 
-console.log(MIGRATION_FILENAME_FORMAT);
-
 export function buildVersionAndName(
   path: string,
 ): { version: number; name: string | null } {
