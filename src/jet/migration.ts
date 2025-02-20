@@ -8,8 +8,17 @@ import { parse } from "path";
  * The length of the version must be 12. The name is consisted of lowercase letters,
  * numbers, and underscores.
  */
-const MIGRATION_FILENAME_FORMAT =
-  /^(?<version>\d{12})(_(?<name>[a-z0-9_]{0,26}))?$/;
+
+export const MIGRATION_NAME_REGEX = /[a-z][a-z\d_]{0,254}/;
+
+const VERSION_REGEX = /\d{12}/;
+
+const MIGRATION_FILENAME_FORMAT = new RegExp(
+  // NOTE: why name is optional?
+  `^(?<version>${VERSION_REGEX.source})(_(?<name>${MIGRATION_NAME_REGEX.source}))?$`,
+);
+
+console.log(MIGRATION_FILENAME_FORMAT);
 
 export function buildVersionAndName(
   path: string,

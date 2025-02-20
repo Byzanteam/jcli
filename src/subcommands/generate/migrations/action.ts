@@ -1,9 +1,10 @@
 import { api } from "@/api/mod.ts";
 import { GlobalOptions } from "@/args.ts";
+import { MIGRATION_NAME_REGEX } from "@/jet/migration.ts";
 
 const migrationTemplateCode = `-- migrate:up\n\n-- migrate:down`;
 
-const migrationNameRegex = /^[a-z_][a-z\d_]{0,254}$/;
+const migrationNameRegex = new RegExp(`^${MIGRATION_NAME_REGEX.source}$`);
 
 export default async function createMigration(
   _options: GlobalOptions,
