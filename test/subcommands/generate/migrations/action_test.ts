@@ -65,7 +65,7 @@ describe("migrations generate", () => {
     assert(api.console.logs.length === 1, "Expected exactly one log entry.");
 
     const expectedLog =
-      "Invalid migration name. Only lowercase letters, numbers, and underscores are allowed, with a maximum length of 26 characters.";
+      "Invalid migration name. Only lowercase letters, numbers, and underscores are allowed, with a maximum length of 255 characters.";
 
     assertEquals(
       api.console.logs[0],
