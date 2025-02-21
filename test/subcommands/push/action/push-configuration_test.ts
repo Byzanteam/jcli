@@ -6,11 +6,9 @@ import {
 } from "@test/mod.ts";
 
 import { afterEach, beforeEach, describe, it } from "@test/mod.ts";
-
-import { PROJECT_DB_PATH, setupAPI } from "@/api/mod.ts";
-
 import { APIClientTest, makeAPIClient } from "@test/api/mod.ts";
 
+import { PROJECT_DB_PATH, setupAPI } from "@/api/mod.ts";
 import createProject from "@/subcommands/admin/projects/create/action.ts";
 import action from "@/subcommands/push/action.ts";
 import { PushOptions } from "@/subcommands/push/option.ts";
@@ -610,6 +608,41 @@ describe("configuration", () => {
           },
         ],
       });
+    });
+  });
+
+  describe("entryFile", () => {
+    const configuration = {
+      name: "my_proj",
+      title: "my_proj",
+      capabilities: [],
+      instances: [],
+      runningWorkflows: {},
+    };
+
+    beforeEach(async () => {
+    });
+
+    it("works", async () => {
+      const initial = { entryFile: "initial.js", ...configuration };
+      await api.fs.writeTextFile("project.json", JSON.stringify(initial));
+      await action(options);
+
+      const initialPatches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(initialPatches, undefined);
+      assertEquals(initialPatches!.length, 1);
+      assertObjectMatch(initialPatches![0], { entryFile: "initial.js" });
+
+      const updated = { entryFile: "updated.js", ...configuration };
+      await api.fs.writeTextFile("project.json", JSON.stringify(updated));
+      await action(options);
+
+      const updatedPatches = api.jet.getConfigurationPatches(projectId);
+
+      assertNotEquals(updatedPatches, undefined);
+      assertEquals(updatedPatches!.length, 2);
+      assertObjectMatch(updatedPatches![1], { entryFile: "updated.js" });
     });
   });
 });
