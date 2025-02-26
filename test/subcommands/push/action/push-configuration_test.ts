@@ -620,9 +620,6 @@ describe("configuration", () => {
       runningWorkflows: {},
     };
 
-    beforeEach(async () => {
-    });
-
     it("works", async () => {
       const initial = { entryFile: "initial.js", ...configuration };
       await api.fs.writeTextFile("project.json", JSON.stringify(initial));
