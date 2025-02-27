@@ -1,6 +1,8 @@
 export interface UpsertWorkflowQueryResponse {
-  workflowDefinition: {
-    hash: string;
+  workflowsUpsertWorkflowDefinition: {
+    workflowDefinition: {
+      hash: string;
+    };
   };
 }
 

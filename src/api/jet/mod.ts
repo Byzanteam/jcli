@@ -352,7 +352,7 @@ export async function upsertWorkflow(
     config,
   );
 
-  return definition.workflowDefinition.hash;
+  return definition.workflowsUpsertWorkflowDefinition.workflowDefinition.hash;
 }
 
 export async function deleteWorkflow(
