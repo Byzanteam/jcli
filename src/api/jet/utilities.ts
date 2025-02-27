@@ -25,18 +25,22 @@ export async function query<T>(
 
   const body = await response.json();
 
-  logRequest(query, variables, body);
-
-  return resolveResponse<T>(body);
+  return resolveResponse<T>(query, variables, body);
 }
 
 function resolveResponse<T>(
+  query: string,
+  variables: object,
   body: { errors?: ReadonlyArray<{ message: string }>; data?: T },
 ): Promise<T> {
+  const message = buildMessage(query, variables, body);
+
   return new Promise((resolve, reject) => {
     if (body.errors) {
-      reject(body.errors);
+      reject(new Error(message));
     } else if (body.data) {
+      getLogger().debug(message);
+
       resolve(body.data);
     }
   });
@@ -121,15 +125,11 @@ export async function* fetchLength<T, U>(
   } while (true);
 }
 
-function logRequest(query: string, variables: object, response: object) {
-  const logger = getLogger();
-  const message = `GraphQL request:
+function buildMessage(query: string, variables: object, body: object) {
+  return `GraphQL request:
 query: ${query}
 
 variables: ${JSON.stringify(variables, null, 2)}
 
-response: ${JSON.stringify(response, null, 2)}
-`;
-
-  logger.debug(message);
+body: ${JSON.stringify(body, null, 2)}`;
 }
