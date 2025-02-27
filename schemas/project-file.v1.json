@@ -9,11 +9,6 @@
       "description": "项目标题",
       "type": "string"
     },
-    "name": {
-      "description": "项目名称",
-      "type": "string",
-      "pattern": "^[a-z_][a-z0-9_]{0,39}$"
-    },
     "capabilities": {
       "descriptions": "插件使用的各种能力",
       "type": "array",
@@ -72,7 +67,6 @@
   },
   "required": [
     "title",
-    "name",
     "capabilities",
     "instances",
     "runningWorkflows"
