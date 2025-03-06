@@ -130,6 +130,7 @@ import {
 } from "@/api/jet/queries/list-projects.ts";
 
 import { ProjectEnvironmentName } from "@/api/mod.ts";
+import { base64ToUint8Array } from "@/api/fs.ts";
 
 export async function createProject(
   config: JcliConfigDotJSON,
@@ -432,6 +433,7 @@ export function listEnvironmentVariables(
   );
 }
 
+// FIXME: remove
 export async function cloneProject(
   config: JcliConfigDotJSON,
   args: CloneProjectArgs,
@@ -502,7 +504,7 @@ function cloneProjectFunctions(
             return {
               path: f.path,
               hash: f.hash,
-              code: f.settings.code,
+              code: base64ToUint8Array(f.settings.code),
             };
           }),
         };

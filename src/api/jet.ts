@@ -187,7 +187,7 @@ export interface JetProject {
   configuration: ProjectDotJSON;
   functions: AsyncIterable<{
     name: string;
-    files: ReadonlyArray<{ path: string; hash: string; code: string }>;
+    files: ReadonlyArray<{ path: string; hash: string; code: Uint8Array }>;
   }>;
   migrations: AsyncIterable<{
     version: number;

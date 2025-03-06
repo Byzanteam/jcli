@@ -39,10 +39,15 @@ export function FunctionFileEntry(functionName: string) {
     override async digest() {
       if (undefined === this._digest) {
         const encoder = new TextEncoder();
+        const serverPath = encoder.encode(this.serverPath);
 
-        this._digest = await digest(
-          encoder.encode(`${this.serverPath}${await this.content()}`),
-        );
+        const code = await this.code();
+
+        const data = new Uint8Array(serverPath.length + code.length);
+        data.set(serverPath);
+        data.set(code, serverPath.length);
+
+        this._digest = await digest(data);
       }
 
       return this._digest;
@@ -263,7 +268,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
         projectId,
         functionName,
         path: fileChange.entry.serverPath,
-        code: await fileChange.entry.content(),
+        code: await fileChange.entry.encodedCode(),
       });
 
       createFunctionFileQuery.execute({
@@ -278,7 +283,7 @@ async function pushFunctionFile<T extends FileEntry & FunctionFileEntryBase>(
         projectId,
         functionName,
         path: fileChange.entry.serverPath,
-        code: await fileChange.entry.content(),
+        code: await fileChange.entry.encodedCode(),
       });
 
       updateFunctionFileQuery.execute({

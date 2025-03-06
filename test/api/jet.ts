@@ -16,6 +16,7 @@ import { digest } from "@/jcli/file/project.ts";
 import { listFilesRec } from "@/jcli/file/files-man.ts";
 import { parseParams as parseWorkflowParams } from "@/jcli/file/workflows-man.ts";
 import { WorkflowDraftWorkflow } from "@/jet/workflow.ts";
+import { base64ToUint8Array } from "@/api/fs.ts";
 
 interface ProjectQuery {
   projectName?: string;
@@ -259,11 +260,13 @@ export function makeJet(): JetTest {
 
         const { dir, base } = parse(path);
 
+        const bin = base64ToUint8Array(code);
+
         if ("" === dir || "/" === dir) {
-          await func.files.writeTextFile(base, code, { createNew: true });
+          await func.files.writeFile(base, bin, { createNew: true });
         } else {
           await tryMkdirRecursively(dir, func.files);
-          await func.files.writeTextFile(path, code, {
+          await func.files.writeFile(path, bin, {
             createNew: true,
           });
         }
@@ -281,7 +284,8 @@ export function makeJet(): JetTest {
         if (!func.files.hasFile(path)) {
           throw new Error("File not found");
         } else {
-          await func.files.writeTextFile(path, code);
+          const bin = base64ToUint8Array(code);
+          await func.files.writeFile(path, bin);
         }
       } else {
         throw new Error("Function not found");
@@ -569,12 +573,12 @@ export function makeJet(): JetTest {
 
         async function* buildFunctionFiles(
           fs: FSTest,
-        ): AsyncIterable<{ path: string; hash: string; code: string }> {
+        ): AsyncIterable<{ path: string; hash: string; code: Uint8Array }> {
           for await (const path of listFilesRec("./", { fs })) {
             yield {
               path,
               hash: path,
-              code: await fs.readTextFile(path),
+              code: await fs.readFile(path),
             };
           }
         }

@@ -1,9 +1,11 @@
 import { extname, join } from "path";
 import { api, DirEntry, FS, PROJECT_ASSETS_DIRECTORY } from "@/api/mod.ts";
 import { digest } from "@/jcli/crypto.ts";
+import { uint8ArrayToBase64 } from "@/api/fs.ts";
 
 export class FileEntry {
   #content: string | undefined;
+  #code: Uint8Array | undefined;
   _digest: string | undefined;
 
   constructor(public readonly path: string) {}
@@ -27,6 +29,21 @@ export class FileEntry {
     }
 
     return this.#content;
+  }
+
+  async code(): Promise<Uint8Array> {
+    if (undefined === this.#code) {
+      const path = join(PROJECT_ASSETS_DIRECTORY, this.path);
+      const file = await api.fs.realPath(path);
+      this.#code = await api.fs.readFile(file);
+    }
+
+    return this.#code;
+  }
+
+  async encodedCode(): Promise<string> {
+    const code = await this.code();
+    return uint8ArrayToBase64(code);
   }
 }
 
