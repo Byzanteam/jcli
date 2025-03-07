@@ -19,6 +19,12 @@ interface BuilderOptions {
   force?: boolean;
 }
 
+interface FunctionFile {
+  path: string;
+  hash: string;
+  code: Uint8Array;
+}
+
 abstract class BaseBuilder {
   protected configuration: ProjectDotJSON;
   protected directory: string;
@@ -44,11 +50,7 @@ abstract class BaseBuilder {
   abstract buildFunctions(
     functions: AsyncIterable<{
       name: string;
-      files: ReadonlyArray<{
-        path: string;
-        hash: string;
-        code: string;
-      }>;
+      files: ReadonlyArray<FunctionFile>;
     }>,
   ): Promise<void>;
   abstract buildMigrations(
@@ -161,11 +163,7 @@ class DatabaseBuilder extends BaseBuilder {
   async buildFunctions(
     functions: AsyncIterable<{
       name: string;
-      files: ReadonlyArray<{
-        path: string;
-        hash: string;
-        code: string;
-      }>;
+      files: ReadonlyArray<FunctionFile>;
     }>,
   ) {
     const db = await this.connectDB();
@@ -307,11 +305,7 @@ class FileBuilder extends BaseBuilder {
   async buildFunctions(
     functions: AsyncIterable<{
       name: string;
-      files: ReadonlyArray<{
-        path: string;
-        hash: string;
-        code: string;
-      }>;
+      files: ReadonlyArray<FunctionFile>;
     }>,
   ) {
     const db = await this.connectDB();
@@ -436,11 +430,7 @@ class ProjectBuilder {
   async buildFunctions(
     functions: AsyncIterable<{
       name: string;
-      files: ReadonlyArray<{
-        path: string;
-        hash: string;
-        code: string;
-      }>;
+      files: ReadonlyArray<FunctionFile>;
     }>,
   ): Promise<void> {
     await this.builder.buildFunctions(functions);
@@ -467,12 +457,12 @@ class ProjectBuilder {
 async function writeFunctionFile(
   directory: string,
   path: string,
-  code: string,
+  code: Uint8Array,
 ) {
   const file = join(directory, PROJECT_ASSETS_DIRECTORY, path);
 
   await api.fs.mkdir(dirname(file), { recursive: true });
-  await api.fs.writeTextFile(file, code, { createNew: true });
+  await api.fs.writeFile(file, code, { createNew: true });
 }
 
 export { ProjectBuilder };

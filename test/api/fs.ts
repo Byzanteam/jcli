@@ -178,6 +178,17 @@ export function makeFS(): FSTest {
       });
     },
 
+    writeFile(
+      path: string,
+      data: Uint8Array,
+      options?: WriteFileOptions,
+    ): Promise<void> {
+      // NOTE: test files are always text files
+      const decoder = new TextDecoder("utf-8");
+      const content = decoder.decode(data);
+      return this.writeTextFile(path, content, options);
+    },
+
     writeTextFile(
       path: string,
       data: string,
