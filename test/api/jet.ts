@@ -534,12 +534,14 @@ export function makeJet(): JetTest {
         const variables = environmentVariables.get(projectId);
 
         if (undefined === variables) {
-          reject(new Error("Project not found"));
+          reject(new Error(`Project(${projectId}) not found`));
         } else {
           if (variables.get(environmentName)!.delete(name)) {
             resolve();
           } else {
-            reject(new Error("Variable not found"));
+            reject(
+              new Error(`Variable(${name}) in ${environmentName} is not found`),
+            );
           }
         }
       });
