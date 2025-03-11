@@ -164,7 +164,7 @@ export async function pushWorkflows(
   const concurrency = options?.concurrency ?? navigator.hardwareConcurrency;
 
   for await (const items of chunk(changes, concurrency)) {
-    await Promise.allSettled(
+    await Promise.all(
       items.map((item) => pushWorkflow(item, queries, projectId)),
     );
   }

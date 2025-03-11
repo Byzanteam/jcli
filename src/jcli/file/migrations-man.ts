@@ -277,7 +277,7 @@ export async function pushMigrations(
       options?.concurrency ?? navigator.hardwareConcurrency,
     )
   ) {
-    await Promise.allSettled(
+    await Promise.all(
       fileChanges.map((change) =>
         pushMigrationsChange(change, queries, projectId)
       ),

@@ -322,7 +322,7 @@ async function pushFunctionFiles(
       options?.concurrency ?? navigator.hardwareConcurrency,
     )
   ) {
-    await Promise.allSettled(
+    await Promise.all(
       changes.map((fileChange) =>
         pushFunctionFile(fileChange, queries, projectId, functionName)
       ),
@@ -383,7 +383,7 @@ export async function pushFunctions(
       options?.concurrency ?? navigator.hardwareConcurrency,
     )
   ) {
-    await Promise.allSettled(
+    await Promise.all(
       changes.map((change) =>
         pushFunction(change, queries, projectId, options)
       ),
