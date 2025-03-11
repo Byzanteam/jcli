@@ -2,6 +2,7 @@ import {
   afterEach,
   assertEquals,
   assertNotEquals,
+  assertStringIncludes,
   beforeEach,
   describe,
   it,
@@ -60,7 +61,18 @@ describe("set variable", () => {
 
     assertEquals(environmentVariables?.size, 0);
 
-    await action(options, "FOO");
+    try {
+      await action(options, "FOO");
+    } catch (err) {
+      if (err instanceof Error) {
+        assertStringIncludes(
+          err.message,
+          "Variable(FOO) in DEVELOPMENT is not found",
+        );
+      } else {
+        throw err;
+      }
+    }
 
     environmentVariables = api.jet.getEnvironmentVariables(
       projectId,
@@ -101,7 +113,18 @@ describe("set variable", () => {
 
     assertEquals(environmentVariables?.size, 0);
 
-    await action({ prod: true }, "FOO");
+    try {
+      await action({ prod: true }, "FOO");
+    } catch (err) {
+      if (err instanceof Error) {
+        assertStringIncludes(
+          err.message,
+          "Variable(FOO) in PRODUCTION is not found",
+        );
+      } else {
+        throw err;
+      }
+    }
 
     environmentVariables = api.jet.getEnvironmentVariables(
       projectId,

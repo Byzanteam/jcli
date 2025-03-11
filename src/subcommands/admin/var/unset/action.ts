@@ -8,7 +8,7 @@ export default async function (options: VarOptions, name: string) {
   try {
     const [[projectId]] = db.query<[string]>("SELECT project_id FROM metadata");
 
-    await Promise.allSettled([api.jet.unsetEnvironmentVariable({
+    await Promise.all([api.jet.unsetEnvironmentVariable({
       projectId,
       environmentName: buildEnvironmentName(options),
       name,
