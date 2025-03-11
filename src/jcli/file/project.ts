@@ -58,9 +58,9 @@ function digestWorkflows(db: DBClass): Promise<string> {
 function getConfiguration(db: DBClass): string {
   const query = "SELECT data FROM configuration";
   const [{ data }] = db.queryEntries<{ data: string }>(query);
-  const { title, capabilities, instances, runningWorkflows } = JSON.parse(data);
+  const { title, capabilities, instances, runningWorkflows, entryFile, imports, scopes } = JSON.parse(data);
 
-  return JSON.stringify({ title, capabilities, instances, runningWorkflows });
+  return JSON.stringify({ title, capabilities, instances, runningWorkflows, entryFile, imports, scopes });
 }
 
 export async function digestProject(db: DBClass): Promise<string> {
