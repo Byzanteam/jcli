@@ -224,6 +224,7 @@ function buildCommandArgument(command: ProjectPatch) {
     title: command.title,
     capabilities,
     instances,
+    entryFile: command.entryFile,
     imports: serializeValue(command.imports),
     scopes: serializeValue(command.scopes),
     runningWorkflows: command.runningWorkflows &&
@@ -232,8 +233,10 @@ function buildCommandArgument(command: ProjectPatch) {
 }
 
 function serializeValue<T extends object>(
-  value: T | undefined,
-): string | undefined {
+  value: T | undefined | null,
+): string | undefined | null {
+  if (value === null) return null;
+
   return (!value || Object.keys(value).length === 0)
     ? undefined
     : JSON.stringify(value);

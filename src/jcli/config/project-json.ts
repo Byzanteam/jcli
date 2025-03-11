@@ -185,8 +185,8 @@ export interface ProjectPatch {
   title?: string;
   capabilities: Array<ProjectCapabilityPatch>;
   instances: Array<ProjectPluginInstancePatch>;
-  entryFile?: string;
-  imports?: ProjectImports;
-  scopes?: ProjectScopes;
+  entryFile?: string | null;
+  imports?: ProjectImports | null;
+  scopes?: ProjectScopes | null;
   runningWorkflows?: ProjectRunningWorkflows;
 }
