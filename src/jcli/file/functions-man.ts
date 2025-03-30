@@ -180,6 +180,8 @@ export interface PushFunctionQueries {
 
   deleteFunctionFileQuery: PreparedQuery<never, never, { path: string }>;
 
+  deleteFunctionFilesQuery: PreparedQuery<never, never, { prefix: string }>;
+
   finalize(): void;
 }
 
@@ -220,6 +222,14 @@ export function prepareQueries(db: DBClass): PushFunctionQueries {
     "DELETE FROM objects WHERE path = :path",
   );
 
+  const deleteFunctionFilesQuery = db.prepareQuery<
+    never,
+    never,
+    { prefix: string }
+  >(
+    "DELETE FROM objects WHERE path LIKE :prefix AND filetype = 'FUNCTION'",
+  );
+
   return {
     listFunctionNamesQuery() {
       return db.query<[string]>("SELECT name FROM functions").flat();
@@ -236,12 +246,14 @@ export function prepareQueries(db: DBClass): PushFunctionQueries {
     createFunctionFileQuery,
     updateFunctionFileQuery,
     deleteFunctionFileQuery,
+    deleteFunctionFilesQuery,
     finalize() {
       createFunctionQuery.finalize();
       deleteFunctionQuery.finalize();
       createFunctionFileQuery.finalize();
       updateFunctionFileQuery.finalize();
       deleteFunctionFileQuery.finalize();
+      deleteFunctionFilesQuery.finalize();
     },
   };
 }
@@ -339,6 +351,7 @@ async function pushFunction(
   const {
     createFunctionQuery,
     deleteFunctionQuery,
+    deleteFunctionFilesQuery,
   } = queries;
 
   switch (change.type) {
@@ -361,6 +374,8 @@ async function pushFunction(
 
       deleteFunctionQuery.execute({ name: change.name });
 
+      deleteRelatedFiles(change.name, deleteFunctionFilesQuery);
+
       break;
 
     default:
@@ -370,6 +385,14 @@ async function pushFunction(
   if (change.type !== "DELETED") {
     await pushFunctionFiles(queries, projectId, change.name, options);
   }
+}
+
+function deleteRelatedFiles(
+  functionName: string,
+  deleteFunctionFilesQuery: PreparedQuery<never, never, { prefix: string }>,
+): void {
+  const prefix = join(BASE_PATH, functionName);
+  deleteFunctionFilesQuery.execute({ prefix: `${prefix}/%` });
 }
 
 export async function pushFunctions(

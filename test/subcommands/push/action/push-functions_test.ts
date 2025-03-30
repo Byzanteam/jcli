@@ -68,6 +68,26 @@ describe("functions", () => {
   });
 
   describe("deleted functions", () => {
+    async function writeFuncFile(
+      functionName: string,
+      path: string,
+      content: string,
+    ) {
+      const file = join(
+        PROJECT_ASSETS_DIRECTORY,
+        "functions",
+        functionName,
+        path,
+      );
+      if (api.fs.hasFile(file)) {
+        await api.fs.writeTextFile(file, content);
+      } else {
+        await api.fs.writeTextFile(file, content, {
+          createNew: true,
+        });
+      }
+    }
+
     beforeEach(async () => {
       await api.fs.mkdir(
         join(PROJECT_ASSETS_DIRECTORY, "functions", "my_func1"),
@@ -75,7 +95,8 @@ describe("functions", () => {
       await api.fs.mkdir(
         join(PROJECT_ASSETS_DIRECTORY, "functions", "my_func2"),
       );
-
+      await writeFuncFile("my_func1", "index.ts", "my_func1");
+      await writeFuncFile("my_func2", "index.ts", "my_func2");
       await action(options);
 
       await api.fs.remove(
@@ -94,12 +115,22 @@ describe("functions", () => {
 
     it("updates db", async () => {
       const db = await api.db.connect(PROJECT_DB_PATH);
-      const entries = db.queryEntries<{ name: string }>(
+
+      const functions = db.queryEntries<{ name: string }>(
         "SELECT name FROM functions",
       );
 
-      assertEquals(entries.length, 1);
-      assertObjectMatch(entries[0], { name: "my_func2" });
+      assertEquals(functions.length, 1);
+      assertObjectMatch(functions[0], { name: "my_func2" });
+
+      const functionFiles = db.queryEntries<{ path: string }>(
+        "SELECT path FROM objects WHERE filetype = 'FUNCTION'",
+      );
+
+      assertEquals(functionFiles.length, 1);
+      assertObjectMatch(functionFiles[0], {
+        path: "functions/my_func2/index.ts",
+      });
 
       db.close();
     });
