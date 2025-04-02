@@ -3,7 +3,7 @@ export interface FS {
   mkdir(path: string, options?: MkdirOptions): Promise<void>;
   readFile(path: string): Promise<Uint8Array>;
   readTextFile(path: string): Promise<string>;
-  remove(path: string): Promise<void>;
+  remove(path: string, options?: RemoveOptions): Promise<void>;
   writeFile(
     path: string,
     data: Uint8Array,
@@ -25,6 +25,10 @@ export interface MkdirOptions {
 
 export interface WriteFileOptions {
   createNew?: boolean;
+}
+
+export interface RemoveOptions {
+  recursive?: boolean;
 }
 
 export interface DirEntry {

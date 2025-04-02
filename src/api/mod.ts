@@ -2,7 +2,14 @@ import { join } from "path";
 
 import { Console, consoleImpl } from "@/api/console.ts";
 import { DB, db, DBClass } from "@/api/db.ts";
-import { DirEntry, FS, fs, MkdirOptions, WriteFileOptions } from "@/api/fs.ts";
+import {
+  DirEntry,
+  FS,
+  fs,
+  MkdirOptions,
+  RemoveOptions,
+  WriteFileOptions,
+} from "@/api/fs.ts";
 import {
   Deployment,
   DeploymentLog,
@@ -47,6 +54,7 @@ export type {
   JetProject,
   MkdirOptions,
   ProjectEnvironmentName,
+  RemoveOptions,
   WriteFileOptions,
 };
 
