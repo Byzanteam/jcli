@@ -3,6 +3,7 @@ import {
   FileInfo,
   FS,
   MkdirOptions,
+  RemoveOptions,
   WriteFileOptions,
 } from "@/api/fs.ts";
 
@@ -80,31 +81,31 @@ class Directory {
     }
   }
 
-  remove([name, ...rest]: ReadonlyArray<string>, recursive = true): void {
+  remove([name, ...rest]: ReadonlyArray<string>, options: RemoveOptions): void {
     if (undefined === name) {
       throw new Error("No such file or directory.");
     }
 
     if (0 === rest.length) {
-      this._remove(name, recursive);
+      this._remove(name, options);
       return;
     }
 
     const fileOrDirectory = this.#children.get(name);
 
     if (fileOrDirectory instanceof Directory) {
-      fileOrDirectory.remove(rest, recursive);
+      fileOrDirectory.remove(rest, options);
     } else {
       throw new Error("No such file or directory.");
     }
   }
 
-  _remove(path: string, recursive = true): void {
+  _remove(path: string, options: RemoveOptions): void {
     const directoryOrFile = this.#children.get(path);
 
     if (
       directoryOrFile instanceof Directory && !directoryOrFile.isEmpty() &&
-      !recursive
+      !options.recursive
     ) {
       throw new Error(`${path} is not empty.`);
     }
@@ -250,10 +251,13 @@ export function makeFS(): FSTest {
       throw new Error(`${path} is not a directory.`);
     },
 
-    remove(path: string, recursive?: boolean): Promise<void> {
+    remove(
+      path: string,
+      options: RemoveOptions = { recursive: false },
+    ): Promise<void> {
       return new Promise((resolve) => {
         const normalizedPath = Directory.normalizePath(path);
-        cwd.remove(normalizedPath, recursive ?? true);
+        cwd.remove(normalizedPath, options);
         resolve();
       });
     },

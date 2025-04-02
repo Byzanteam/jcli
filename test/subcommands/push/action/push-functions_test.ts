@@ -101,6 +101,7 @@ describe("functions", () => {
 
       await api.fs.remove(
         join(PROJECT_ASSETS_DIRECTORY, "functions", "my_func1"),
+        { recursive: true },
       );
 
       await action(options);
