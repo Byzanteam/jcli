@@ -584,13 +584,15 @@ function cloneProjectWorkflows(
 
     return {
       pageInfo,
-      records: nodes.map(({ name, definition }) => {
-        return {
-          name,
-          data: JSON.parse(definition.data),
-          hash: definition.hash,
-        };
-      }),
+      records: nodes
+        .filter(({ definition }) => definition !== null)
+        .map(({ name, definition }) => {
+          return {
+            name,
+            data: JSON.parse(definition!.data),
+            hash: definition!.hash,
+          };
+        }),
     };
   }
   return connectionIterator(
